@@ -131,16 +131,16 @@ jobs:
         # Copy Keymap files
         Copy-Item -Path "$uiBinFolder/keymaps" -Destination "dist/keymaps" -Recurse -Force
         
-        # Copy lib folders for Release build
+        # Copy lib folders for Release build (copy contents, not the folder itself)
         if (Test-Path "$consoleBinFolder/lib") {
-          Write-Host "Copying console lib folder..."
-          Copy-Item -Path "$consoleBinFolder/lib" -Destination "dist/lib" -Recurse -Force
+          Write-Host "Copying console lib folder contents..."
+          Copy-Item -Path "$consoleBinFolder/lib/*" -Destination "dist/lib" -Recurse -Force
         } else {
           Write-Warning "Console lib folder not found at $consoleBinFolder/lib"
         }
         if (Test-Path "$uiBinFolder/lib") {
-          Write-Host "Copying UI lib folder..."
-          Copy-Item -Path "$uiBinFolder/lib" -Destination "dist/lib" -Recurse -Force
+          Write-Host "Copying UI lib folder contents..."
+          Copy-Item -Path "$uiBinFolder/lib/*" -Destination "dist/lib" -Recurse -Force
         } else {
           Write-Warning "UI lib folder not found at $uiBinFolder/lib"
         }
