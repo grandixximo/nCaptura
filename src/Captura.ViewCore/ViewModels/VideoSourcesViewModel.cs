@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Captura.Video;
 
 namespace Captura.ViewModels
