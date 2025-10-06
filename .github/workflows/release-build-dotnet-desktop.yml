@@ -90,14 +90,35 @@ jobs:
       env:
         Configuration: ${{ matrix.configuration }}
 
-    # Upload the application
+    # Package binaries
+    - name: Package binaries
+      run: |
+        $releaseDir = "src/Captura/bin/${{ matrix.configuration }}"
+        $outputZip = "nCaptura-${{ github.ref_name }}-Release.zip"
+        Compress-Archive -Path "$releaseDir/*" -DestinationPath $outputZip
+        echo "RELEASE_ZIP=$outputZip" >> $env:GITHUB_ENV
+      shell: pwsh
+      env:
+        Configuration: ${{ matrix.configuration }}
+
+    # Upload the application as artifact
     - name: Upload the binary
       uses: actions/upload-artifact@v4
       with:
-        name: Captura-${{ github.ref_name }}
-        path: src/Captura/bin/${{ env.Configuration }}/* # or path/to/artifact
+        name: nCaptura-${{ github.ref_name }}-Release
+        path: src/Captura/bin/${{ matrix.configuration }}/* # or path/to/artifact
       env:
         Configuration: ${{ matrix.configuration }}
+    
+    # Upload binaries to GitHub Release
+    - name: Upload to GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: nCaptura-${{ github.ref_name }}-Release.zip
+        draft: false
+        prerelease: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     # # Decode the base 64 encoded pfx and save the Signing_Certificate
     # - name: Decode the pfx
