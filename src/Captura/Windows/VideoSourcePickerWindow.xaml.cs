@@ -175,7 +175,8 @@ namespace Captura
 
         void WindowMouseMove(object Sender, MouseEventArgs E)
         {
-            var point = MouseCursor.CursorPosition;
+            var platformServices = ServiceProvider.Get<IPlatformServices>();
+            var point = platformServices.CursorPosition;
 
             switch (_mode)
             {
