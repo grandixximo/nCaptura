@@ -113,13 +113,15 @@ namespace Captura
 
         bool TryExit()
         {
-            if (_helper.MainViewModel.RecordingViewModel.RecorderState == RecorderState.Recording)
+            var recordingViewModel = ServiceProvider.Get<RecordingViewModel>();
+            
+            if (recordingViewModel.RecorderState == RecorderState.Recording)
             {
                 if (!ServiceProvider.MessageProvider.ShowYesNo(
                     "A Recording is in progress. Are you sure you want to exit?", "Confirm Exit"))
                     return false;
             }
-            else if (_helper.MainViewModel.RecordingViewModel.RunningStopRecordingCount > 0)
+            else if (recordingViewModel.RunningStopRecordingCount > 0)
             {
                 if (!ServiceProvider.MessageProvider.ShowYesNo(
                     "Some Recordings have not finished writing to disk. Are you sure you want to exit?", "Confirm Exit"))
