@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
@@ -14,6 +14,7 @@ using Reactive.Bindings;
 using Color = System.Windows.Media.Color;
 using ColorConverter = System.Windows.Media.ColorConverter;
 using DColor = System.Drawing.Color;
+using VideoWindow = Captura.Video.Window;
 
 namespace Captura
 {
