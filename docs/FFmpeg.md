@@ -13,6 +13,11 @@ If it is installed globally (available in PATH), you don't have to do anything.
 If you don't have FFmpeg or want to update, use the inbuilt **FFmpeg Downloader**.
 FFmpeg needs to be downloaded only once.
 
-In cases where the **FFmpeg Downloader** fails, please download manually from <https://ffmpeg.zeranoe.com/builds/> and set FFmpeg folder in `Configure | FFmpeg`.
+In cases where the **FFmpeg Downloader** fails, please download manually from one of these sources:
+- <https://www.gyan.dev/ffmpeg/builds/> (Recommended - Windows builds)
+- <https://github.com/BtbN/FFmpeg-Builds/releases> (Alternative Windows builds)
+- <https://ffmpeg.org/download.html> (Official FFmpeg site with links to all builds)
+
+After downloading, extract the archive and set the FFmpeg folder (containing `ffmpeg.exe`) in `Configure | FFmpeg`.
 
 If you don't want to use FFmpeg, you can switch to `SharpAvi`.
