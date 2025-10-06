@@ -113,6 +113,10 @@ jobs:
         Copy-Item -Path "$uiBinFolder/*.exe" -Destination "dist/" -Force
         Copy-Item -Path "$uiBinFolder/*.exe.config" -Destination "dist/" -Force -ErrorAction SilentlyContinue
         
+        # Copy ModernUI DLLs that are excluded from lib folder (stay in root)
+        Copy-Item -Path "$uiBinFolder/FirstFloor.ModernUI.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
+        Copy-Item -Path "$uiBinFolder/ModernUI.Xceed.Toolkit.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
+        
         # Copy Keymap files
         Copy-Item -Path "$uiBinFolder/keymaps" -Destination "dist/keymaps" -Recurse -Force
         
