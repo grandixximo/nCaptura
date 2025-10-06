@@ -107,20 +107,26 @@ jobs:
         # Copy Languages
         Copy-Item -Path "$uiBinFolder/Languages" -Destination "dist/languages" -Recurse -Force
         
-        # Copy executables and config files
+        # Copy executables
         Copy-Item -Path "$consoleBinFolder/*.exe" -Destination "dist/" -Force
-        Copy-Item -Path "$consoleBinFolder/*.exe.config" -Destination "dist/" -Force -ErrorAction SilentlyContinue
         Copy-Item -Path "$uiBinFolder/*.exe" -Destination "dist/" -Force
-        Copy-Item -Path "$uiBinFolder/*.exe.config" -Destination "dist/" -Force -ErrorAction SilentlyContinue
         
-        # Copy UI framework DLLs that must stay in root directory
+        # Copy config files (these enable assembly loading from lib folder)
+        if (Test-Path "$consoleBinFolder/captura-cli.exe.config") {
+          Copy-Item -Path "$consoleBinFolder/captura-cli.exe.config" -Destination "dist/" -Force
+        } else {
+          Write-Warning "captura-cli.exe.config not found!"
+        }
+        if (Test-Path "$uiBinFolder/captura.exe.config") {
+          Copy-Item -Path "$uiBinFolder/captura.exe.config" -Destination "dist/" -Force
+        } else {
+          Write-Warning "captura.exe.config not found!"
+        }
+        
+        # Copy UI framework DLLs that must stay in root directory (referenced in XAML)
         Copy-Item -Path "$uiBinFolder/FirstFloor.ModernUI.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
         Copy-Item -Path "$uiBinFolder/ModernUI.Xceed.Toolkit.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
         Copy-Item -Path "$uiBinFolder/Xceed.Wpf.Toolkit.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
-        
-        # Copy Captura assemblies that must stay in root directory
-        Copy-Item -Path "$uiBinFolder/Captura.*.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
-        Copy-Item -Path "$uiBinFolder/Screna.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
         
         # Copy Keymap files
         Copy-Item -Path "$uiBinFolder/keymaps" -Destination "dist/keymaps" -Recurse -Force
