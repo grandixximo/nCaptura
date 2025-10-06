@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Linq;
 using Captura.Models;
+using Captura.ViewModels;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
