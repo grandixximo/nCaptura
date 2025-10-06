@@ -116,18 +116,8 @@ namespace Captura
         {
             var recordingViewModel = ServiceProvider.Get<RecordingViewModel>();
             
-            if (recordingViewModel.RecorderState == RecorderState.Recording)
-            {
-                if (!ServiceProvider.MessageProvider.ShowYesNo(
-                    "A Recording is in progress. Are you sure you want to exit?", "Confirm Exit"))
-                    return false;
-            }
-            else if (recordingViewModel.RunningStopRecordingCount > 0)
-            {
-                if (!ServiceProvider.MessageProvider.ShowYesNo(
-                    "Some Recordings have not finished writing to disk. Are you sure you want to exit?", "Confirm Exit"))
-                    return false;
-            }
+            if (!recordingViewModel.CanExit())
+                return false;
 
             _helper.MainViewModel.Dispose();
 
