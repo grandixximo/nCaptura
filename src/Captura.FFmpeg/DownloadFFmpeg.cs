@@ -86,7 +86,7 @@ namespace Captura.FFmpeg
                 // Find ffmpeg.exe in the archive (may be in subdirectories)
                 var ffmpegEntry = archive.Entries.FirstOrDefault(M => 
                     M.Name.Equals(ExeName, StringComparison.OrdinalIgnoreCase) && 
-                    M.FullName.Contains("bin", StringComparison.OrdinalIgnoreCase));
+                    M.FullName.IndexOf("bin", StringComparison.OrdinalIgnoreCase) >= 0);
                 
                 // If not found in bin folder, search anywhere
                 if (ffmpegEntry == null)
