@@ -113,10 +113,14 @@ jobs:
         Copy-Item -Path "$uiBinFolder/*.exe" -Destination "dist/" -Force
         Copy-Item -Path "$uiBinFolder/*.exe.config" -Destination "dist/" -Force -ErrorAction SilentlyContinue
         
-        # Copy ModernUI and Xceed DLLs that are excluded from lib folder (stay in root)
+        # Copy UI framework DLLs that must stay in root directory
         Copy-Item -Path "$uiBinFolder/FirstFloor.ModernUI.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
         Copy-Item -Path "$uiBinFolder/ModernUI.Xceed.Toolkit.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
         Copy-Item -Path "$uiBinFolder/Xceed.Wpf.Toolkit.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
+        
+        # Copy Captura assemblies that must stay in root directory
+        Copy-Item -Path "$uiBinFolder/Captura.*.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
+        Copy-Item -Path "$uiBinFolder/Screna.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
         
         # Copy Keymap files
         Copy-Item -Path "$uiBinFolder/keymaps" -Destination "dist/keymaps" -Recurse -Force
