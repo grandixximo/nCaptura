@@ -3,6 +3,9 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
       xmlns:models="clr-namespace:Captura.Models;assembly=Captura.Core"
+      xmlns:viewModels="clr-namespace:Captura.ViewModels;assembly=Captura.ViewCore"
+      xmlns:video="clr-namespace:Captura.Video;assembly=Captura.Core"
+      xmlns:viewModels="clr-namespace:Captura.ViewModels;assembly=Captura.ViewCore"
       xmlns:screna="clr-namespace:Captura.Video;assembly=Screna"
       xmlns:captura="clr-namespace:Captura"
       xmlns:mui="http://firstfloorsoftware.com/ModernUI"
@@ -73,7 +76,7 @@
                     <Style TargetType="DockPanel">
                         <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoSourceKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type models:NoVideoSourceProvider}">
+                            <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoSourceKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type video:NoVideoSourceProvider}">
                                 <Setter Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                         </Style.Triggers>
@@ -257,7 +260,7 @@ This Limit option is to prevent system crashes due to using high FPS on full scr
                 <StackPanel.Style>
                     <Style TargetType="StackPanel">
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoSourceKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type models:NoVideoSourceProvider}">
+                            <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoSourceKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type video:NoVideoSourceProvider}">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                             </DataTrigger>
                         </Style.Triggers>
@@ -271,7 +274,7 @@ This Limit option is to prevent system crashes due to using high FPS on full scr
                     <Style TargetType="Frame">
                         <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoSourceKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type models:NoVideoSourceProvider}">
+                            <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoSourceKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type video:NoVideoSourceProvider}">
                                 <Setter Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                         </Style.Triggers>
@@ -283,7 +286,7 @@ This Limit option is to prevent system crashes due to using high FPS on full scr
                 <DockPanel.Style>
                     <Style TargetType="DockPanel">
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoSourceKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type models:NoVideoSourceProvider}">
+                            <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoSourceKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type video:NoVideoSourceProvider}">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                             </DataTrigger>
                         </Style.Triggers>
@@ -331,7 +334,7 @@ This Limit option is to prevent system crashes due to using high FPS on full scr
                 <StackPanel.Style>
                     <Style TargetType="StackPanel">
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoSourceKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type models:NoVideoSourceProvider}">
+                            <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoSourceKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type video:NoVideoSourceProvider}">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                             </DataTrigger>
                         </Style.Triggers>
