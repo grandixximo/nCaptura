@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using Captura.Audio;
 using Captura.Loc;
 using Captura.Models;
@@ -28,7 +28,7 @@ namespace Captura.FFmpeg
 
         public void ShowLogs()
         {
-            SettingsWindow.ShowFFmpegLogs();
+            FFmpegLogWindow.ShowFFmpegLogs();
         }
 
         public void ShowUnavailable()

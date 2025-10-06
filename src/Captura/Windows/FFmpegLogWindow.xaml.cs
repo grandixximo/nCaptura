@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 
 namespace Captura
 {
@@ -12,6 +12,11 @@ namespace Captura
         void CloseButton_Click(object Sender, RoutedEventArgs E) => Close();
 
         static FFmpegLogWindow _instance;
+
+        public static void ShowFFmpegLogs()
+        {
+            ShowInstance();
+        }
 
         public static void ShowInstance()
         {

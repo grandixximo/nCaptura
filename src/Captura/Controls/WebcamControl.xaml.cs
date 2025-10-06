@@ -28,10 +28,7 @@ namespace Captura
             //Create capture object.
             if (VideoDevice != null && PresentationSource.FromVisual(this) is HwndSource source)
             {
-                Capture = new CaptureWebcam(VideoDevice, null, source.Handle)
-                {
-                    Scale = Dpi.X
-                };
+                Capture = new CaptureWebcam(VideoDevice, null, source.Handle);
                 
                 SizeChanged += (S, E) => OnSizeChange();
 
@@ -54,20 +51,17 @@ namespace Captura
             //Create capture object.
             if (VideoDevice != null && PresentationSource.FromVisual(MainWindow) is HwndSource source)
             {
-                Capture = new CaptureWebcam(VideoDevice, null, source.Handle)
-                {
-                    Scale = Dpi.X
-                };
+                Capture = new CaptureWebcam(VideoDevice, null, source.Handle);
                 
                 Capture.StartPreview();
 
-                Capture.OnPreviewWindowResize(50, 40, new Point(280, 1));
+                Capture.OnPreviewWindowResize(280, 1, 50, 40);
             }
         }
 
         void OnSizeChange()
         {
-            Capture?.OnPreviewWindowResize(ActualWidth, ActualHeight, new Point(5, 40));
+            Capture?.OnPreviewWindowResize(5, 40, (int)ActualWidth, (int)ActualHeight);
         }
 
         void WebcamControl_OnIsVisibleChanged(object Sender, DependencyPropertyChangedEventArgs E)

@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace Captura.Video
@@ -8,7 +9,10 @@ namespace Captura.Video
     {
         public IWindow PickWindow(Predicate<IWindow> Filter = null)
         {
-            return VideoSourcePickerWindow.PickWindow(Filter);
+            // Convert Predicate to list of skipped window handles
+            // Modern API uses IEnumerable<IntPtr> instead of Predicate
+            // For now, just pass null (no skip windows)
+            return VideoSourcePickerWindow.PickWindow((IEnumerable<IntPtr>)null);
         }
 
         public IScreen PickScreen()

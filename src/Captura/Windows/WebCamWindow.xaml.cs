@@ -36,7 +36,8 @@ namespace Captura
                 if (img != null)
                 {
                     var screenShotViewModel = ServiceProvider.Get<ScreenShotViewModel>();
-                    await screenShotViewModel.SaveScreenShot(img);
+                    // Use DiskWriter to save the screenshot
+                    await screenShotViewModel.DiskWriter.Save(img);
                 }
             }
             catch { }

@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Shell;
 using Captura.ViewModels;
@@ -36,6 +36,11 @@ namespace Captura.Views
         }
 
         void CloseButton_Click(object Sender, RoutedEventArgs E) => Close();
+
+        public static void ShowInstance()
+        {
+            new FFmpegDownloaderWindow().ShowAndFocus();
+        }
 
         void SelectTargetFolder(object Sender, MouseButtonEventArgs E)
         {
