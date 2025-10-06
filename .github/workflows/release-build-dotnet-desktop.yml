@@ -127,7 +127,9 @@ jobs:
         # Copy Keymap files
         Copy-Item -Path "$uiBinFolder/keymaps" -Destination "dist/keymaps" -Recurse -Force
         
-        # Copy lib folders for Release build (copy contents, not the folder itself)
+        # Create lib directory and copy DLL contents
+        New-Item -ItemType Directory -Force -Path "dist/lib" | Out-Null
+        
         if (Test-Path "$consoleBinFolder/lib") {
           Write-Host "Copying console lib folder contents..."
           Copy-Item -Path "$consoleBinFolder/lib/*" -Destination "dist/lib" -Recurse -Force
