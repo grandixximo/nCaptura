@@ -1,8 +1,6 @@
 using System;
 using System.Windows;
-using System.Windows.Interop;
 using Captura.Windows.DirectX;
-using Captura.Windows.Gdi;
 using Reactive.Bindings.Extensions;
 using SharpDX.Direct3D9;
 
@@ -45,63 +43,16 @@ namespace Captura.Video
             }
 
             // Modern version doesn't have preview window in MainWindow
+            // Just dispose the frame
             _lastFrame?.Dispose();
             _lastFrame = Frame;
-            Frame?.Dispose();
-
-                    case Texture2DFrame texture2DFrame:
-                        win.WinFormsHost.Visibility = Visibility.Collapsed;
-                        if (_d3D9PreviewAssister == null)
-                        {
-                            _d3D9PreviewAssister = new D3D9PreviewAssister(ServiceProvider.Get<IPlatformServices>());
-                            _texture = _d3D9PreviewAssister.GetSharedTexture(texture2DFrame.PreviewTexture);
-
-                            using var surface = _texture.GetSurfaceLevel(0);
-                            _backBufferPtr = surface.NativePointer;
-                        }
-
-                        Invalidate(_backBufferPtr, texture2DFrame.Width, texture2DFrame.Height);
-                        break;
-                }
-            });
-        }
-
-        void Invalidate(IntPtr BackBufferPtr, int Width, int Height)
-        {
-            var win = MainWindow.Instance;
-
-            win.D3DImage.Lock();
-            win.D3DImage.SetBackBuffer(D3DResourceType.IDirect3DSurface9, BackBufferPtr);
-
-            if (BackBufferPtr != IntPtr.Zero)
-                win.D3DImage.AddDirtyRect(new Int32Rect(0, 0, Width, Height));
-
-            win.D3DImage.Unlock();
         }
 
         public void Dispose()
         {
-            var win = MainWindow.Instance;
-
-            win.Dispatcher.Invoke(() =>
-            {
-                win.DisplayImage.Image = null;
-                win.WinFormsHost.Visibility = Visibility.Collapsed;
-
-                _lastFrame?.Dispose();
-                _lastFrame = null;
-
-                if (_d3D9PreviewAssister != null)
-                {
-                    Invalidate(IntPtr.Zero, 0, 0);
-
-                    _texture.Dispose();
-
-                    _d3D9PreviewAssister.Dispose();
-
-                    _d3D9PreviewAssister = null;
-                }
-            });
+            _lastFrame?.Dispose();
+            _d3D9PreviewAssister?.Dispose();
+            _texture?.Dispose();
         }
     }
 }
