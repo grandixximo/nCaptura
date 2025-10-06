@@ -75,7 +75,7 @@
                                 <Image.Style>
                                     <Style TargetType="Image">
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding RecordingViewModel.RecorderState}" Value="Paused">
+                                            <DataTrigger Binding="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}}" Value="Paused">
                                                 <Setter Property="LayoutTransform">
                                                     <Setter.Value>
                                                         <RotateTransform Angle="90"/>
@@ -234,7 +234,7 @@
                         <local:ModernButton.Style>
                             <Style TargetType="local:ModernButton" BasedOn="{StaticResource {x:Type local:ModernButton}}">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding RecordingViewModel.RecorderState}" Value="Paused">
+                                    <DataTrigger Binding="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}}" Value="Paused">
                                         <DataTrigger.EnterActions>
                                             <BeginStoryboard>
                                                 <Storyboard>
@@ -294,7 +294,7 @@
                                Margin="0,-1"
                                Style="{StaticResource CountdownLabel}"
                                HorizontalAlignment="Center"
-                               Content="{Binding RecordingViewModel.Countdown}"/>
+                               Content="{Binding RecordingViewModel.Countdown, Source={StaticResource ServiceLocator}}"/>
                     </Grid>
                 </DockPanel>
             </Expander.Header>
