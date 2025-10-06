@@ -1,5 +1,3 @@
-﻿using Captura.ViewModels;
-
 namespace Captura
 {
     public partial class HomePage
@@ -7,16 +5,8 @@ namespace Captura
         public HomePage()
         {
             InitializeComponent();
-
-            if (DataContext is MainViewModel vm)
-            {
-                vm.Refreshed += () =>
-                {
-                    AudioDropdown.Shake();
-
-                    VideoWriterComboBox.Shake();
-                };
-            }
+            
+            // MainViewModel.Refreshed event removed - shake animations no longer needed
         }
     }
 }

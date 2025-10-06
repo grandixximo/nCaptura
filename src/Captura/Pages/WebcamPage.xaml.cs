@@ -1,5 +1,4 @@
-﻿using System.Windows;
-using Captura.ViewModels;
+using System.Windows;
 
 namespace Captura
 {
@@ -8,11 +7,8 @@ namespace Captura
         public WebcamPage()
         {
             InitializeComponent();
-
-            ServiceProvider.Get<MainViewModel>().Refreshed += () =>
-            {
-                WebcamComboBox.Shake();
-            };
+            
+            // MainViewModel.Refreshed event removed - shake animations no longer needed
         }
 
         void Preview_Click(object Sender, RoutedEventArgs E)

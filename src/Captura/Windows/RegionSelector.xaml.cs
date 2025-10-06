@@ -27,7 +27,8 @@ namespace Captura
 
             InitializeComponent();
 
-            _regionItem = new RegionItem(this);
+            var platformServices = ServiceProvider.Get<IPlatformServices>();
+            _regionItem = new RegionItem(this, platformServices);
 
             // Prevent Closing by User
             Closing += (S, E) => E.Cancel = true;
@@ -261,7 +262,8 @@ namespace Captura
 
         void Snapper_OnClick(object Sender, RoutedEventArgs E)
         {
-            var win = _videoSourcePicker.PickWindow(new [] { Handle });
+            // PickWindow now needs a Predicate, not IntPtr[]
+            var win = _videoSourcePicker.PickWindow(w => w.Handle != Handle);
 
             if (win == null)
                 return;

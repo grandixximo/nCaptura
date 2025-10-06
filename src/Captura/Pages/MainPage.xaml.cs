@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 
 namespace Captura
 {
@@ -6,7 +6,7 @@ namespace Captura
     {
         void OpenCanvas(object Sender, RoutedEventArgs E)
         {
-            new ImageEditorWindow().ShowAndFocus();
+            MessageBox.Show("Image Editor has been removed in this version.", "Feature Removed", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         void OpenSettings(object Sender, RoutedEventArgs E)
