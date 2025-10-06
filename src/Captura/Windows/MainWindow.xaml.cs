@@ -1,9 +1,11 @@
 ﻿using System.Drawing;
 using System.Linq;
+using Captura.Models;
+using Captura.ViewModels;
+using Captura.Views;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
-using Captura.Models;
 
 namespace Captura
 {
@@ -11,32 +13,56 @@ namespace Captura
     {
         public static MainWindow Instance { get; private set; }
 
-        readonly MainWindowHelper _helper;
+        FFmpegDownloaderWindow _downloader;
 
         public MainWindow()
         {
             Instance = this;
             
+            FFmpegService.FFmpegDownloader += () =>
+            {
+                if (_downloader == null)
+                {
+                    _downloader = new FFmpegDownloaderWindow();
+                    _downloader.Closed += (Sender, Args) => _downloader = null;
+                }
+
+                _downloader.ShowAndFocus();
+            };
+            
             InitializeComponent();
 
-            _helper = ServiceProvider.Get<MainWindowHelper>();
-
-            _helper.MainViewModel.Init(!App.CmdOptions.NoPersist, !App.CmdOptions.Reset);
-
-            _helper.HotkeySetup.Setup();
-
-            _helper.TimerModel.Init();
-
-            Loaded += (Sender, Args) =>
+            if (DataContext is MainViewModel vm)
             {
-                RepositionWindowIfOutside();
+                vm.Init(!App.CmdOptions.NoPersist, true, !App.CmdOptions.Reset, !App.CmdOptions.NoHotkeys);
 
-                ServiceProvider.Get<WebcamPage>().SetupPreview();
+                var listener = new HotkeyListener();
 
-                _helper.HotkeySetup.ShowUnregistered();
-            };
+                listener.HotkeyReceived += Id => vm.HotKeyManager.ProcessHotkey(Id);
 
-            if (App.CmdOptions.Tray || _helper.Settings.Tray.MinToTrayOnStartup)
+                ServiceProvider.Get<HotKeyManager>().HotkeyPressed += Service =>
+                {
+                    switch (Service)
+                    {
+                        case ServiceName.OpenImageEditor:
+                            new ImageEditorWindow().ShowAndFocus();
+                            break;
+
+                        case ServiceName.ShowMainWindow:
+                            this.ShowAndFocus();
+                            break;
+                    }
+                };
+
+                Loaded += (Sender, Args) =>
+                {
+                    RepositionWindowIfOutside();
+
+                    vm.ViewLoaded();
+                };
+            }
+
+            if (App.CmdOptions.Tray || ServiceProvider.Get<Settings>().Tray.MinToTrayOnStartup)
                 Hide();
 
             Closing += (Sender, Args) =>
@@ -44,31 +70,15 @@ namespace Captura
                 if (!TryExit())
                     Args.Cancel = true;
             };
-
-            // Register to bring this instance to foreground when other instances are launched.
-            SingleInstanceManager.StartListening(WakeApp);
-        }
-
-        void WakeApp()
-        {
-            Dispatcher.Invoke(() =>
-            {
-                if (WindowState == WindowState.Minimized)
-                {
-                    WindowState = WindowState.Normal;
-                }
-
-                Activate();
-            });
         }
 
         void RepositionWindowIfOutside()
         {
             // Window dimensions taking care of DPI
-            var rect = new RectangleF((float) Left,
-                (float) Top,
-                (float) ActualWidth,
-                (float) ActualHeight).ApplyDpi();
+            var rect = new Rectangle((int)(Left * Dpi.X),
+                (int)(Top * Dpi.Y),
+                (int)(ActualWidth * Dpi.X),
+                (int)(ActualHeight * Dpi.Y));
             
             if (!Screen.AllScreens.Any(M => M.Bounds.Contains(rect)))
             {
@@ -88,7 +98,7 @@ namespace Captura
 
         void CloseButton_Click(object Sender, RoutedEventArgs Args)
         {
-            if (_helper.Settings.Tray.MinToTrayOnClose)
+            if (ServiceProvider.Get<Settings>().Tray.MinToTrayOnClose)
             {
                 Hide();
             }
@@ -101,15 +111,37 @@ namespace Captura
             {
                 Hide();
             }
-            else this.ShowAndFocus();
+            else
+            {
+                Show();
+
+                WindowState = WindowState.Normal;
+
+                Activate();
+            }
         }
 
         bool TryExit()
         {
-            if (!_helper.RecordingViewModel.CanExit())
-                return false;
+            if (DataContext is MainViewModel vm)
+            {
+                if (vm.RecordingViewModel.RecorderState == RecorderState.Recording)
+                {
+                    if (!ServiceProvider.MessageProvider.ShowYesNo(
+                        "A Recording is in progress. Are you sure you want to exit?", "Confirm Exit"))
+                        return false;
+                }
+                else if (vm.RecordingViewModel.RunningStopRecordingCount > 0)
+                {
+                    if (!ServiceProvider.MessageProvider.ShowYesNo(
+                        "Some Recordings have not finished writing to disk. Are you sure you want to exit?", "Confirm Exit"))
+                        return false;
+                }
 
-            ServiceProvider.Dispose();
+                vm.Dispose();
+            }
+
+            SystemTray.Dispose();
 
             return true;
         }
@@ -118,6 +150,9 @@ namespace Captura
 
         void HideButton_Click(object Sender, RoutedEventArgs Args) => Hide();
 
-        void ShowMainWindow(object Sender, RoutedEventArgs E) => this.ShowAndFocus();
+        void ShowMainWindow(object Sender, RoutedEventArgs E)
+        {
+            this.ShowAndFocus();
+        }
     }
 }

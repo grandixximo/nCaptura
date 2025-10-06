@@ -1,19 +1,19 @@
-﻿namespace Captura
+﻿namespace Captura.Views
 {
-    public partial class SettingsWindow
+    public partial class LicensesWindow
     {
-        SettingsWindow()
+        LicensesWindow()
         {
             InitializeComponent();
         }
 
-        static SettingsWindow _instance;
+        static LicensesWindow _instance;
 
         public static void ShowInstance()
         {
             if (_instance == null)
             {
-                _instance = new SettingsWindow();
+                _instance = new LicensesWindow();
 
                 _instance.Closed += (S, E) => _instance = null;
             }

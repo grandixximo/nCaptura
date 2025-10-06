@@ -2,15 +2,9 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:local="clr-namespace:Captura"
-      xmlns:hotkeys="clr-namespace:Captura.Hotkeys;assembly=Captura.Hotkeys"
-      DataContext="{Binding HotkeysViewModel, Source={StaticResource ServiceLocator}}"
-      Title="{Binding Hotkeys, Source={StaticResource Loc}, Mode=OneWay}">
+      xmlns:hotkeys="clr-namespace:Captura;assembly=Captura.Hotkeys"
+      DataContext="{Binding HotKeyManager, Source={StaticResource ServiceLocator}}">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="4*"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="2*"/>
-        </Grid.ColumnDefinitions>
         <DockPanel Margin="5">
             <Grid DockPanel.Dock="Top">
                 <Grid.ColumnDefinitions>
@@ -67,7 +61,7 @@
                                 <local:ModernButton DockPanel.Dock="Right"
                                                     CommandParameter="{Binding}"
                                                     IconData="{Binding Icons.Close, Source={StaticResource ServiceLocator}}"
-                                                    Command="{Binding HotkeysViewModel.RemoveCommand, Source={StaticResource ServiceLocator}}">
+                                                    Command="{Binding HotKeyManager.RemoveCommand, Source={StaticResource ServiceLocator}}">
                                     <local:ModernButton.LayoutTransform>
                                         <ScaleTransform ScaleX="0.8" ScaleY="0.8"/>
                                     </local:ModernButton.LayoutTransform>
@@ -82,7 +76,7 @@
                                 <CheckBox IsChecked="{Binding IsActive, Mode=TwoWay}"/>
 
                                 <ComboBox SelectedValue="{Binding Service, Mode=TwoWay}"
-                                          DisplayMemberPath="Description"
+                                          DisplayMemberPath="Description.Display"
                                           ItemsSource="{x:Static hotkeys:HotKeyManager.AllServices}"
                                           Margin="10,0"
                                           IsEnabled="{Binding IsActive}"/>
@@ -92,17 +86,5 @@
                 </ItemsControl>
             </ScrollViewer>
         </DockPanel>
-        <GridSplitter Grid.Column="1"
-                      Width="1"
-                      Margin="7,0"/>
-        <StackPanel Margin="5"
-                    Grid.Column="2">
-            <Label Content="Toggle Region Picker"
-                   FontWeight="Bold"
-                   Margin="0,5"/>
-
-            <CheckBox IsChecked="{Binding AboutViewModel.Settings.RegionPickerHotkeyAutoStartRecording, Source={StaticResource ServiceLocator}}"
-                      Content="Automatically start recording"/>
-        </StackPanel>
     </Grid>
 </Page>

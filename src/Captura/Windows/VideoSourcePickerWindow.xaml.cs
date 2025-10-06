@@ -1,18 +1,23 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
-using Captura.Video;
+using Captura.Models;
+using Screna;
 using Color = System.Windows.Media.Color;
 using Cursors = System.Windows.Input.Cursors;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
+using Window = Screna.Window;
 
 namespace Captura
 {
@@ -26,7 +31,7 @@ namespace Captura
 
         readonly VideoPickerMode _mode;
 
-        Predicate<IWindow> Predicate { get; set; }
+        List<IntPtr> SkipWindows { get; } = new List<IntPtr>();
 
         VideoSourcePickerWindow(VideoPickerMode Mode)
         {
@@ -40,32 +45,32 @@ namespace Captura
 
             UpdateBackground();
 
-            var platformServices = ServiceProvider.Get<IPlatformServices>();
-
-            _screens = platformServices.EnumerateScreens().ToArray();
-            _windows = platformServices.EnumerateWindows().ToArray();
+            _screens = Screen.AllScreens;
+            _windows = Window.EnumerateVisible().ToArray();
 
             ShowCancelText();
         }
 
-        readonly IScreen[] _screens;
+        readonly Screen[] _screens;
 
-        readonly IWindow[] _windows;
+        readonly Window[] _windows;
 
-        public IScreen SelectedScreen { get; private set; }
+        public Screen SelectedScreen { get; private set; }
 
-        public IWindow SelectedWindow { get; private set; }
+        public Window SelectedWindow { get; private set; }
 
         void UpdateBackground()
         {
-            using var bmp = ScreenShot.Capture();
-            var stream = new MemoryStream();
-            bmp.Save(stream, ImageFormats.Png);
+            using (var bmp = ScreenShot.Capture())
+            {
+                var stream = new MemoryStream();
+                bmp.Save(stream, ImageFormat.Png);
 
-            stream.Seek(0, SeekOrigin.Begin);
+                stream.Seek(0, SeekOrigin.Begin);
 
-            var decoder = new PngBitmapDecoder(stream, BitmapCreateOptions.None, BitmapCacheOption.Default);
-            Background = new ImageBrush(decoder.Frames[0]);
+                var decoder = new PngBitmapDecoder(stream, BitmapCreateOptions.None, BitmapCacheOption.Default);
+                Background = new ImageBrush(decoder.Frames[0]);
+            }
         }
 
         void BeginClose()
@@ -83,12 +88,10 @@ namespace Captura
         {
             foreach (var screen in _screens)
             {
-                var bounds = screen.Rectangle;
-
-                var left = -Left + bounds.Left / Dpi.X;
-                var top = -Top + bounds.Top / Dpi.Y;
-                var width = bounds.Width / Dpi.X;
-                var height = bounds.Height / Dpi.Y;
+                var left = -Left + screen.Bounds.Left / Dpi.X;
+                var top = -Top + screen.Bounds.Top / Dpi.Y;
+                var width = screen.Bounds.Width / Dpi.X;
+                var height = screen.Bounds.Height / Dpi.Y;
 
                 var container = new ContentControl
                 {
@@ -173,21 +176,19 @@ namespace Captura
 
         void WindowMouseMove(object Sender, MouseEventArgs E)
         {
-            var platformServices = ServiceProvider.Get<IPlatformServices>();
-
-            var point = platformServices.CursorPosition;
+            var point = MouseCursor.CursorPosition;
 
             switch (_mode)
             {
                 case VideoPickerMode.Screen:
-                    SelectedScreen = _screens.FirstOrDefault(M => M.Rectangle.Contains(point));
+                    SelectedScreen = _screens.FirstOrDefault(M => M.Bounds.Contains(point));
 
-                    UpdateBorderAndCursor(SelectedScreen?.Rectangle);
+                    UpdateBorderAndCursor(SelectedScreen?.Bounds);
                     break;
 
                 case VideoPickerMode.Window:
                     SelectedWindow = _windows
-                        .Where(M => Predicate?.Invoke(M) ?? true)
+                        .Where(M => !SkipWindows.Contains(M.Handle))
                         .FirstOrDefault(M => M.Rectangle.Contains(point));
                     
                     UpdateBorderAndCursor(SelectedWindow?.Rectangle);
@@ -212,19 +213,23 @@ namespace Captura
 
             picker.ShowDialog();
 
-            return picker.SelectedScreen;
+            return picker.SelectedScreen == null ? null : new ScreenWrapper(picker.SelectedScreen);
         }
 
-        public static IWindow PickWindow(Predicate<IWindow> Filter)
+        public static IWindow PickWindow(IEnumerable<IntPtr> SkipWindows)
         {
             var picker = new VideoSourcePickerWindow(VideoPickerMode.Window)
             {
                 Border =
                 {
                     BorderThickness = new Thickness(5)
-                },
-                Predicate = Filter
+                }
             };
+
+            if (SkipWindows != null)
+            {
+                picker.SkipWindows.AddRange(SkipWindows);
+            }
 
             picker.ShowDialog();
 

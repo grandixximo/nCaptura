@@ -1,30 +1,19 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
 using System.Windows.Shell;
-using Captura.Models;
 using Captura.ViewModels;
 
 namespace Captura.Views
 {
     public partial class FFmpegDownloaderWindow
     {
-        FFmpegDownloaderWindow()
+        public FFmpegDownloaderWindow()
         {
             InitializeComponent();
 
-            // Explicitly set DataContext to avoid race condition on quick window open
-            DataContext = ServiceProvider.Get<FFmpegDownloadViewModel>();
-
-            // DataContext is now guaranteed to be set
             if (DataContext is FFmpegDownloadViewModel vm)
             {
-                Closing += async (S, E) =>
-                {
-                    if (!await vm.Cancel())
-                    {
-                        E.Cancel = true;
-                    }
-                };
+                vm.CloseWindowAction += Close;
 
                 vm.ProgressChanged += P =>
                 {
@@ -54,19 +43,6 @@ namespace Captura.Views
             {
                 vm.SelectFolderCommand.ExecuteIfCan();
             }
-        }
-
-        static FFmpegDownloaderWindow _downloader;
-
-        public static void ShowInstance()
-        {
-            if (_downloader == null)
-            {
-                _downloader = new FFmpegDownloaderWindow();
-                _downloader.Closed += (Sender, Args) => _downloader = null;
-            }
-
-            _downloader.ShowAndFocus();
         }
     }
 }

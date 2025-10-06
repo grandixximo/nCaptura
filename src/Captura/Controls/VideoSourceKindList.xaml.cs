@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 using System.Windows.Input;
-using Captura.Video;
+using Captura.Models;
 
 namespace Captura
 {
@@ -13,11 +13,23 @@ namespace Captura
 
         void OnVideoSourceReSelect(object Sender, MouseButtonEventArgs E)
         {
-            if (Sender is ListViewItem item && item.IsSelected)
+            if (Sender is ListViewItem item
+                && item.IsSelected
+                && item.DataContext is VideoSourceModel model)
             {
-                if (item.DataContext is IVideoSourceProvider provider)
+                switch (model.Provider)
                 {
-                    provider.OnSelect();
+                    case WindowSourceProvider windowSourceProvider:
+                        windowSourceProvider.PickWindow();
+                        break;
+
+                    case ScreenSourceProvider screenSourceProvider:
+                        screenSourceProvider.PickScreen();
+                        break;
+
+                    case DeskDuplSourceProvider deskDuplSourceProvider:
+                        deskDuplSourceProvider.PickScreen();
+                        break;
                 }
             }
         }

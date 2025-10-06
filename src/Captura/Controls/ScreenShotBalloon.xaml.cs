@@ -4,7 +4,6 @@ using System.IO;
 using System.Diagnostics;
 using System;
 using System.Windows.Media.Imaging;
-using Captura.Models;
 
 namespace Captura
 {
@@ -46,8 +45,10 @@ namespace Captura
 
         void EditButton_OnClick(object Sender, RoutedEventArgs E)
         {
-            var winserv = ServiceProvider.Get<IMainWindow>();
-            winserv.EditImage(_filePath);
+            var win = new ImageEditorWindow();
+            win.Open(_filePath);
+
+            win.Show();
         }
     }
 }

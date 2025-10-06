@@ -4,10 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:captura="clr-namespace:Captura"
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              DataContext="{Binding MainViewModel, Source={StaticResource ServiceLocator}}"
              mc:Ignorable="d">
-    <Grid>
-        <Grid.Resources>
+    <DockPanel>
+        <DockPanel.Resources>
             <Style TargetType="Path" x:Key="VideoSourceIcon" BasedOn="{StaticResource {x:Type Path}}">
                 <Setter Property="Width" Value="12"/>
                 <Setter Property="Height" Value="12"/>
@@ -24,50 +25,42 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-        </Grid.Resources>
-        <Border CornerRadius="15,15,25,25"
-                BorderThickness="0"
-                Margin="0,2,0,0"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Bottom"
-                Width="70"
-                Height="33"
-                Background="{DynamicResource ButtonBackgroundHover}"/>
-        <DockPanel>
-            <captura:ModernButton ToolTip="{Binding Configure, Source={StaticResource Loc}, Mode=OneWay}"
-                                  Click="OpenSettings"
-                                  Foreground="{DynamicResource Accent}"
-                                  IconData="{Binding Icons.Settings, Source={StaticResource ServiceLocator}}"
-                                  DockPanel.Dock="Right"
-                                  RenderTransformOrigin="0.5,0.5">
-                <captura:ModernButton.RenderTransform>
-                    <RotateTransform/>
-                </captura:ModernButton.RenderTransform>
-                <captura:ModernButton.Triggers>
-                    <EventTrigger RoutedEvent="captura:ModernButton.MouseEnter">
-                        <EventTrigger.Actions>
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Angle"
-                                                     To="110"
-                                                     Duration="0:0:0.15"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </EventTrigger.Actions>
-                    </EventTrigger>
-                    <EventTrigger RoutedEvent="captura:ModernButton.MouseLeave">
-                        <EventTrigger.Actions>
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Angle"
-                                                     To="0"
-                                                     Duration="0:0:0.15"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </EventTrigger.Actions>
-                    </EventTrigger>
-                </captura:ModernButton.Triggers>
-            </captura:ModernButton>
+        </DockPanel.Resources>
+        <DockPanel DockPanel.Dock="Top">
+            <xctk:DropDownButton ToolTip="{Binding Audio, Source={StaticResource Loc}, Mode=OneWay}"
+                                 DockPanel.Dock="Right"
+                                 Margin="0,5,5,5">
+                <Path Data="{Binding Icons.Mic, Source={StaticResource ServiceLocator}}">
+                    <Path.Style>
+                        <Style TargetType="Path" BasedOn="{StaticResource VideoSourceIcon}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Settings.Audio.Enabled}" Value="True">
+                                    <Setter Property="Fill" Value="{DynamicResource Accent}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Path.Style>
+                </Path>
+
+                <xctk:DropDownButton.DropDownContent>
+                    <Frame Source="../Pages/AudioPage.xaml"
+                           Margin="10"/>
+                </xctk:DropDownButton.DropDownContent>
+            </xctk:DropDownButton>
+
+            <xctk:DropDownButton ToolTip="{Binding WebCam, Source={StaticResource Loc}, Mode=OneWay}"
+                                 Padding="5"
+                                 DockPanel.Dock="Right"
+                                 Margin="0,5,5,5">
+                <Path Style="{StaticResource VideoSourceIcon}"
+                      Data="{Binding Icons.Webcam, Source={StaticResource ServiceLocator}}"/>
+
+                <xctk:DropDownButton.DropDownContent>
+                    <Frame Source="../Pages/WebcamPage.xaml"
+                           Margin="10"
+                           MinWidth="250"/>
+                </xctk:DropDownButton.DropDownContent>
+            </xctk:DropDownButton>
 
             <captura:ModernButton ToolTip="{Binding OpenOutFolder, Source={StaticResource Loc}, Mode=OneWay}"
                                   Command="{Binding OpenOutputFolderCommand}"
@@ -75,16 +68,19 @@
                                   DockPanel.Dock="Right"/>
 
             <StackPanel Orientation="Horizontal">
-                <captura:ModernToggleButton ToolTip="Microphone"
-                                            IconData="{Binding Icons.Mic, Source={StaticResource ServiceLocator}}"
-                                            IsChecked="{Binding Settings.Audio.RecordMicrophone, Mode=TwoWay}"/>
-
-                <captura:ModernToggleButton ToolTip="Speaker"
-                                            IconData="{Binding Icons.Speaker, Source={StaticResource ServiceLocator}}"
-                                            IsChecked="{Binding Settings.Audio.RecordSpeaker, Mode=TwoWay}"/>
+                <captura:ModernToggleButton ToolTip="{Binding IncludeCursor, Source={StaticResource Loc}, Mode=OneWay}"
+                                            IsEnabled="{Binding RecordingViewModel.RecorderState, Converter={StaticResource NotRecordingConverter}}"
+                                            IconData="{Binding Icons.Cursor, Source={StaticResource ServiceLocator}}"
+                                            IsChecked="{Binding Settings.IncludeCursor}"/>
+                <captura:ModernToggleButton ToolTip="{Binding IncludeClicks, Source={StaticResource Loc}, Mode=OneWay}"
+                                            IconData="{Binding Icons.Hand, Source={StaticResource ServiceLocator}}"
+                                            IsChecked="{Binding Settings.Clicks.Display, Mode=TwoWay}"/>
+                <captura:ModernToggleButton ToolTip="{Binding IncludeKeys, Source={StaticResource Loc}, Mode=OneWay}"
+                                            IconData="{Binding Icons.Keyboard, Source={StaticResource ServiceLocator}}"
+                                            IsChecked="{Binding Settings.Keystrokes.Display, Mode=TwoWay}"/>
             </StackPanel>
 
             <captura:VideoSourceKindList/>
         </DockPanel>
-    </Grid>
+    </DockPanel>
 </UserControl>

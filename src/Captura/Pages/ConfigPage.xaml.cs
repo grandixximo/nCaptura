@@ -2,11 +2,11 @@
 
 namespace Captura
 {
-    public partial class MainPage
+    public partial class ConfigPage
     {
-        void OpenCanvas(object Sender, RoutedEventArgs E)
+        void OpenOverlayManager(object Sender, RoutedEventArgs E)
         {
-            new ImageEditorWindow().ShowAndFocus();
+            OverlayWindow.ShowInstance();
         }
 
         void OpenSettings(object Sender, RoutedEventArgs E)
