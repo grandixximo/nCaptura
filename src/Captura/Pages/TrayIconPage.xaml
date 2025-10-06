@@ -31,7 +31,7 @@
                 <ComboBox SelectedValue="{Binding Settings.Tray.LeftClickAction, Mode=TwoWay}"
                           SelectedValuePath="ServiceName"
                           DisplayMemberPath="Description.Display"
-                          ItemsSource="{x:Static hotkeys:HotKeyManager.AllServices}"/>
+                          ItemsSource="{Binding HotkeysViewModel.AllServices, Source={StaticResource ServiceLocator}}"/>
             </DockPanel>
         </StackPanel>
     </Grid>
