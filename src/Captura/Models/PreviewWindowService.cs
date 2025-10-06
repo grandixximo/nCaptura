@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Interop;
 using Captura.Windows.DirectX;
@@ -44,34 +44,10 @@ namespace Captura.Video
                 return;
             }
 
-            var win = MainWindow.Instance;
-
-            win.Dispatcher.Invoke(() =>
-            {
-                win.DisplayImage.Image = null;
-
-                _lastFrame?.Dispose();
-                _lastFrame = Frame;
-
-                Frame = Frame.Unwrap();
-
-                switch (Frame)
-                {
-                    case DrawingFrame drawingFrame:
-                        try
-                        {
-                            // TODO: Preview is not shown during Webcam only recordings
-                            // This check swallows errors
-                            var h = drawingFrame.Bitmap.Height;
-
-                            if (h == 0)
-                                return;
-                        }
-                        catch { return; }
-
-                        win.WinFormsHost.Visibility = Visibility.Visible;
-                        win.DisplayImage.Image = drawingFrame.Bitmap;
-                        break;
+            // Modern version doesn't have preview window in MainWindow
+            _lastFrame?.Dispose();
+            _lastFrame = Frame;
+            Frame?.Dispose();
 
                     case Texture2DFrame texture2DFrame:
                         win.WinFormsHost.Visibility = Visibility.Collapsed;

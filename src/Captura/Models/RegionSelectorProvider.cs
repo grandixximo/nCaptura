@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows;
 using Captura.ViewModels;
@@ -13,11 +13,12 @@ namespace Captura.Video
         readonly RegionSelectorViewModel _viewModel;
 
         public RegionSelectorProvider(RegionSelectorViewModel ViewModel,
-            IPlatformServices PlatformServices)
+            IPlatformServices PlatformServices,
+            IVideoSourcePicker VideoSourcePicker)
         {
             _viewModel = ViewModel;
 
-            _regionSelector = new Lazy<RegionSelector>(() => new RegionSelector(ViewModel));
+            _regionSelector = new Lazy<RegionSelector>(() => new RegionSelector(VideoSourcePicker));
 
             _regionItem = new RegionItem(this, PlatformServices);
         }

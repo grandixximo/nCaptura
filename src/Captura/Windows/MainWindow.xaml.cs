@@ -31,7 +31,7 @@ namespace Captura
             {
                 RepositionWindowIfOutside();
 
-                ServiceProvider.Get<WebcamPage>().SetupPreview();
+                // WebcamPage.SetupPreview() removed in modern version
 
                 _helper.HotkeySetup.ShowUnregistered();
             };
@@ -58,7 +58,7 @@ namespace Captura
                     WindowState = WindowState.Normal;
                 }
 
-                ShowAndFocus();
+                this.ShowAndFocus();
             });
         }
 
