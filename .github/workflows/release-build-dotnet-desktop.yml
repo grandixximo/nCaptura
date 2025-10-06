@@ -132,8 +132,24 @@ jobs:
         Copy-Item -Path "$uiBinFolder/keymaps" -Destination "dist/keymaps" -Recurse -Force
         
         # Copy lib folders for Release build
-        Copy-Item -Path "$consoleBinFolder/lib" -Destination "dist/lib" -Recurse -Force -ErrorAction SilentlyContinue
-        Copy-Item -Path "$uiBinFolder/lib" -Destination "dist/lib" -Recurse -Force -ErrorAction SilentlyContinue
+        if (Test-Path "$consoleBinFolder/lib") {
+          Write-Host "Copying console lib folder..."
+          Copy-Item -Path "$consoleBinFolder/lib" -Destination "dist/lib" -Recurse -Force
+        } else {
+          Write-Warning "Console lib folder not found at $consoleBinFolder/lib"
+        }
+        if (Test-Path "$uiBinFolder/lib") {
+          Write-Host "Copying UI lib folder..."
+          Copy-Item -Path "$uiBinFolder/lib" -Destination "dist/lib" -Recurse -Force
+        } else {
+          Write-Warning "UI lib folder not found at $uiBinFolder/lib"
+        }
+        
+        # List what's in the bin folder for debugging
+        Write-Host "`n=== Contents of UI bin folder: ==="
+        Get-ChildItem -Path "$uiBinFolder" | Select-Object Name
+        Write-Host "`n=== Contents of dist folder: ==="
+        Get-ChildItem -Path "dist" -Recurse | Select-Object FullName
       shell: pwsh
       env:
         Configuration: ${{ matrix.configuration }}
