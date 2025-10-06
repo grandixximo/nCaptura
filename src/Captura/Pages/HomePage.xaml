@@ -147,20 +147,7 @@
                     </ComboBox.ToolTip>
                 </ComboBox>
 
-                <CheckBox Margin="0,5"
-                          Content="{Binding VarFrameRate, Source={StaticResource Loc}, Mode=OneWay}"
-                          IsChecked="{Binding Settings.Gif.VariableFrameRate, Mode=TwoWay}">
-                    <CheckBox.Style>
-                        <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoWriterKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type screna:GifWriterProvider}">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </CheckBox.Style>
-                </CheckBox>
+                <!-- Gif Writer settings removed - GifWriterProvider no longer exists in modern codebase -->
 
                 <Grid Margin="0,5"
                       IsEnabled="{Binding RecordingViewModel.RecorderState, Converter={StaticResource NotRecordingConverter}}">
@@ -209,21 +196,7 @@ This Limit option is to prevent system crashes due to using high FPS on full scr
                         </CheckBox.ToolTip>
                     </CheckBox>
 
-                    <Grid.Style>
-                        <Style TargetType="Grid">
-                            <Setter Property="Visibility" Value="Visible"/>
-                            <Style.Triggers>
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding VideoViewModel.SelectedVideoWriterKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type screna:GifWriterProvider}"/>
-                                        <Condition Binding="{Binding Settings.Gif.VariableFrameRate}" Value="True"/>
-                                    </MultiDataTrigger.Conditions>
-
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                </MultiDataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Grid.Style>
+                    <!-- Gif Writer framerate trigger removed - GifWriterProvider no longer exists -->
                 </Grid>
 
                 <DockPanel Margin="0,5"
@@ -245,9 +218,7 @@ This Limit option is to prevent system crashes due to using high FPS on full scr
                     <DockPanel.Style>
                         <Style TargetType="DockPanel">
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoWriterKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type screna:GifWriterProvider}">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
+                                <!-- GifWriterProvider trigger removed - no longer exists -->
                                 <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoWriterKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type models:DiscardWriterProvider}">
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                 </DataTrigger>
