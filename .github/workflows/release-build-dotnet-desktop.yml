@@ -107,18 +107,47 @@ jobs:
         # Copy Languages
         Copy-Item -Path "$uiBinFolder/Languages" -Destination "dist/languages" -Recurse -Force
         
-        # Copy executables and config files
+        # Copy executables
         Copy-Item -Path "$consoleBinFolder/*.exe" -Destination "dist/" -Force
-        Copy-Item -Path "$consoleBinFolder/*.exe.config" -Destination "dist/" -Force -ErrorAction SilentlyContinue
         Copy-Item -Path "$uiBinFolder/*.exe" -Destination "dist/" -Force
-        Copy-Item -Path "$uiBinFolder/*.exe.config" -Destination "dist/" -Force -ErrorAction SilentlyContinue
+        
+        # Copy config files (these enable assembly loading from lib folder)
+        if (Test-Path "$consoleBinFolder/captura-cli.exe.config") {
+          Copy-Item -Path "$consoleBinFolder/captura-cli.exe.config" -Destination "dist/" -Force
+        } else {
+          Write-Warning "captura-cli.exe.config not found!"
+        }
+        if (Test-Path "$uiBinFolder/captura.exe.config") {
+          Copy-Item -Path "$uiBinFolder/captura.exe.config" -Destination "dist/" -Force
+        } else {
+          Write-Warning "captura.exe.config not found!"
+        }
+        
         
         # Copy Keymap files
         Copy-Item -Path "$uiBinFolder/keymaps" -Destination "dist/keymaps" -Recurse -Force
         
-        # Copy lib folders for Release build
-        Copy-Item -Path "$consoleBinFolder/lib" -Destination "dist/lib" -Recurse -Force -ErrorAction SilentlyContinue
-        Copy-Item -Path "$uiBinFolder/lib" -Destination "dist/lib" -Recurse -Force -ErrorAction SilentlyContinue
+        # Create lib directory and copy DLL contents
+        New-Item -ItemType Directory -Force -Path "dist/lib" | Out-Null
+        
+        if (Test-Path "$consoleBinFolder/lib") {
+          Write-Host "Copying console lib folder contents..."
+          Copy-Item -Path "$consoleBinFolder/lib/*" -Destination "dist/lib" -Recurse -Force
+        } else {
+          Write-Warning "Console lib folder not found at $consoleBinFolder/lib"
+        }
+        if (Test-Path "$uiBinFolder/lib") {
+          Write-Host "Copying UI lib folder contents..."
+          Copy-Item -Path "$uiBinFolder/lib/*" -Destination "dist/lib" -Recurse -Force
+        } else {
+          Write-Warning "UI lib folder not found at $uiBinFolder/lib"
+        }
+        
+        # List what's in the bin folder for debugging
+        Write-Host "`n=== Contents of UI bin folder: ==="
+        Get-ChildItem -Path "$uiBinFolder" | Select-Object Name
+        Write-Host "`n=== Contents of dist folder: ==="
+        Get-ChildItem -Path "dist" -Recurse | Select-Object FullName
       shell: pwsh
       env:
         Configuration: ${{ matrix.configuration }}
