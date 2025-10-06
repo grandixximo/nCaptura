@@ -1,8 +1,6 @@
-﻿using System.Drawing;
+using System.Drawing;
 using System.Linq;
 using Captura.Models;
-using Captura.ViewModels;
-using Captura.Views;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
@@ -13,56 +11,32 @@ namespace Captura
     {
         public static MainWindow Instance { get; private set; }
 
-        FFmpegDownloaderWindow _downloader;
+        readonly MainWindowHelper _helper;
 
         public MainWindow()
         {
             Instance = this;
             
-            FFmpegService.FFmpegDownloader += () =>
-            {
-                if (_downloader == null)
-                {
-                    _downloader = new FFmpegDownloaderWindow();
-                    _downloader.Closed += (Sender, Args) => _downloader = null;
-                }
-
-                _downloader.ShowAndFocus();
-            };
-            
             InitializeComponent();
 
-            if (DataContext is MainViewModel vm)
+            _helper = ServiceProvider.Get<MainWindowHelper>();
+
+            _helper.MainViewModel.Init(!App.CmdOptions.NoPersist, !App.CmdOptions.Reset);
+
+            _helper.HotkeySetup.Setup();
+
+            _helper.TimerModel.Init();
+
+            Loaded += (Sender, Args) =>
             {
-                vm.Init(!App.CmdOptions.NoPersist, true, !App.CmdOptions.Reset, !App.CmdOptions.NoHotkeys);
+                RepositionWindowIfOutside();
 
-                var listener = new HotkeyListener();
+                ServiceProvider.Get<WebcamPage>().SetupPreview();
 
-                listener.HotkeyReceived += Id => vm.HotKeyManager.ProcessHotkey(Id);
+                _helper.HotkeySetup.ShowUnregistered();
+            };
 
-                ServiceProvider.Get<HotKeyManager>().HotkeyPressed += Service =>
-                {
-                    switch (Service)
-                    {
-                        case ServiceName.OpenImageEditor:
-                            new ImageEditorWindow().ShowAndFocus();
-                            break;
-
-                        case ServiceName.ShowMainWindow:
-                            this.ShowAndFocus();
-                            break;
-                    }
-                };
-
-                Loaded += (Sender, Args) =>
-                {
-                    RepositionWindowIfOutside();
-
-                    vm.ViewLoaded();
-                };
-            }
-
-            if (App.CmdOptions.Tray || ServiceProvider.Get<Settings>().Tray.MinToTrayOnStartup)
+            if (App.CmdOptions.Tray || _helper.Settings.Tray.MinToTrayOnStartup)
                 Hide();
 
             Closing += (Sender, Args) =>
@@ -70,6 +44,22 @@ namespace Captura
                 if (!TryExit())
                     Args.Cancel = true;
             };
+
+            // Register to bring this instance to foreground when other instances are launched.
+            SingleInstanceManager.StartListening(WakeApp);
+        }
+
+        void WakeApp()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (WindowState == WindowState.Minimized)
+                {
+                    WindowState = WindowState.Normal;
+                }
+
+                ShowAndFocus();
+            });
         }
 
         void RepositionWindowIfOutside()
@@ -98,7 +88,7 @@ namespace Captura
 
         void CloseButton_Click(object Sender, RoutedEventArgs Args)
         {
-            if (ServiceProvider.Get<Settings>().Tray.MinToTrayOnClose)
+            if (_helper.Settings.Tray.MinToTrayOnClose)
             {
                 Hide();
             }
@@ -123,23 +113,20 @@ namespace Captura
 
         bool TryExit()
         {
-            if (DataContext is MainViewModel vm)
+            if (_helper.MainViewModel.RecordingViewModel.RecorderState == RecorderState.Recording)
             {
-                if (vm.RecordingViewModel.RecorderState == RecorderState.Recording)
-                {
-                    if (!ServiceProvider.MessageProvider.ShowYesNo(
-                        "A Recording is in progress. Are you sure you want to exit?", "Confirm Exit"))
-                        return false;
-                }
-                else if (vm.RecordingViewModel.RunningStopRecordingCount > 0)
-                {
-                    if (!ServiceProvider.MessageProvider.ShowYesNo(
-                        "Some Recordings have not finished writing to disk. Are you sure you want to exit?", "Confirm Exit"))
-                        return false;
-                }
-
-                vm.Dispose();
+                if (!ServiceProvider.MessageProvider.ShowYesNo(
+                    "A Recording is in progress. Are you sure you want to exit?", "Confirm Exit"))
+                    return false;
             }
+            else if (_helper.MainViewModel.RecordingViewModel.RunningStopRecordingCount > 0)
+            {
+                if (!ServiceProvider.MessageProvider.ShowYesNo(
+                    "Some Recordings have not finished writing to disk. Are you sure you want to exit?", "Confirm Exit"))
+                    return false;
+            }
+
+            _helper.MainViewModel.Dispose();
 
             SystemTray.Dispose();
 

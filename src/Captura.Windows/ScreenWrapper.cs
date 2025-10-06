@@ -9,7 +9,7 @@ namespace Captura.Video
     {
         readonly Screen _screen;
 
-        ScreenWrapper(Screen Screen)
+        public ScreenWrapper(Screen Screen)
         {
             _screen = Screen;
         }

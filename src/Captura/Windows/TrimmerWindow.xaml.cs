@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -12,7 +12,7 @@ namespace Captura.Views
             
             if (DataContext is TrimmerViewModel vm)
             {
-                vm.AssignPlayer(MediaElement, this);
+                vm.AssignPlayer(MediaElement);
 
                 Closing += (S, E) => vm.Dispose();
             }

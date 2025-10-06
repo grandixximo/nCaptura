@@ -166,7 +166,15 @@ namespace Captura
 
         LayerFrame Webcam(WebcamOverlaySettings Settings)
         {
-            return Image(Settings, "Webcam");
+            // WebcamOverlaySettings doesn't inherit from ImageOverlaySettings in modern version
+            // Create a temporary ImageOverlaySettings with the same position/size
+            var imageSettings = new ImageOverlaySettings
+            {
+                X = Settings.X,
+                Y = Settings.Y,
+                Opacity = Settings.Opacity
+            };
+            return Image(imageSettings, "Webcam");
         }
 
         LayerFrame Text(TextOverlaySettings Settings, string Text)
