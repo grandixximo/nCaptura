@@ -13,8 +13,13 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <None Include="app.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
+  <Target Name="CopyAppConfig" AfterTargets="Build">
+    <Copy SourceFiles="app.config" DestinationFiles="$(OutputPath)$(AssemblyName).exe.config" />
+  </Target>
   <ItemGroup>
     <Resource Include="Images\Logo.png" />
     <Resource Include="Images\record.ico" />

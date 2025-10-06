@@ -18,8 +18,13 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
+  <Target Name="CopyAppConfig" AfterTargets="Build">
+    <Copy SourceFiles="App.config" DestinationFiles="$(OutputPath)$(AssemblyName).exe.config" />
+  </Target>
   <ItemGroup>
     <ProjectReference Include="..\Captura.Base\Captura.Base.csproj" />
     <ProjectReference Include="..\Captura.Core\Captura.Core.csproj" />
