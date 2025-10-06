@@ -1,4 +1,4 @@
-﻿<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:sys="clr-namespace:System;assembly=mscorlib"
       xmlns:captura="clr-namespace:Captura"
@@ -25,7 +25,8 @@
                                Style="{StaticResource TextColor}">
                         <Run FontSize="20" Text="Captura"/> <Run Text="{Binding AppVersion, Mode=OneWay}"/><LineBreak/>
                         © <Run Text="2019"/> <Hyperlink CommandParameter="https://github.com/MathewSachin">Mathew Sachin</Hyperlink>
-                        © <Run Text="{Binding Year, Source={x:Static sys:DateTime.Now}, Mode=OneWay}"/> <Hyperlink CommandParameter="https://github.com/mrchipset">Mr. Chip</Hyperlink>
+                        © <Run Text="{Binding Year, Source={x:Static sys:DateTime.Now}, Mode=OneWay}"/> <Hyperlink CommandParameter="https://github.com/mrchipset">Mr. Chip</Hyperlink><LineBreak/>
+                        © <Run Text="{Binding Year, Source={x:Static sys:DateTime.Now}, Mode=OneWay}"/> <Hyperlink CommandParameter="https://github.com/grandixximo">grandixximo</Hyperlink>
                     </TextBlock>
                 </DockPanel>
 
@@ -33,7 +34,7 @@
                     <captura:ModernButton Content="GitHub"
                                           IconData="{Binding Icons.GitHub, Source={StaticResource ServiceLocator}}"
                                           Command="{Binding HyperlinkCommand}"
-                                          CommandParameter="https://github.com/mrchipset/nCaptura/"/>
+                                          CommandParameter="https://github.com/grandixximo/nCaptura/"/>
 
                     <!--<captura:ModernButton Content="{Binding Donate, Source={StaticResource Loc}, Mode=OneWay}"
                                           IconData="{Binding Icons.PayPal, Source={StaticResource ServiceLocator}}"
