@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using Captura.Native;
@@ -8,7 +8,7 @@ namespace Captura.Video
     /// <summary>
     /// Draws the MouseCursor on an Image
     /// </summary>
-    static class MouseCursor
+    public static class MouseCursor
     {
         const int CursorShowing = 1;
         

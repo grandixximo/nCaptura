@@ -1,5 +1,5 @@
-﻿using System.Drawing;
 using System.Windows;
+using Captura.Models;
 using Captura.Views;
 using Microsoft.Win32;
 
@@ -9,17 +9,17 @@ namespace Captura
     {
         void ViewLicenses(object Sender, RoutedEventArgs E)
         {
-            LicensesWindow.ShowInstance();
+            NavigationService?.Navigate(new LicensesPage());
         }
 
         void ViewCrashLogs(object Sender, RoutedEventArgs E)
         {
-            CrashLogsWindow.ShowInstance();
+            NavigationService?.Navigate(new CrashLogsPage());
         }
 
         void OpenImageEditor(object Sender, RoutedEventArgs E)
         {
-            new ImageEditorWindow().ShowAndFocus();
+            MessageBox.Show("Image Editor has been removed in this version.", "Feature Removed", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         void OpenAudioVideoTrimmer(object Sender, RoutedEventArgs E)
@@ -29,17 +29,7 @@ namespace Captura
 
         void OpenImageCropper(object Sender, RoutedEventArgs E)
         {
-            var ofd = new OpenFileDialog
-            {
-                Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp;*.wmp;*.tiff",
-                CheckFileExists = true,
-                CheckPathExists = true
-            };
-
-            if (ofd.ShowDialog().GetValueOrDefault())
-            {
-                new CropWindow(ofd.FileName).ShowAndFocus();
-            }
+            MessageBox.Show("Image Cropper has been removed in this version.", "Feature Removed", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         async void UploadToImgur(object Sender, RoutedEventArgs E)
@@ -53,9 +43,10 @@ namespace Captura
 
             if (ofd.ShowDialog().GetValueOrDefault())
             {
-                var img = (Bitmap)Image.FromFile(ofd.FileName);
+                var imgSystem = ServiceProvider.Get<IImagingSystem>();
 
-                await img.UploadToImgur();
+                using var img = imgSystem.LoadBitmap(ofd.FileName);
+                await img.UploadImage();
             }
         }
     }

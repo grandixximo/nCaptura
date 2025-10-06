@@ -2,6 +2,7 @@ using System.Windows;
 using Captura.Models;
 using Captura.Video;
 using Captura.ViewModels;
+using Settings = Captura.Settings;
 
 namespace Captura
 {
@@ -36,8 +37,9 @@ namespace Captura
                 if (img != null)
                 {
                     var screenShotViewModel = ServiceProvider.Get<ScreenShotViewModel>();
+                    var settings = ServiceProvider.Get<Settings>();
                     // Use DiskWriter to save the screenshot
-                    await screenShotViewModel.DiskWriter.Save(img);
+                    await screenShotViewModel.DiskWriter.Save(img, settings.ScreenShots.ImageFormat, null);
                 }
             }
             catch { }

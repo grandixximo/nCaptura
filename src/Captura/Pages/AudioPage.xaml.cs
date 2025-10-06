@@ -1,4 +1,4 @@
-﻿using Captura.ViewModels;
+using Captura.Models;
 
 namespace Captura
 {
@@ -6,12 +6,14 @@ namespace Captura
     {
         public AudioPage()
         {
-            InitializeComponent();
-
-            ServiceProvider.Get<MainViewModel>().Refreshed += () =>
+            IsVisibleChanged += (S, E) =>
             {
-                AudioSourcesPanel.Shake();
+                var audioSourceVm = ServiceProvider.Get<AudioSourceViewModel>();
+
+                audioSourceVm.ListeningPeakLevel = IsVisible;
             };
+
+            InitializeComponent();
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 
 namespace Captura.Views
@@ -29,7 +29,7 @@ namespace Captura.Views
 
         void OpenFFmpegLog(object Sender, RoutedEventArgs E)
         {
-            SettingsWindow.ShowFFmpegLogs();
+            FFmpegLogWindow.ShowFFmpegLogs();
         }
     }
 }
