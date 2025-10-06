@@ -6,4 +6,4 @@ using System.Reflection;
 [assembly: AssemblyProduct(nameof(Captura))]
 [assembly: AssemblyCopyright("(c) 2018 Mathew Sachin")]
 [assembly: AssemblyTrademark(nameof(Captura))]
-[assembly: AssemblyVersion("10.1.1")]
+[assembly: AssemblyVersion("10.2.0")]
