@@ -219,7 +219,7 @@ This Limit option is to prevent system crashes due to using high FPS on full scr
                         <Style TargetType="DockPanel">
                             <Style.Triggers>
                                 <!-- GifWriterProvider trigger removed - no longer exists -->
-                                <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoWriterKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type models:DiscardWriterProvider}">
+                                <DataTrigger Binding="{Binding VideoViewModel.SelectedVideoWriterKind, Converter={StaticResource GetTypeConverter}}" Value="{x:Type video:DiscardWriterProvider}">
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                 </DataTrigger>
                             </Style.Triggers>
