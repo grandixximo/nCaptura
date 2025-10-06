@@ -14,13 +14,12 @@ using Reactive.Bindings;
 using Color = System.Windows.Media.Color;
 using ColorConverter = System.Windows.Media.ColorConverter;
 using DColor = System.Drawing.Color;
-using VideoWindow = Captura.Video.Window;
 
 namespace Captura
 {
     public static class WpfExtensions
     {
-        public static void ShowAndFocus(this Window W)
+        public static void ShowAndFocus(this System.Windows.Window W)
         {
             if (W.IsVisible && W.WindowState == WindowState.Minimized)
             {
