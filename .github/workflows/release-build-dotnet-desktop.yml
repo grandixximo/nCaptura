@@ -176,7 +176,26 @@ jobs:
           ${{ env.PORTABLE_ZIP }}
           ${{ env.INSTALLER_EXE }}
         draft: false
-        prerelease: true
+        prerelease: false
+        name: "nCaptura ${{ github.ref_name }}"
+        body: |
+          ## nCaptura ${{ github.ref_name }}
+
+          ### What's New
+
+          ✅ **Fixed FFmpeg Downloader** - Now uses reliable mirrors with automatic fallback  
+          ✅ **Windows Installer** - Professional .exe installer included  
+          ✅ **Portable Package** - Also available as portable ZIP
+
+          ### Download
+
+          Choose one:
+          - **Installer** (`nCaptura-${{ github.ref_name }}-Setup.exe`) - Recommended for most users
+          - **Portable** (`nCaptura-${{ github.ref_name }}-Portable.zip`) - No installation required
+
+          ---
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ github.ref_name }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
