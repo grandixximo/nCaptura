@@ -1,12 +1,13 @@
 ![Captura](https://mathewsachin.github.io/Captura/assets/Banner.png)
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE.md)
-![Build Status](https://github.com/mrchipset/nCaptura/actions/workflows/build.yml/badge.svg)
+![Build Status](https://github.com/grandixximo/nCaptura/actions/workflows/build.yml/badge.svg)
 
 
 
-&copy; [Copyright 2019](mathew/LICENSE_MathewSachin.md) Mathew Sachin
-&copy; [Copyright 2024](LICENSE.md) Mr. Chip
+&copy; [Copyright 2019](mathew/LICENSE_MathewSachin.md) Mathew Sachin  
+&copy; [Copyright 2024](LICENSE.md) Mr. Chip  
+&copy; [Copyright 2025](LICENSE.md) grandixximo
 
 To read the story of **Capture** in following
 :link: <https://mathewsachin.github.io/Captura/>
@@ -17,14 +18,24 @@ Capture Screen, WebCam, Audio, Cursor, Mouse Clicks and Keystrokes.
 ![Captura](docs/Screenshots/Captura.png)
 
 
-I also learned about the program **Captura** from chatting room. [Captura](https://github.com/MathewSachin/Captura) was first developed as an open source program first initiated by **Mathew Sachin**. But the author eventually abandoned the development and maintenance of this software due to some unpleasant experiences ([#406](https://github.com/MathewSachin/Captura/issues/405)) and a shift in interest ([#570](https://github.com/MathewSachin/Captura/issues/570)).
+## About This Fork
+
+I use **Captura** regularly and love it because it's **small, portable, and just works**. The original [Captura](https://github.com/MathewSachin/Captura) was developed by **Mathew Sachin**, and I'm incredibly grateful for his work creating this excellent tool. While the original project was discontinued, [Mr. Chip (mrchipset)](https://github.com/mrchipset/nCaptura) did a great job maintaining a fork and keeping it alive.
+
+I forked this repository from mrchipset's version because I actively use this software and want to ensure it continues working smoothly. With the help of **Cursor** and **Claude**, I've made some important fixes:
+
+- ✅ Fixed the FFmpeg download window initialization issue
+- ✅ Updated FFmpeg download mirrors to ensure reliability
+- ✅ Improved build and release workflows
+
+**This is not an attempt to reboot the project**—it's simply maintained by someone who uses and appreciates it. I'll continue to apply fixes as needed (like updating download mirrors or addressing compatibility issues) to keep this wonderful tool working for everyone who relies on it.
+
+**Huge thanks to:**
+- **Mathew Sachin** for creating Captura
+- **Mr. Chip (mrchipset)** for his excellent maintenance work
+- **Cursor & Claude** for helping make these fixes possible
 
 ![Captura-Repository](docs/Screenshots/Captura_Github_Repo.png)
-
-
-Looking at the Github code stats, the entire repository probably has less than **50k** lines of code. In the spirit of learning, I cloned this repository and found that it compiles directly on Visual Studio 2022, which is still very nice. During the period I also found some software bugs. this is a good software, it is a pity to be discontinued. So I want to have the opportunity to take over the maintenance of this software, so I made a fork [mrchipset/nCaptura](https://github.com/mrchipset/nCaptura) to start my modification.
-
-I changed the repository name to **nCaptura**, which means `new-Captura`. Hopefully, it will lead to a new trip for this project.
 
 
 ## Features
@@ -41,22 +52,18 @@ I changed the repository name to **nCaptura**, which means `new-Captura`. Hopefu
 - Configurable [Hotkeys](https://mathewsachin.github.io/Captura/hotkeys)
 
 ## Installation
-Installation package `nCaptura` is coming soon.
-To install the original `Captura`. Please find the information following.
 
-[latest]: https://github.com/MathewSachin/Captura/releases/latest
+[latest]: https://github.com/grandixximo/nCaptura/releases/latest
 
 Portable and Setup builds for the latest release can be downloaded from [here][latest].
 
-### Chocolatey
+**Choose one:**
+- **Installer** (`nCaptura-Setup.exe`) - Recommended for most users
+- **Portable** (`nCaptura-Portable.zip`) - No installation required
 
-```powershell
-choco install captura -y
-```
+### Build from Source
 
-### Dev Builds
-
-See the [Continuous Integration page](docs/CI.md).
+See the [Build Notes](docs/Build.md) for instructions on building from source.
 
 ## Docs
 [Build Notes](docs/Build.md) | [System Requirements](docs/System-Requirements.md) | [Contributing](CONTRIBUTING.md)
