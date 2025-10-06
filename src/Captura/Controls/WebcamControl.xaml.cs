@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Interop;
 using Captura.Webcam;
 using Point = System.Drawing.Point;
@@ -28,9 +28,8 @@ namespace Captura
             //Create capture object.
             if (VideoDevice != null && PresentationSource.FromVisual(this) is HwndSource source)
             {
-                Capture = new CaptureWebcam(VideoDevice)
+                Capture = new CaptureWebcam(VideoDevice, null, source.Handle)
                 {
-                    PreviewWindow = source.Handle,
                     Scale = Dpi.X
                 };
                 
@@ -55,9 +54,8 @@ namespace Captura
             //Create capture object.
             if (VideoDevice != null && PresentationSource.FromVisual(MainWindow) is HwndSource source)
             {
-                Capture = new CaptureWebcam(VideoDevice)
+                Capture = new CaptureWebcam(VideoDevice, null, source.Handle)
                 {
-                    PreviewWindow = source.Handle,
                     Scale = Dpi.X
                 };
                 

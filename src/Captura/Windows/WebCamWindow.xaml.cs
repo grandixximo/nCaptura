@@ -1,5 +1,6 @@
-﻿using System.Windows;
+using System.Windows;
 using Captura.Models;
+using Captura.Video;
 using Captura.ViewModels;
 
 namespace Captura
@@ -28,10 +29,15 @@ namespace Captura
         {
             try
             {
-                var img = ServiceProvider.Get<IWebCamProvider>().Capture();
+                // Get image from webcam control
+                var bitmapLoader = ServiceProvider.Get<IBitmapLoader>();
+                var img = WebCameraControl.Capture?.GetFrame(bitmapLoader);
                 
                 if (img != null)
-                    await ServiceProvider.Get<MainViewModel>().ScreenShotViewModel.SaveScreenShot(img);
+                {
+                    var screenShotViewModel = ServiceProvider.Get<ScreenShotViewModel>();
+                    await screenShotViewModel.SaveScreenShot(img);
+                }
             }
             catch { }
         }
