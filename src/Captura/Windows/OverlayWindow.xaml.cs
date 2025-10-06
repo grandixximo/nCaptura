@@ -12,9 +12,8 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using Captura.Models;
-using Captura.MouseKeyHook;
 using Captura.ViewModels;
-using Captura.Video;
+using Screna;
 using Color = System.Windows.Media.Color;
 using Point = System.Windows.Point;
 
@@ -166,17 +165,7 @@ namespace Captura
 
         LayerFrame Webcam(WebcamOverlaySettings Settings)
         {
-            // WebcamOverlaySettings doesn't inherit from ImageOverlaySettings in modern version
-            // Create a temporary ImageOverlaySettings with default position
-            var imageSettings = new ImageOverlaySettings
-            {
-                X = 80,
-                Y = 100,
-                Opacity = Settings.Opacity,
-                HorizontalAlignment = Alignment.End,
-                VerticalAlignment = Alignment.End
-            };
-            return Image(imageSettings, "Webcam");
+            return Image(Settings, "Webcam");
         }
 
         LayerFrame Text(TextOverlaySettings Settings, string Text)
@@ -415,32 +404,24 @@ namespace Captura
 
         async void UpdateBackground()
         {
-            var vm = ServiceProvider.Get<MainViewModel>();
-
-            Bitmap bmp;
-
-            switch (vm.VideoViewModel.SelectedVideoSourceKind?.Source)
+            // Modern version doesn't have VideoViewModel on MainViewModel
+            // Just capture a simple screenshot
+            try
             {
-                case FullScreenItem _:
-                case NoVideoItem _:
-                    bmp = ScreenShot.Capture();
-                    break;
+                var bmp = ScreenShot.Capture();
+                
+                using (bmp)
+                {
+                    var stream = new MemoryStream();
+                    bmp.Save(stream, ImageFormats.Png);
 
-                default:
-                    bmp = await vm.ScreenShotViewModel.GetScreenShot();
-                    break;
+                    stream.Seek(0, SeekOrigin.Begin);
+
+                    var decoder = new PngBitmapDecoder(stream, BitmapCreateOptions.None, BitmapCacheOption.Default);
+                    Img.Source = decoder.Frames[0];
+                }
             }
-
-            using (bmp)
-            {
-                var stream = new MemoryStream();
-                bmp.Save(stream, ImageFormat.Png);
-
-                stream.Seek(0, SeekOrigin.Begin);
-
-                var decoder = new PngBitmapDecoder(stream, BitmapCreateOptions.None, BitmapCacheOption.Default);
-                Img.Source = decoder.Frames[0];
-            }
+            catch { /* Ignore screenshot errors */ }
         }
 
         void UpdateScale()
