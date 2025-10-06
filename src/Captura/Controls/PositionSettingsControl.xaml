@@ -23,7 +23,7 @@
 
             <Label Content="X: "
                    Margin="0,3"/>
-            <ComboBox ItemsSource="{x:Static base:PositionedOverlaySettings.XAlignments}"
+            <ComboBox ItemsSource="{x:Static viewModels:MainViewModel.XAlignments}"
                       SelectedValue="{Binding HorizontalAlignment, Mode=TwoWay}"
                       SelectedValuePath="Source"
                       DisplayMemberPath="Display"
@@ -36,7 +36,7 @@
             <Label Content="Y: "
                    Grid.Row="1"
                    Margin="0,3"/>
-            <ComboBox ItemsSource="{x:Static base:PositionedOverlaySettings.YAlignments}"
+            <ComboBox ItemsSource="{x:Static viewModels:MainViewModel.YAlignments}"
                       SelectedValue="{Binding VerticalAlignment, Mode=TwoWay}"
                       SelectedValuePath="Source"
                       DisplayMemberPath="Display"
