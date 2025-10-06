@@ -31,7 +31,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <LibFiles Include="$(OutputPath)*.dll" Exclude="$(OutputPath)FirstFloor.ModernUI.dll;$(OutputPath)ModernUI.Xceed.Toolkit.dll;$(OutputPath)Xceed.Wpf.Toolkit.dll" />
+      <LibFiles Include="$(OutputPath)*.dll" />
       <PdbFiles Include="$(OutputPath)*.pdb" />
       <XmlDocFiles Include="$(OutputPath)*.xml" />
     </ItemGroup>

@@ -123,10 +123,6 @@ jobs:
           Write-Warning "captura.exe.config not found!"
         }
         
-        # Copy UI framework DLLs that must stay in root directory (referenced in XAML)
-        Copy-Item -Path "$uiBinFolder/FirstFloor.ModernUI.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
-        Copy-Item -Path "$uiBinFolder/ModernUI.Xceed.Toolkit.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
-        Copy-Item -Path "$uiBinFolder/Xceed.Wpf.Toolkit.dll" -Destination "dist/" -Force -ErrorAction SilentlyContinue
         
         # Copy Keymap files
         Copy-Item -Path "$uiBinFolder/keymaps" -Destination "dist/keymaps" -Recurse -Force
