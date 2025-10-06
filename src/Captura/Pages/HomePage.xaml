@@ -4,7 +4,6 @@
       xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
       xmlns:models="clr-namespace:Captura.Models;assembly=Captura.Core"
       xmlns:viewModels="clr-namespace:Captura.ViewModels;assembly=Captura.ViewCore"
-      xmlns:video="clr-namespace:Captura.Video;assembly=Captura.Core"
       xmlns:viewModels="clr-namespace:Captura.ViewModels;assembly=Captura.ViewCore"
       xmlns:screna="clr-namespace:Captura.Video;assembly=Screna"
       xmlns:captura="clr-namespace:Captura"
