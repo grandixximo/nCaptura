@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -247,6 +247,12 @@ namespace Captura.ViewModels
 
         public bool StartRecording(RecordingModelParams RecordingParams, string FileName = null)
         {
+            // DEBUG LOGGING
+            System.Diagnostics.Debug.WriteLine($"[RecordingModel] StartRecording called");
+            System.Diagnostics.Debug.WriteLine($"[RecordingModel]   VideoSourceKind: {RecordingParams.VideoSourceKind?.GetType().Name} - {RecordingParams.VideoSourceKind?.Name}");
+            System.Diagnostics.Debug.WriteLine($"[RecordingModel]   VideoSourceKind.Source: {RecordingParams.VideoSourceKind?.Source?.Name}");
+            System.Diagnostics.Debug.WriteLine($"[RecordingModel]   VideoWriter: {RecordingParams.VideoWriter}");
+            
             IsVideo = !(RecordingParams.VideoSourceKind is NoVideoSourceProvider);
 
             var extension = RecordingParams.VideoWriter.Extension;
@@ -535,10 +541,18 @@ namespace Captura.ViewModels
 
         IImageProvider GetImageProvider(RecordingModelParams RecordingParams)
         {
-            return RecordingParams
+            var provider = RecordingParams
                 .VideoSourceKind
                 ?.Source
                 ?.GetImageProvider(Settings.IncludeCursor);
+                
+            // DEBUG LOGGING
+            System.Diagnostics.Debug.WriteLine($"[RecordingModel] GetImageProvider:");
+            System.Diagnostics.Debug.WriteLine($"[RecordingModel]   VideoSourceKind: {RecordingParams.VideoSourceKind?.GetType().Name}");
+            System.Diagnostics.Debug.WriteLine($"[RecordingModel]   Source: {RecordingParams.VideoSourceKind?.Source?.GetType().Name}");
+            System.Diagnostics.Debug.WriteLine($"[RecordingModel]   ImageProvider: {provider?.GetType().Name ?? "NULL"}");
+            
+            return provider;
         }
 
         public string CurrentFileName { get; private set; }
