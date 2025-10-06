@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -12,12 +12,12 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using Captura.Models;
-using Screna;
+using Captura.Video;
 using Color = System.Windows.Media.Color;
 using Cursors = System.Windows.Input.Cursors;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
-using Window = Screna.Window;
+using Window = Captura.Video.Window;
 
 namespace Captura
 {

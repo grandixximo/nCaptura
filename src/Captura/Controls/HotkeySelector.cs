@@ -1,4 +1,5 @@
-﻿using Captura.Models;
+using Captura.Models;
+using Captura.Hotkeys;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;

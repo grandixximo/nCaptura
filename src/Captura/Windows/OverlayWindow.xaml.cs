@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Drawing;
@@ -13,7 +13,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using Captura.Models;
 using Captura.ViewModels;
-using Screna;
+using Captura.Video;
 using Color = System.Windows.Media.Color;
 using Point = System.Windows.Point;
 
