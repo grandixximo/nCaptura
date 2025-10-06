@@ -108,8 +108,10 @@ jobs:
         Copy-Item -Path "$uiBinFolder/Languages" -Destination "dist/languages" -Recurse -Force
         
         # Copy executables and config files
-        Copy-Item -Path "$consoleBinFolder/*.exe*" -Destination "dist/" -Force
-        Copy-Item -Path "$uiBinFolder/*.exe*" -Destination "dist/" -Force
+        Copy-Item -Path "$consoleBinFolder/*.exe" -Destination "dist/" -Force
+        Copy-Item -Path "$consoleBinFolder/*.exe.config" -Destination "dist/" -Force -ErrorAction SilentlyContinue
+        Copy-Item -Path "$uiBinFolder/*.exe" -Destination "dist/" -Force
+        Copy-Item -Path "$uiBinFolder/*.exe.config" -Destination "dist/" -Force -ErrorAction SilentlyContinue
         
         # Copy Keymap files
         Copy-Item -Path "$uiBinFolder/keymaps" -Destination "dist/keymaps" -Recurse -Force
