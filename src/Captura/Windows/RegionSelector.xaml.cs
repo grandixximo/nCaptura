@@ -1,4 +1,4 @@
-﻿using Captura.Models;
+using Captura.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -8,6 +8,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using Captura.Video;
 using Captura.ViewModels;
 using Color = System.Windows.Media.Color;
 

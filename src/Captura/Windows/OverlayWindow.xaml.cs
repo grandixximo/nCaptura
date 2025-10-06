@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using Captura.Models;
+using Captura.MouseKeyHook;
 using Captura.ViewModels;
 using Captura.Video;
 using Color = System.Windows.Media.Color;

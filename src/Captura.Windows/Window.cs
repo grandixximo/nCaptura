@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -11,7 +11,7 @@ namespace Captura.Video
     /// <summary>
     /// Minimal representation of a Window.
     /// </summary>
-    class Window : IWindow
+    public class Window : IWindow
     {
         /// <summary>
         /// Creates a new instance of <see cref="Window"/>.
