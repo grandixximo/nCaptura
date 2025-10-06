@@ -91,23 +91,80 @@ jobs:
       env:
         Configuration: ${{ matrix.configuration }}
 
-    # Package binaries
-    - name: Package binaries
+    # Prepare distribution folder
+    - name: Prepare distribution folder
       run: |
-        $releaseDir = "src/Captura/bin/${{ matrix.configuration }}"
-        $outputZip = "nCaptura-${{ github.ref_name }}-Release.zip"
-        Compress-Archive -Path "$releaseDir/*" -DestinationPath $outputZip
-        echo "RELEASE_ZIP=$outputZip" >> $env:GITHUB_ENV
+        # Create dist folder
+        New-Item -ItemType Directory -Force -Path dist
+        New-Item -ItemType Directory -Force -Path temp
+        
+        $consoleBinFolder = "src/Captura.Console/bin/${{ matrix.configuration }}"
+        $uiBinFolder = "src/Captura/bin/${{ matrix.configuration }}"
+        
+        # Copy License files
+        Copy-Item -Path "licenses" -Destination "dist/licenses" -Recurse -Force
+        
+        # Copy Languages
+        Copy-Item -Path "$uiBinFolder/Languages" -Destination "dist/languages" -Recurse -Force
+        
+        # Copy executables and config files
+        Copy-Item -Path "$consoleBinFolder/*.exe*" -Destination "dist/" -Force
+        Copy-Item -Path "$uiBinFolder/*.exe*" -Destination "dist/" -Force
+        
+        # Copy Keymap files
+        Copy-Item -Path "$uiBinFolder/keymaps" -Destination "dist/keymaps" -Recurse -Force
+        
+        # Copy lib folders for Release build
+        Copy-Item -Path "$consoleBinFolder/lib" -Destination "dist/lib" -Recurse -Force -ErrorAction SilentlyContinue
+        Copy-Item -Path "$uiBinFolder/lib" -Destination "dist/lib" -Recurse -Force -ErrorAction SilentlyContinue
       shell: pwsh
       env:
         Configuration: ${{ matrix.configuration }}
 
+    # Package portable version
+    - name: Package portable version
+      run: |
+        # Create portable directories
+        New-Item -ItemType Directory -Force -Path "dist/Settings"
+        New-Item -ItemType Directory -Force -Path "dist/Codecs"
+        
+        $version = "${{ github.ref_name }}"
+        $portableZip = "nCaptura-${version}-Portable.zip"
+        Compress-Archive -Path "dist/*" -DestinationPath $portableZip
+        echo "PORTABLE_ZIP=$portableZip" >> $env:GITHUB_ENV
+        
+        # Remove portable-specific directories for installer
+        Remove-Item -Path "dist/Settings" -Recurse -Force
+        Remove-Item -Path "dist/Codecs" -Recurse -Force
+      shell: pwsh
+
+    # Install Inno Setup
+    - name: Install Inno Setup
+      run: |
+        choco install innosetup -y
+      shell: pwsh
+
+    # Build installer
+    - name: Build installer with Inno Setup
+      run: |
+        $version = "${{ github.ref_name }}".TrimStart('v')
+        $innoPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+        & $innoPath "/DMyAppVersion=$version" "Inno.iss"
+        
+        # Rename output file
+        $installerName = "nCaptura-${{ github.ref_name }}-Setup.exe"
+        Move-Item -Path "temp/Captura-Setup.exe" -Destination $installerName -Force
+        echo "INSTALLER_EXE=$installerName" >> $env:GITHUB_ENV
+      shell: pwsh
+
     # Upload the application as artifact
-    - name: Upload the binary
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: nCaptura-${{ github.ref_name }}-Release
-        path: src/Captura/bin/${{ matrix.configuration }}/* # or path/to/artifact
+        path: |
+          ${{ env.PORTABLE_ZIP }}
+          ${{ env.INSTALLER_EXE }}
       env:
         Configuration: ${{ matrix.configuration }}
     
@@ -115,7 +172,9 @@ jobs:
     - name: Upload to GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        files: nCaptura-${{ github.ref_name }}-Release.zip
+        files: |
+          ${{ env.PORTABLE_ZIP }}
+          ${{ env.INSTALLER_EXE }}
         draft: false
         prerelease: true
       env:
