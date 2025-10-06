@@ -1,4 +1,4 @@
-﻿<Window x:Class="Captura.MainWindow"
+<Window x:Class="Captura.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:tb="http://www.hardcodet.net/taskbar"
@@ -222,7 +222,7 @@
                     <local:ModernButton ToolTip="{Binding RecordStop, Source={StaticResource Loc}, Mode=OneWay}"
                                         Command="{Binding RecordingViewModel.RecordCommand, Source={StaticResource ServiceLocator}}"
                                         Foreground="#b71c1c"
-                                        IconData="{Binding RecordingViewModel.RecorderState, Source={StaticResource ServiceLocator}, Converter={StaticResource StateToRecordButtonGeometryConverter}}"/>
+                                        IconData="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource StateToRecordButtonGeometryConverter}}"/>
                     <local:ModernButton ToolTip="{Binding PauseResume, Source={StaticResource Loc}, Mode=OneWay}" 
                                         Command="{Binding RecordingViewModel.PauseCommand, Source={StaticResource ServiceLocator}}"
                                         IconData="{Binding Icons.Pause, Source={StaticResource ServiceLocator}}"
