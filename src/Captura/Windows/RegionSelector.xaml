@@ -100,7 +100,7 @@
             </Border.Style>
 
             <InkCanvas Background="Transparent"
-                       Visibility="{Binding AboutViewModel.Settings.UI.RegionSelectorDrawingTools, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}"
+                       Visibility="{Binding MainViewModel.Settings.UI.RegionSelectorDrawingTools, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}"
                        Name="InkCanvas"/>
         </Border>
 
@@ -323,7 +323,7 @@
                 BorderBrush="{DynamicResource Accent}"
                 BorderThickness="1"
                 VerticalAlignment="Top"
-                Visibility="{Binding AboutViewModel.Settings.UI.RegionSelectorDrawingTools, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}">
+                Visibility="{Binding MainViewModel.Settings.UI.RegionSelectorDrawingTools, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}">
             <DockPanel Background="{DynamicResource WindowBackground}"
                        LastChildFill="False">
                 <ListBox Name="ModesBox"
