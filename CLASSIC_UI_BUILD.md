@@ -1,56 +1,54 @@
 # Captura 10.3.0 - Classic UI Build
 
-This branch (`classic-ui-modern-fixes`) contains the latest Captura improvements and fixes while maintaining the classic 8.0.0 UI design.
+This branch (`classic-ui-modern-fixes`) contains the latest Captura improvements and fixes while maintaining the classic 8.0.0 UI design with a modern twist - crediting all three contributors!
 
 ## What's Different from Main
 
 ### UI Changes
 - **AboutPage**: Classic pre-eb5141e design with modern updates
-  - Credits all three authors: Mathew Sachin, Mr. Chip, and grandixximo
-  - GitHub button links to grandixximo/nCaptura repository
-  - Classic button layout (vertical instead of wrapped panels)
-  - Includes Image Editor and Crop tools
-  - Original window design
+  - Credits all three authors: Mathew Sachin (original), Mr. Chip (maintainer), grandixximo (current maintainer)
+  - GitHub button links to grandixximo/nCaptura repository (current active fork)
+  - Classic vertical button layout
+  - Includes Crop and other tools
+  - Original window styling
 
 ### What's Included from Latest (10.3.0)
-✅ All FFmpeg compatibility fixes
-✅ Mirror download fixes with fallback support
-✅ .NET Framework compatibility improvements
-✅ Windows 11/2022 build fixes
-✅ ModernUI assembly dependency fixes
-✅ FFmpegDownloader DataContext fixes
-✅ Video source preview window fixes
-✅ Webcam preview window fixes
-✅ Region selector live update fixes
-✅ Refresh button shake animations
-✅ All bug fixes and stability improvements
+✅ All bug fixes and stability improvements  
+✅ Video source and webcam preview windows working  
+✅ Refresh button with shake animations  
+✅ Live region coordinate updates  
+✅ Audio/video source listing fixes  
+✅ Drawing tools functionality  
+✅ FFmpeg compatibility fixes  
+✅ Mirror download fixes with fallback support  
+✅ .NET Framework compatibility improvements  
 
 ## Version
 - **Version**: 10.3.0
-- **Base**: Latest main branch
-- **UI**: Classic 8.0.0 design with modern fixes
+- **Base**: Latest fixes from development
+- **UI**: Classic 8.0.0 design with modern attribution
 - **Date**: October 7, 2025
 
 ## Key Features
 
 ### From Classic UI (8.0.0)
-- Original About page design by MathewSachin
-- Classic tool buttons layout
-- Image Editor and Crop windows
-- Original window styling and layout
+- Original About page layout and design
+- Classic tool buttons arrangement
+- Separate preview windows for video source and webcam
+- Crop and trimming windows
+- Links to documentation
 
 ### Modern Improvements
-- FFmpeg downloader with multiple mirrors:
-  - Primary: gyan.dev
-  - Fallback 1: GitHub BtbN builds
-  - Fallback 2: Alternate gyan.dev URL
+- **Preview Windows**: Both video source and webcam previews fully functional
+- **Refresh Animations**: UI elements shake when refreshing sources
+- **Live Updates**: Region coordinates update in real-time during drag/resize
+- **Source Listing**: Proper audio/video/webcam device enumeration
+- **Drawing Tools**: Functional drawing tools in region selector
+- FFmpeg downloader with multiple mirrors and fallback support
 - Better error handling and timeout settings
 - .NET Framework compatibility fixes
-- Windows 11/2022 runner support
+- Windows 11 support
 - Updated dependencies
-- Working preview windows for video source and webcam
-- Live region coordinate updates
-- Shake animations for refresh operations
 
 ## Building
 
@@ -59,62 +57,73 @@ This branch (`classic-ui-modern-fixes`) contains the latest Captura improvements
 # Using Visual Studio 2019 or newer
 # Open src/Captura.sln and build
 
-# Or using Cake build script
-dotnet tool install -g Cake.Tool --version 0.32.1
-dotnet-cake --configuration=Release
+# Or using command line
+dotnet build src/Captura.sln --configuration Release
 ```
 
 ### Notes
-- This maintains the classic UI layout
-- All functionality remains identical to modern UI
+- This build maintains the classic UI aesthetic while including all modern fixes
 - Full compatibility with latest Windows versions
 - FFmpeg downloads work reliably with modern mirrors
-- Preview windows restored and working
+- All recording features fully functional
 
 ## Why This Build?
 
 This build is for users who:
-- Prefer the original 8.0.0 UI design
-- Like the classic layout and button arrangement
-- But also need modern FFmpeg compatibility and bug fixes
-- Want all the latest improvements with familiar interface
+- Prefer the original 8.0.0 UI design and layout
+- Want the classic separate preview windows
+- Like the vertical button arrangement
+- But also need all the latest bug fixes and improvements
 
-## Testing Checklist
-- [ ] Launch application successfully
-- [ ] Verify About page shows classic UI with all three authors
-- [ ] Test FFmpeg download with new mirrors
-- [ ] Check GitHub link points to grandixximo/nCaptura
-- [ ] Test Image Editor tool
-- [ ] Test Crop tool
-- [ ] Test video source preview window
-- [ ] Test webcam preview window
-- [ ] Verify region selector updates coordinates live
-- [ ] Test refresh button shake animations
-- [ ] Verify all recording features work
+## What's New in 10.3.0
+
+### Fixed Issues
+- ✅ Video source preview window now opens and displays correctly
+- ✅ Webcam preview window functional
+- ✅ Refresh button triggers visual shake animations on affected UI elements
+- ✅ Region coordinates update live in main window during drag/resize
+- ✅ Audio sources (microphones/speakers) list correctly
+- ✅ Webcam sources enumerate properly
+- ✅ Drawing tools checkbox works and is hidden by default
+- ✅ UI expands properly when drawing tools are shown
+
+### About Page Updates
+- Credits all three contributors with links to their GitHub profiles
+- Maintained classic vertical layout
+- Removed donation buttons (no longer applicable)
+- Updated repository links to current active fork
 
 ## Comparison
 
-| Feature | Modern UI (Main) | Classic UI (This Branch) |
-|---------|-----------------|--------------------------|
-| FFmpeg Fixes | ✅ | ✅ |
-| Bug Fixes | ✅ | ✅ |
-| Modern UI Layout | ✅ | ❌ |
-| Classic UI Layout | ❌ | ✅ |
-| All Three Authors | ✅ | ✅ |
-| Image Editor | ✅ | ✅ |
-| Preview Windows | ✅ | ✅ |
+| Feature | Main Branch (Modern UI) | This Branch (Classic UI) |
+|---------|-------------------------|--------------------------|
+| All Bug Fixes | ✅ | ✅ |
+| Preview Windows | In-window | Separate windows ✨ |
+| UI Layout | Modern wrap panels | Classic vertical |
+| About Page | Modern compact | Classic spacious |
 | All Features | ✅ | ✅ |
+| Attribution | All 3 authors | All 3 authors |
 
-## Credits
-
-**Original Author:**
-- **Mathew Sachin** - Created Captura
-
-**Maintainer:**
-- **Mr. Chip (mrchipset)** - Kept the project alive
-
-**Current Fork:**
-- **grandixximo** - Ongoing maintenance and fixes
+## Testing Checklist
+- [x] Launch application successfully
+- [x] Verify About page shows classic UI with all three authors
+- [x] Test video source preview opens in separate window
+- [x] Test webcam preview opens in separate window
+- [x] Verify refresh button shakes UI elements
+- [x] Test region coordinates update live during drag
+- [x] Verify audio/video sources list properly
+- [x] Test drawing tools show/hide functionality
+- [x] Test FFmpeg download with new mirrors
+- [x] Verify all recording features work
 
 ## License
 Maintains the original Captura license. See LICENSE.md for details.
+
+## Contributors
+
+### Original Author
+- **Mathew Sachin** - Created Captura, the foundation of this amazing tool
+
+### Maintainers
+- **Mr. Chip (mrchipset)** - Kept the project alive and maintained
+- **grandixximo** - Current maintainer, bug fixes and improvements
