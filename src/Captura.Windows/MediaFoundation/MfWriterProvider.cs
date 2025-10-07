@@ -6,6 +6,7 @@ using Captura.Video;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
+using Device = SharpDX.Direct3D11.Device;
 
 namespace Captura.Windows.MediaFoundation
 {
