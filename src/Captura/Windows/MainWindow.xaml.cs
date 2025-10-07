@@ -3,9 +3,11 @@ using System.Drawing;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Forms.Integration;
 using System.Windows.Input;
 using System.Windows.Markup;
+using Captura.Loc;
 using Captura.Models;
 using Captura.ViewModels;
 using Captura.Video;
@@ -86,7 +88,7 @@ namespace Captura
                 (float) ActualWidth,
                 (float) ActualHeight).ApplyDpi();
             
-            if (!Screen.AllScreens.Any(M => M.Bounds.Contains(rect)))
+            if (!System.Windows.Forms.Screen.AllScreens.Any(M => M.Bounds.Contains(rect)))
             {
                 Left = 50;
                 Top = 50;
@@ -367,18 +369,20 @@ namespace Captura
 
             // FPS Label
             var fpsLabel = new System.Windows.Controls.Label { Margin = new Thickness(5, 0, 5, 0) };
-            var fpsBinding = new System.Windows.Data.Binding("ViewConditions.FpsVisibility.Value")
+            var viewConditions = ServiceProvider.Get<ViewConditions>();
+            var fpsBinding = new System.Windows.Data.Binding("FpsVisibility.Value")
             {
-                Source = ServiceProvider.Get<ViewConditions>()
+                Source = viewConditions
             };
             fpsLabel.SetBinding(UIElement.VisibilityProperty, fpsBinding);
             
             var fpsTextBlock = new TextBlock();
             fpsTextBlock.Inlines.Add("FPS: ");
             var fpsRun = new System.Windows.Documents.Run();
-            var fpsRunBinding = new System.Windows.Data.Binding("FpsManager.Fps")
+            var fpsManager = ServiceProvider.Get<FpsManager>();
+            var fpsRunBinding = new System.Windows.Data.Binding("Fps")
             {
-                Source = ServiceProvider.Get<FpsManager>(),
+                Source = fpsManager,
                 Mode = System.Windows.Data.BindingMode.OneWay
             };
             fpsRun.SetBinding(System.Windows.Documents.Run.TextProperty, fpsRunBinding);
@@ -643,7 +647,7 @@ namespace Captura
             {
                 var tooltipBinding = new System.Windows.Data.Binding(tooltip)
                 {
-                    Source = ServiceProvider.Get<LanguageManager>(),
+                    Source = LanguageManager.Instance,
                     Mode = System.Windows.Data.BindingMode.OneWay
                 };
                 btn.SetBinding(FrameworkElement.ToolTipProperty, tooltipBinding);
@@ -675,11 +679,11 @@ namespace Captura
             {
                 var binding = new System.Windows.Data.Binding(iconBinding)
                 {
-                    Source = ServiceProvider.Get<MainViewModel>()
+                    Source = _helper.MainViewModel
                 };
                 if (!string.IsNullOrEmpty(iconConverter))
                 {
-                    binding.Converter = (IValueConverter)FindResource($"{iconConverter}");
+                    binding.Converter = (System.Windows.Data.IValueConverter)FindResource($"{iconConverter}");
                 }
                 btn.SetBinding(ModernButton.IconDataProperty, binding);
             }
@@ -700,20 +704,20 @@ namespace Captura
             var btn = new ModernButton
             {
                 Opacity = 0.9,
-                RenderTransformOrigin = new Point(0.5, 0.5),
+                RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
                 RenderTransform = new System.Windows.Media.RotateTransform()
             };
 
             // Tooltip
             var tooltipBinding = new System.Windows.Data.Binding("PauseResume")
             {
-                Source = ServiceProvider.Get<LanguageManager>(),
+                Source = LanguageManager.Instance,
                 Mode = System.Windows.Data.BindingMode.OneWay
             };
             btn.SetBinding(FrameworkElement.ToolTipProperty, tooltipBinding);
 
             // Command
-            var cmd = ServiceProvider.Get<MainViewModel>().RecordingViewModel.PauseCommand;
+            var cmd = _helper.MainViewModel.RecordingViewModel.PauseCommand;
             btn.Command = cmd;
 
             // IconData

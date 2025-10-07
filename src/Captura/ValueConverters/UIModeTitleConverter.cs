@@ -1,7 +1,6 @@
 using System;
 using System.Globalization;
 using System.Windows.Data;
-using Captura.Models;
 
 namespace Captura
 {
@@ -12,9 +11,16 @@ namespace Captura
             if (Value is bool useClassicUI && useClassicUI)
             {
                 // Classic UI shows timer in title
-                var timerModel = ServiceProvider.Get<TimerModel>();
-                if (timerModel != null && timerModel.TimeSpan != TimeSpan.Zero)
-                    return $"Captura - {timerModel.TimeSpan:hh\\:mm\\:ss}";
+                try
+                {
+                    var timerModel = ServiceProvider.Get<TimerModel>();
+                    if (timerModel != null && timerModel.TimeSpan != TimeSpan.Zero)
+                        return $"Captura - {timerModel.TimeSpan:hh\\:mm\\:ss}";
+                }
+                catch
+                {
+                    // If TimerModel not available, just return "Captura"
+                }
             }
             
             return "Captura";
