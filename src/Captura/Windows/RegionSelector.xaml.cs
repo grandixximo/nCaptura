@@ -416,8 +416,8 @@ namespace Captura
                         break;
                 }
                 
-                // Update region coordinates after manual resize
-                UpdateRegion();
+                // Update region coordinates after layout completes (ActualWidth/ActualHeight are updated)
+                Dispatcher.BeginInvoke(new Action(() => UpdateRegion()), System.Windows.Threading.DispatcherPriority.Loaded);
             }
         }
     }
