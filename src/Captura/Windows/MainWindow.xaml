@@ -299,7 +299,7 @@
                 </DockPanel>
             </Expander.Header>
             <DockPanel Margin="-5,0,0,0"
-                       Height="550">
+                       MaxHeight="650">
                 <Label Margin="5"
                        Content="© Mathew Sachin"
                        Opacity="0.9"
