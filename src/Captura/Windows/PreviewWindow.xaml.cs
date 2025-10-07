@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -18,9 +18,16 @@ namespace Captura
         bool _hidden;
         readonly DispatcherTimer _timer;
 
-        public PreviewWindow()
+        PreviewWindow()
         {
             InitializeComponent();
+            
+            // Prevent closing, just hide instead
+            Closing += (S, E) =>
+            {
+                Hide();
+                E.Cancel = true;
+            };
 
             StrectValues.ItemsSource = new[]
             {
@@ -39,6 +46,13 @@ namespace Captura
             _timer.Tick += TimerOnTick;
 
             _timer.Start();
+        }
+
+        public static PreviewWindow Instance { get; } = new PreviewWindow();
+
+        public IntPtr GetHandle()
+        {
+            return new System.Windows.Interop.WindowInteropHelper(this).Handle;
         }
 
         void TimerOnTick(object Sender, EventArgs Args)
@@ -140,6 +154,15 @@ namespace Captura
             {
                 _timer.Stop();
             }
+        }
+
+        public IntPtr GetBackBufferPtr()
+        {
+            return DisplayImage.Dispatcher.Invoke(() =>
+            {
+                var hwndSource = PresentationSource.FromVisual(DisplayImage) as System.Windows.Interop.HwndSource;
+                return hwndSource?.Handle ?? IntPtr.Zero;
+            });
         }
     }
 }

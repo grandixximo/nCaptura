@@ -12,21 +12,18 @@ namespace Captura.Video
         D3D9PreviewAssister _d3D9PreviewAssister;
         IntPtr _backBufferPtr;
         Texture _texture;
-        readonly VisualSettings _visualSettings;
+        readonly PreviewWindow _previewWindow;
 
         public void Show()
         {
-            _visualSettings.Expanded = true;
+            _previewWindow.ShowAndFocus();
         }
 
-        public bool IsVisible { get; private set; }
+        public bool IsVisible => _previewWindow.IsVisible;
 
-        public PreviewWindowService(VisualSettings VisualSettings)
+        public PreviewWindowService()
         {
-            _visualSettings = VisualSettings;
-
-            VisualSettings.ObserveProperty(M => M.Expanded)
-                .Subscribe(M => IsVisible = M);
+            _previewWindow = new PreviewWindow();
         }
 
         IBitmapFrame _lastFrame;
@@ -42,10 +39,28 @@ namespace Captura.Video
                 return;
             }
 
-            // Modern version doesn't have preview window in MainWindow
-            // Just dispose the frame
-            _lastFrame?.Dispose();
-            _lastFrame = Frame;
+            // Display frame in preview window
+            try
+            {
+                if (_d3D9PreviewAssister == null || _texture == null || _backBufferPtr != _previewWindow.GetBackBufferPtr())
+                {
+                    _d3D9PreviewAssister?.Dispose();
+                    _texture?.Dispose();
+
+                    _backBufferPtr = _previewWindow.GetBackBufferPtr();
+                    _d3D9PreviewAssister = new D3D9PreviewAssister(_backBufferPtr);
+                    _texture = _d3D9PreviewAssister.CreateTexture(Frame.Width, Frame.Height);
+                }
+
+                _d3D9PreviewAssister.Render(_texture, Frame);
+
+                _lastFrame?.Dispose();
+                _lastFrame = Frame;
+            }
+            catch
+            {
+                Frame?.Dispose();
+            }
         }
 
         public void Dispose()
@@ -53,6 +68,7 @@ namespace Captura.Video
             _lastFrame?.Dispose();
             _d3D9PreviewAssister?.Dispose();
             _texture?.Dispose();
+            _previewWindow?.Close();
         }
     }
 }
