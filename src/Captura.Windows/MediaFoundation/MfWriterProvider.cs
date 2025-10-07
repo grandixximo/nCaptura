@@ -191,7 +191,7 @@ namespace Captura.Windows.MediaFoundation
             errorMessage = null;
             IntPtr pActivate = IntPtr.Zero;
             Activate activate = null;
-            MediaFoundation.Transform transform = null;
+            SharpDX.MediaFoundation.Transform transform = null;
             MediaType inputType = null;
             MediaType outputType = null;
             
@@ -241,7 +241,7 @@ namespace Captura.Windows.MediaFoundation
                 // Actually activate the transform (this tests if it can be created)
                 try
                 {
-                    transform = activate.ActivateObject<MediaFoundation.Transform>();
+                    transform = activate.ActivateObject<SharpDX.MediaFoundation.Transform>();
                 }
                 catch (Exception ex)
                 {
