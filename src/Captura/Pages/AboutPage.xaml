@@ -24,9 +24,9 @@
                                LineHeight="30"
                                Style="{StaticResource TextColor}">
                         <Run FontSize="20" Text="Captura"/> <Run Text="{Binding AppVersion, Mode=OneWay}"/><LineBreak/>
-                        © <Run Text="2019"/> <Hyperlink CommandParameter="https://github.com/MathewSachin">Mathew Sachin</Hyperlink>
-                        © <Run Text="{Binding Year, Source={x:Static sys:DateTime.Now}, Mode=OneWay}"/> <Hyperlink CommandParameter="https://github.com/mrchipset">Mr. Chip</Hyperlink><LineBreak/>
-                        © <Run Text="{Binding Year, Source={x:Static sys:DateTime.Now}, Mode=OneWay}"/> <Hyperlink CommandParameter="https://github.com/grandixximo">grandixximo</Hyperlink>
+                        © 2018 <Hyperlink CommandParameter="https://github.com/MathewSachin">Mathew Sachin</Hyperlink> (Original Author)<LineBreak/>
+                        © 2024 <Hyperlink CommandParameter="https://github.com/mrchipset">Mr. Chip</Hyperlink> (Maintainer)<LineBreak/>
+                        © <Run Text="{Binding Year, Source={x:Static sys:DateTime.Now}, Mode=OneWay}"/> <Hyperlink CommandParameter="https://github.com/grandixximo">grandixximo</Hyperlink> (Current Fork)
                     </TextBlock>
                 </DockPanel>
 
@@ -44,7 +44,7 @@
                     <captura:ModernButton Content="{Binding Website, Source={StaticResource Loc}, Mode=OneWay}"
                                           IconData="{Binding Icons.Web, Source={StaticResource ServiceLocator}}"
                                           Command="{Binding HyperlinkCommand}"
-                                          CommandParameter="https://MathewSachin.github.io/Captura"/>
+                                          CommandParameter="https://github.com/grandixximo/nCaptura"/>
                 </WrapPanel>
 
                 <GridSplitter Height="3"
