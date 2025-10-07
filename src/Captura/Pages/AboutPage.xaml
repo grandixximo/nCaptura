@@ -36,6 +36,11 @@
                                           Command="{Binding HyperlinkCommand}"
                                           CommandParameter="https://github.com/grandixximo/nCaptura/"/>
 
+                    <captura:ModernButton Content="{Binding Donate, Source={StaticResource Loc}, Mode=OneWay}"
+                                          IconData="{Binding Icons.PayPal, Source={StaticResource ServiceLocator}}"
+                                          Command="{Binding HyperlinkCommand}"
+                                          CommandParameter="https://www.paypal.me/MathewSachin"/>
+
                     <captura:ModernButton Content="{Binding Website, Source={StaticResource Loc}, Mode=OneWay}"
                                           IconData="{Binding Icons.Web, Source={StaticResource ServiceLocator}}"
                                           Command="{Binding HyperlinkCommand}"
