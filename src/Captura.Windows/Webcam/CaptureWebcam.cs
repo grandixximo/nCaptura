@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using DirectShowLib;
@@ -92,6 +93,8 @@ namespace Captura.Webcam
         {
             _videoDevice = VideoDevice ?? throw new ArgumentException("The videoDevice parameter must be set to a valid Filter.\n");
 
+            Trace.WriteLine($"[Captura Webcam] Initializing webcam: {VideoDevice.Name}");
+
             _form = new DummyForm();
             _form.Show();
 
@@ -100,6 +103,7 @@ namespace Captura.Webcam
             _previewWindow = PreviewWindow != IntPtr.Zero ? PreviewWindow : _form.Handle;
 
             CreateGraph();
+            Trace.WriteLine($"[Captura Webcam] Graph created successfully for: {VideoDevice.Name}");
         }
 
         #region Public Methods
@@ -108,12 +112,15 @@ namespace Captura.Webcam
         /// </summary>
         public void StartPreview()
         {
+            Trace.WriteLine($"[Captura Webcam] StartPreview called for: {_videoDevice?.Name}");
             DerenderGraph();
 
             _wantPreviewRendered = _previewWindow != IntPtr.Zero && _videoDevice != null;
+            Trace.WriteLine($"[Captura Webcam] Want preview rendered: {_wantPreviewRendered}");
 
             RenderGraph();
             StartPreviewIfNeeded();
+            Trace.WriteLine($"[Captura Webcam] StartPreview completed");
         }
 
         /// <summary>
@@ -423,16 +430,20 @@ namespace Captura.Webcam
             // Render preview stream (only if necessary)
             if (_wantPreviewRendered && !_isPreviewRendered)
             {
+                Trace.WriteLine($"[Captura Webcam] Rendering preview stream for: {_videoDevice.Name}");
+                
                 // Render preview (video -> renderer)
                 // Try Preview pin first, fallback to Capture pin if Preview doesn't exist
                 var cat = PinCategory.Preview;
                 var med = MediaType.Video;
+                Trace.WriteLine($"[Captura Webcam] Attempting Preview pin...");
                 var hr = _captureGraphBuilder.RenderStream(cat, med, _videoDeviceFilter, _baseGrabFlt, null);
                 
                 // Many modern webcams don't have a Preview pin, only a Capture pin
                 // If Preview fails, try Capture pin
                 if (hr < 0)
                 {
+                    Trace.WriteLine($"[Captura Webcam] Preview pin failed (HRESULT: 0x{hr:X8}), trying Capture pin...");
                     cat = PinCategory.Capture;
                     hr = _captureGraphBuilder.RenderStream(cat, med, _videoDeviceFilter, _baseGrabFlt, null);
                     
@@ -447,8 +458,17 @@ namespace Captura.Webcam
                             unchecked((int)0x80004005) => "Unspecified error - Device may not support DirectShow",
                             _ => $"DirectShow error (HRESULT: 0x{hr:X8})"
                         };
+                        Trace.WriteLine($"[Captura Webcam] ERROR: Capture pin also failed - {errorMsg}");
                         throw new COMException($"Failed to render camera stream: {errorMsg}", hr);
                     }
+                    else
+                    {
+                        Trace.WriteLine($"[Captura Webcam] SUCCESS: Capture pin worked!");
+                    }
+                }
+                else
+                {
+                    Trace.WriteLine($"[Captura Webcam] SUCCESS: Preview pin worked!");
                 }
                 
                 if (hr < 0) Marshal.ThrowExceptionForHR(hr);
