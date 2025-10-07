@@ -1,4 +1,4 @@
-﻿using Captura.Audio;
+using Captura.Audio;
 using Captura.Models;
 using System;
 using Captura.Video;
@@ -12,11 +12,14 @@ namespace Captura.Windows
     {
         public static void Load(IBinder Binder)
         {
-            if (Windows8OrAbove)
-            {
-                MfManager.Startup();
-                Binder.BindAsInterfaceAndClass<IVideoWriterProvider, MfWriterProvider>();
-            }
+            // MF (Media Foundation) disabled - causes issues on Windows 11 (hanging at "saving video" with 0KB files)
+            // Hardware encoder compatibility problems with some GPU drivers
+            // Users should use FFmpeg instead which has better compatibility
+            //if (Windows8OrAbove)
+            //{
+            //    MfManager.Startup();
+            //    Binder.BindAsInterfaceAndClass<IVideoWriterProvider, MfWriterProvider>();
+            //}
 
             Binder.BindSingleton<WindowsSettings>();
             Binder.Bind<IPlatformServices, WindowsPlatformServices>();
@@ -33,10 +36,11 @@ namespace Captura.Windows
 
         public static void Unload()
         {
-            if (Windows8OrAbove)
-            {
-                MfManager.Shutdown();
-            }
+            // MF disabled
+            //if (Windows8OrAbove)
+            //{
+            //    MfManager.Shutdown();
+            //}
         }
 
         public static bool Windows8OrAbove
