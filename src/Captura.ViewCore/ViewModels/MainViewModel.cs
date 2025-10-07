@@ -149,12 +149,4 @@ namespace Captura.ViewModels
             Settings.Save();
         }
     }
-} if (!_persist)
-                return;
-
-            _rememberByName.Remember();
-
-            Settings.Save();
-        }
-    }
 }
