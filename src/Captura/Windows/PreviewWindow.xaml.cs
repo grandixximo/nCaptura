@@ -55,6 +55,11 @@ namespace Captura
             return new System.Windows.Interop.WindowInteropHelper(this).Handle;
         }
 
+        public void UpdateImage(System.Windows.Media.Imaging.BitmapSource Bitmap)
+        {
+            DisplayImage.Source = Bitmap;
+        }
+
         void TimerOnTick(object Sender, EventArgs Args)
         {
             var elapsed = DateTime.Now - _lastMouseMoveTime;

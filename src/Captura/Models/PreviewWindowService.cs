@@ -1,21 +1,16 @@
 using System;
-using System.Windows;
-using Captura.Windows.DirectX;
-using Reactive.Bindings.Extensions;
-using SharpDX.Direct3D9;
+using System.Windows.Media.Imaging;
 
 namespace Captura.Video
 {
     // ReSharper disable once ClassNeverInstantiated.Global
     public class PreviewWindowService : IPreviewWindow
     {
-        D3D9PreviewAssister _d3D9PreviewAssister;
-        IntPtr _backBufferPtr;
-        Texture _texture;
         readonly PreviewWindow _previewWindow;
 
         public void Show()
         {
+            // Show the actual PreviewWindow for classic UI
             _previewWindow.ShowAndFocus();
         }
 
@@ -23,15 +18,17 @@ namespace Captura.Video
 
         public PreviewWindowService()
         {
-            _previewWindow = new PreviewWindow();
+            // Use singleton PreviewWindow instance
+            _previewWindow = PreviewWindow.Instance;
         }
-
-        IBitmapFrame _lastFrame;
 
         public void Display(IBitmapFrame Frame)
         {
             if (Frame is RepeatFrame)
+            {
+                Frame.Dispose();
                 return;
+            }
 
             if (!IsVisible)
             {
@@ -39,36 +36,41 @@ namespace Captura.Video
                 return;
             }
 
-            // Display frame in preview window
             try
             {
-                if (_d3D9PreviewAssister == null || _texture == null || _backBufferPtr != _previewWindow.GetBackBufferPtr())
+                // Render frame to the Image control
+                _previewWindow.Dispatcher.Invoke(() =>
                 {
-                    _d3D9PreviewAssister?.Dispose();
-                    _texture?.Dispose();
+                    var bitmap = new WriteableBitmap(Frame.Width, Frame.Height, 96, 96,
+                        System.Windows.Media.PixelFormats.Bgr32, null);
 
-                    _backBufferPtr = _previewWindow.GetBackBufferPtr();
-                    _d3D9PreviewAssister = new D3D9PreviewAssister(_backBufferPtr);
-                    _texture = _d3D9PreviewAssister.CreateTexture(Frame.Width, Frame.Height);
-                }
+                    bitmap.Lock();
+                    try
+                    {
+                        Frame.CopyTo(bitmap.BackBuffer, bitmap.BackBufferStride);
+                        bitmap.AddDirtyRect(new System.Windows.Int32Rect(0, 0, Frame.Width, Frame.Height));
+                    }
+                    finally
+                    {
+                        bitmap.Unlock();
+                    }
 
-                _d3D9PreviewAssister.Render(_texture, Frame);
-
-                _lastFrame?.Dispose();
-                _lastFrame = Frame;
+                    _previewWindow.UpdateImage(bitmap);
+                });
             }
             catch
             {
-                Frame?.Dispose();
+                // Ignore preview errors
+            }
+            finally
+            {
+                Frame.Dispose();
             }
         }
 
         public void Dispose()
         {
-            _lastFrame?.Dispose();
-            _d3D9PreviewAssister?.Dispose();
-            _texture?.Dispose();
-            _previewWindow?.Close();
+            // PreviewWindow is singleton, don't close it
         }
     }
 }
