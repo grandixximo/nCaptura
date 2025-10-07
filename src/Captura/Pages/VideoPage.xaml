@@ -300,16 +300,6 @@
 
             <DockPanel Margin="0,5"
                        IsEnabled="{Binding ViewConditions.IsEnabled.Value, Source={StaticResource ServiceLocator}}"
-                       Visibility="{Binding ViewConditions.IsMf.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}">
-                <Label Content="Hardware Encoder"
-                       ContentStringFormat="{}{0}:"/>
-                <ComboBox ItemsSource="{Binding MfCodecsViewModel.AvailableEncoders, Source={StaticResource ServiceLocator}}"
-                          SelectedValue="{Binding MfCodecsViewModel.Settings.SelectedEncoder, Mode=TwoWay, Source={StaticResource ServiceLocator}}"
-                          Margin="5,0"/>
-            </DockPanel>
-
-            <DockPanel Margin="0,5"
-                       IsEnabled="{Binding ViewConditions.IsEnabled.Value, Source={StaticResource ServiceLocator}}"
                        Visibility="{Binding ViewConditions.IsVideoQuality.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Label Content="{Binding Quality, Source={StaticResource Loc}, Mode=OneWay}"
                        ContentStringFormat="{}{0}:"/>
