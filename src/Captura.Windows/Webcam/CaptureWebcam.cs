@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using DirectShowLib;
@@ -424,9 +424,19 @@ namespace Captura.Webcam
             if (_wantPreviewRendered && !_isPreviewRendered)
             {
                 // Render preview (video -> renderer)
+                // Try Preview pin first, fallback to Capture pin if Preview doesn't exist
                 var cat = PinCategory.Preview;
                 var med = MediaType.Video;
                 var hr = _captureGraphBuilder.RenderStream(cat, med, _videoDeviceFilter, _baseGrabFlt, null);
+                
+                // Many modern webcams don't have a Preview pin, only a Capture pin
+                // If Preview fails, try Capture pin
+                if (hr < 0)
+                {
+                    cat = PinCategory.Capture;
+                    hr = _captureGraphBuilder.RenderStream(cat, med, _videoDeviceFilter, _baseGrabFlt, null);
+                }
+                
                 if (hr < 0) Marshal.ThrowExceptionForHR(hr);
 
                 // Get the IVideoWindow interface
