@@ -257,13 +257,24 @@ namespace Captura.Windows.MediaFoundation
 
         public IEnumerable<string> GetAvailableEncoderNames()
         {
-            // Don't require _device for listing encoders - just detect what's available
-            var encoders = DetectAllHardwareEncoders();
-            
-            if (encoders.Count == 0)
-                return Enumerable.Empty<string>();
+            try
+            {
+                // Don't require _device for listing encoders - just detect what's available
+                var encoders = DetectAllHardwareEncoders();
+                
+                if (encoders.Count == 0)
+                {
+                    // Fallback: always offer at least H.264
+                    return new[] { "H.264" };
+                }
 
-            return encoders.Select(encoder => encoder.CodecName).ToList();
+                return encoders.Select(encoder => encoder.CodecName).ToList();
+            }
+            catch
+            {
+                // If detection fails, offer H.264 as fallback
+                return new[] { "H.264" };
+            }
         }
     }
 }

@@ -37,9 +37,20 @@ namespace Captura.ViewModels
             get
             {
                 if (_mfWriterProvider == null)
-                    return Enumerable.Empty<string>();
+                {
+                    // Fallback if MF provider isn't available
+                    return new[] { "H.264" };
+                }
 
-                return _mfWriterProvider.GetAvailableEncoderNames();
+                var encoders = _mfWriterProvider.GetAvailableEncoderNames();
+                
+                // Ensure we always return at least H.264
+                if (encoders == null || !encoders.Any())
+                {
+                    return new[] { "H.264" };
+                }
+                
+                return encoders;
             }
         }
     }
