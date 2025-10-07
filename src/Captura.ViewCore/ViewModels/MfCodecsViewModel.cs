@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Captura.Video;
 using Captura.Windows;
@@ -22,6 +23,9 @@ namespace Captura.ViewModels
             _mfWriterProvider = WriterProviders.OfType<MfWriterProvider>().FirstOrDefault();
             _videoWritersViewModel = VideoWritersViewModel;
             
+            // Populate available encoders list
+            _availableEncoders = new ObservableCollection<string>(GetEncoderList());
+            
             // When encoder selection changes, refresh the available video writers
             Settings.PropertyChanged += (s, e) =>
             {
@@ -32,26 +36,31 @@ namespace Captura.ViewModels
             };
         }
 
-        public IEnumerable<string> AvailableEncoders
+        IEnumerable<string> GetEncoderList()
         {
-            get
+            if (_mfWriterProvider == null)
             {
-                if (_mfWriterProvider == null)
-                {
-                    // Fallback if MF provider isn't available
-                    return new[] { "H.264" };
-                }
-
-                var encoders = _mfWriterProvider.GetAvailableEncoderNames();
-                
-                // Ensure we always return at least H.264
-                if (encoders == null || !encoders.Any())
-                {
-                    return new[] { "H.264" };
-                }
-                
-                return encoders;
+                // Fallback if MF provider isn't available
+                return new[] { "H.264" };
             }
+
+            var encoders = _mfWriterProvider.GetAvailableEncoderNames();
+            
+            // Ensure we always return at least H.264
+            if (encoders == null || !encoders.Any())
+            {
+                return new[] { "H.264" };
+            }
+            
+            return encoders;
+        }
+
+        ObservableCollection<string> _availableEncoders;
+
+        public ObservableCollection<string> AvailableEncoders
+        {
+            get => _availableEncoders;
+            set => Set(ref _availableEncoders, value);
         }
     }
 }
