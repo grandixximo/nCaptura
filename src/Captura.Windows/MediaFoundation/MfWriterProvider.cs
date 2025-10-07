@@ -134,22 +134,9 @@ namespace Captura.Windows.MediaFoundation
             // Only provide MF options if compatible
             if (_isCompatible && _device != null)
             {
-                // Detect all available hardware encoders
+                // Detect all available hardware encoders and offer them all
                 var availableEncoders = DetectAllHardwareEncoders();
-                
-                // Filter by selected encoder if specified
-                var selectedEncoder = _settings?.SelectedEncoder;
-                if (!string.IsNullOrEmpty(selectedEncoder))
-                {
-                    var matchingEncoder = availableEncoders.FirstOrDefault(e => e.CodecName == selectedEncoder);
-                    if (matchingEncoder != default)
-                    {
-                        yield return new MfItem(_device, matchingEncoder.CodecName, matchingEncoder.FormatGuid, matchingEncoder.Extension, _warningMessage);
-                        yield break;
-                    }
-                }
 
-                // If no selection or selection not found, offer all encoders
                 foreach (var encoder in availableEncoders)
                 {
                     yield return new MfItem(_device, encoder.CodecName, encoder.FormatGuid, encoder.Extension, _warningMessage);
