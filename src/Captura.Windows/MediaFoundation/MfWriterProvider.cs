@@ -167,20 +167,27 @@ namespace Captura.Windows.MediaFoundation
         {
             var encoders = new List<(string, Guid, string)>();
 
-            // Check for H.264 hardware encoder
-            if (CheckForHardwareEncoder(VideoFormatGuids.H264))
-                encoders.Add(("H.264", VideoFormatGuids.H264, ".mp4"));
+            try
+            {
+                // Check for H.264 hardware encoder
+                if (CheckForHardwareEncoder(VideoFormatGuids.H264))
+                    encoders.Add(("H.264", VideoFormatGuids.H264, ".mp4"));
 
-            // Check for H.265 (HEVC) hardware encoder
-            if (CheckForHardwareEncoder(VideoFormatGuids.Hevc))
-                encoders.Add(("H.265 (HEVC)", VideoFormatGuids.Hevc, ".mp4"));
+                // Check for H.265 (HEVC) hardware encoder
+                if (CheckForHardwareEncoder(VideoFormatGuids.Hevc))
+                    encoders.Add(("H.265 (HEVC)", VideoFormatGuids.Hevc, ".mp4"));
 
-            // VP9 GUID (not in SharpDX VideoFormatGuids)
-            var vp9Guid = new Guid("A3DF5476-2858-4B1D-B9DC-0FC9E7F4F3F5");
-            if (CheckForHardwareEncoder(vp9Guid))
-                encoders.Add(("VP9", vp9Guid, ".webm"));
+                // VP9 GUID (not in SharpDX VideoFormatGuids)
+                var vp9Guid = new Guid("A3DF5476-2858-4B1D-B9DC-0FC9E7F4F3F5");
+                if (CheckForHardwareEncoder(vp9Guid))
+                    encoders.Add(("VP9", vp9Guid, ".webm"));
+            }
+            catch
+            {
+                // Detection failed, use fallback
+            }
 
-            // Fallback: If no encoders found but we got here, at least offer H.264
+            // Always offer at least H.264 - even if detection failed
             if (encoders.Count == 0)
                 encoders.Add(("H.264", VideoFormatGuids.H264, ".mp4"));
 
