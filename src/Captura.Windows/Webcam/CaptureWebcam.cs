@@ -435,6 +435,20 @@ namespace Captura.Webcam
                 {
                     cat = PinCategory.Capture;
                     hr = _captureGraphBuilder.RenderStream(cat, med, _videoDeviceFilter, _baseGrabFlt, null);
+                    
+                    if (hr < 0)
+                    {
+                        // Provide helpful error message based on HRESULT
+                        var errorMsg = hr switch
+                        {
+                            unchecked((int)0x80070005) => "Access denied - Check Windows camera privacy settings",
+                            unchecked((int)0x8007048F) => "Camera is in use by another application",
+                            unchecked((int)0x80040217) => "No capture or preview pin found on device",
+                            unchecked((int)0x80004005) => "Unspecified error - Device may not support DirectShow",
+                            _ => $"DirectShow error (HRESULT: 0x{hr:X8})"
+                        };
+                        throw new COMException($"Failed to render camera stream: {errorMsg}", hr);
+                    }
                 }
                 
                 if (hr < 0) Marshal.ThrowExceptionForHR(hr);

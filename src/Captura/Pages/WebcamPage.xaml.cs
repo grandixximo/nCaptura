@@ -5,6 +5,7 @@ using WSize = System.Windows.Size;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
+using Captura.Models;
 using Captura.ViewModels;
 using Captura.Webcam;
 using Captura.Windows.Gdi;
@@ -20,15 +21,18 @@ namespace Captura
         readonly ScreenShotModel _screenShotModel;
         readonly IPlatformServices _platformServices;
         readonly WebcamOverlayReactor _reactor;
+        readonly IMessageProvider _messageProvider;
 
         public WebcamPage(WebcamModel WebcamModel,
             ScreenShotModel ScreenShotModel,
             IPlatformServices PlatformServices,
-            WebcamOverlaySettings WebcamSettings)
+            WebcamOverlaySettings WebcamSettings,
+            IMessageProvider MessageProvider)
         {
             _webcamModel = WebcamModel;
             _screenShotModel = ScreenShotModel;
             _platformServices = PlatformServices;
+            _messageProvider = MessageProvider;
 
             _reactor = new WebcamOverlayReactor(WebcamSettings);
 
@@ -76,13 +80,23 @@ namespace Captura
             {
                 if (IsVisible && _webcamCapture == null)
                 {
-                    _webcamCapture = _webcamModel.InitCapture();
-
-                    if (_webcamCapture.Value is { } capture)
+                    try
                     {
-                        _reactor.WebcamSize.OnNext(new WSize(capture.Width, capture.Height));
+                        _webcamCapture = _webcamModel.InitCapture();
 
-                        UpdateWebcamPreview();
+                        if (_webcamCapture.Value is { } capture)
+                        {
+                            _reactor.WebcamSize.OnNext(new WSize(capture.Width, capture.Height));
+
+                            UpdateWebcamPreview();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _messageProvider.ShowException(ex, "Failed to initialize webcam");
+                        
+                        // Reset to "No Webcam" selection on error
+                        _webcamModel.SelectedCam = NoWebcamItem.Instance;
                     }
                 }
                 else if (!IsVisible && _webcamCapture != null)
@@ -104,7 +118,17 @@ namespace Captura
 
             _webcamModel
                 .ObserveProperty(M => M.SelectedCam)
-                .Subscribe(M => UpdateWebcamPreview());
+                .Subscribe(M =>
+                {
+                    try
+                    {
+                        UpdateWebcamPreview();
+                    }
+                    catch (Exception ex)
+                    {
+                        _messageProvider.ShowException(ex, "Failed to update webcam preview");
+                    }
+                });
 
             _reactor.Location
                 .CombineLatest(_reactor.Size, (M, N) =>
