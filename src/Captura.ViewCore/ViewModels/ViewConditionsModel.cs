@@ -1,4 +1,4 @@
-﻿using System.Reactive.Linq;
+using System.Reactive.Linq;
 using System.Windows;
 using Captura.FFmpeg;
 using Captura.Models;
@@ -57,7 +57,7 @@ namespace Captura.ViewModels
 
             IsFFmpeg = VideoWritersViewModel
                 .ObserveProperty(M => M.SelectedVideoWriterKind)
-                .Select(M => M is FFmpegWriterProvider || M is StreamingWriterProvider)
+                .Select(M => M is FFmpegWriterProvider)
                 .ToReadOnlyReactivePropertySlim();
 
             IsVideoQuality = VideoWritersViewModel
