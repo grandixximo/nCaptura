@@ -194,6 +194,9 @@ namespace Captura
         
         void UpdateRegion()
         {
+            // Force layout update so ActualWidth/ActualHeight reflect current Width/Height
+            Region.UpdateLayout();
+            
             _region = Dispatcher.Invoke(() =>
                 new Rectangle((int)((Left + LeftOffset) * Dpi.X),
                     (int)((Top + TopOffset) * Dpi.Y),
