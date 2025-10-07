@@ -26,9 +26,7 @@ namespace Captura.ViewModels
                 if (_mfWriterProvider == null)
                     return Enumerable.Empty<string>();
 
-                return _mfWriterProvider
-                    .Select(item => item.ToString())
-                    .Distinct();
+                return _mfWriterProvider.GetAvailableEncoderNames();
             }
         }
     }

@@ -238,5 +238,15 @@ namespace Captura.Windows.MediaFoundation
                 return "Hardware-accelerated video encoding using Media Foundation";
             }
         }
+
+        public IEnumerable<string> GetAvailableEncoderNames()
+        {
+            if (!_isCompatible || _device == null)
+                return Enumerable.Empty<string>();
+
+            return DetectAllHardwareEncoders()
+                .Select(encoder => encoder.CodecName)
+                .ToList();
+        }
     }
 }
