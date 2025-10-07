@@ -9,7 +9,6 @@ namespace Captura.Video
     public class RegionSelectorProvider : IRegionProvider
     {
         readonly Lazy<RegionSelector> _regionSelector;
-        readonly RegionItem _regionItem;
         readonly RegionSelectorViewModel _viewModel;
 
         public RegionSelectorProvider(RegionSelectorViewModel ViewModel,
@@ -19,8 +18,6 @@ namespace Captura.Video
             _viewModel = ViewModel;
 
             _regionSelector = new Lazy<RegionSelector>(() => new RegionSelector(VideoSourcePicker));
-
-            _regionItem = new RegionItem(this, PlatformServices);
         }
 
         public bool SelectorVisible
@@ -48,13 +45,18 @@ namespace Captura.Video
                     System.Diagnostics.Debug.WriteLine($"[RegionSelectorProvider] Forwarding to RegionSelector window");
                     _regionSelector.Value.SelectedRegion = value;
                 }
-                
-                // Update the region item name
-                _regionItem.Name = value.ToString().Replace("{", "").Replace("}", "").Replace(",", ", ");
             }
         }
 
-        public IVideoItem VideoSource => _regionItem;
+        public IVideoItem VideoSource
+        {
+            get
+            {
+                // Ensure RegionSelector is created so we have a RegionItem to return
+                // This ensures there's only one RegionItem instance (the one in RegionSelector)
+                return _regionSelector.Value.VideoSource;
+            }
+        }
 
         public IntPtr Handle => _regionSelector.Value.Handle;
     }

@@ -23,6 +23,7 @@ namespace Captura.ViewModels
         readonly IDialogService _dialogService;
         readonly WebcamModel _webcamModel;
         readonly AudioSourceViewModel _audioSource;
+        readonly VideoWritersViewModel _videoWritersViewModel;
 
         public ICommand ShowPreviewCommand { get; }
         public ICommand OpenOutputFolderCommand { get; }
@@ -43,12 +44,14 @@ namespace Captura.ViewModels
             IFFmpegViewsProvider FFmpegViewsProvider,
             RememberByName RememberByName,
             WebcamModel WebcamModel,
-            AudioSourceViewModel AudioSource) : base(Settings, Loc)
+            AudioSourceViewModel AudioSource,
+            VideoWritersViewModel VideoWritersViewModel) : base(Settings, Loc)
         {
             _dialogService = DialogService;
             _rememberByName = RememberByName;
             _webcamModel = WebcamModel;
             _audioSource = AudioSource;
+            _videoWritersViewModel = VideoWritersViewModel;
 
             OutFolderDisplay = Settings
                 .ObserveProperty(M => M.OutPath)
