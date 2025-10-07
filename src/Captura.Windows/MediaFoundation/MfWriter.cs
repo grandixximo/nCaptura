@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using Captura.Audio;
 using Captura.Native;
@@ -16,7 +16,7 @@ namespace Captura.Windows.MediaFoundation
     {
         readonly Device _device;
         const int BitRate = 8_000_000;
-        readonly Guid _encodingFormat = VideoFormatGuids.H264;
+        readonly Guid _encodingFormat;
         readonly Guid _encodedAudioFormat = AudioFormatGuids.Aac;
         readonly long _frameDuration;
         readonly SinkWriter _writer;
@@ -61,13 +61,14 @@ namespace Captura.Windows.MediaFoundation
             return attr;
         }
 
-        public MfWriter(VideoWriterArgs Args, Device Device)
+        public MfWriter(VideoWriterArgs Args, Device Device, Guid EncodingFormat = default)
         {
             var inputFormat = Args.ImageProvider.DummyFrame is Texture2DFrame
                 ? VideoFormatGuids.NV12
                 : VideoFormatGuids.Rgb32;
 
             _device = Device;
+            _encodingFormat = EncodingFormat == default ? VideoFormatGuids.H264 : EncodingFormat;
 
             _frameDuration = TenPower7 / Args.FrameRate;
 

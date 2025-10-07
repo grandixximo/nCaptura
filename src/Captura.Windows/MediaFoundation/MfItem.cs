@@ -1,3 +1,4 @@
+using System;
 using Captura.Video;
 using SharpDX.Direct3D11;
 
@@ -7,31 +8,35 @@ namespace Captura.Windows.MediaFoundation
     {
         readonly Device _device;
         readonly string _warning;
+        readonly string _codecName;
+        readonly Guid _formatGuid;
+        readonly string _extension;
 
-        public string Extension => ".mp4";
+        public string Extension => _extension;
         
         public string Description
         {
             get
             {
-                var baseDesc = "H.264 Hardware encoder (MP4 + AAC audio)";
+                var baseDesc = $"{_codecName} Hardware encoder (MP4 + AAC audio)";
                 return string.IsNullOrEmpty(_warning) ? baseDesc : $"{baseDesc} - {_warning}";
             }
         }
 
-        readonly string _name = "H.264 (Hardware)";
-
-        public MfItem(Device Device, string Warning = null)
+        public MfItem(Device Device, string CodecName, Guid FormatGuid, string Extension, string Warning = null)
         {
             _device = Device;
+            _codecName = CodecName;
+            _formatGuid = FormatGuid;
+            _extension = Extension;
             _warning = Warning;
         }
 
-        public override string ToString() => _name;
+        public override string ToString() => $"{_codecName} (Hardware)";
 
         public virtual IVideoFileWriter GetVideoFileWriter(VideoWriterArgs Args)
         {
-            return new MfWriter(Args, _device);
+            return new MfWriter(Args, _device, _formatGuid);
         }
     }
 }
