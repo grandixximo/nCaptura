@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using DirectShowLib;
@@ -275,9 +275,10 @@ namespace Captura.Webcam
                 // Retreive the media control interface (for starting/stopping graph)
                 _mediaControl = (IMediaControl)_graphBuilder;
 
-                _videoInfoHeader = Marshal.PtrToStructure<VideoInfoHeader>(media.formatPtr);
-                Marshal.FreeCoTaskMem(media.formatPtr);
-                media.formatPtr = IntPtr.Zero;
+                // Note:
+                // The connected media type (including formatPtr) is only valid AFTER the graph connects.
+                // Reading media.formatPtr here (right after SetMediaType) can be null/invalid and crash.
+                // We correctly retrieve the connected media type in RenderGraph() via GetConnectedMediaType.
 
                 hr = _sampGrabber.SetBufferSamples(true);
 
@@ -423,11 +424,20 @@ namespace Captura.Webcam
             // Render preview stream (only if necessary)
             if (_wantPreviewRendered && !_isPreviewRendered)
             {
-                // Render preview (video -> renderer)
+                // Try Preview pin first; fall back to Capture pin if needed
                 var cat = PinCategory.Preview;
                 var med = MediaType.Video;
                 var hr = _captureGraphBuilder.RenderStream(cat, med, _videoDeviceFilter, _baseGrabFlt, null);
-                if (hr < 0) Marshal.ThrowExceptionForHR(hr);
+
+                if (hr < 0)
+                {
+                    // Some devices don't expose a Preview pin
+                    cat = PinCategory.Capture;
+                    hr = _captureGraphBuilder.RenderStream(cat, med, _videoDeviceFilter, _baseGrabFlt, null);
+
+                    if (hr < 0)
+                        Marshal.ThrowExceptionForHR(hr);
+                }
 
                 // Get the IVideoWindow interface
                 _videoWindow = (IVideoWindow)_graphBuilder;
@@ -461,10 +471,33 @@ namespace Captura.Webcam
                 if (hr < 0)
                     Marshal.ThrowExceptionForHR(hr);
 
-                if (media.formatType != FormatType.VideoInfo || media.formatPtr == IntPtr.Zero)
+                if (media.formatPtr == IntPtr.Zero)
                     throw new NotSupportedException("Unknown Grabber Media Format");
 
-                _videoInfoHeader = (VideoInfoHeader)Marshal.PtrToStructure(media.formatPtr, typeof(VideoInfoHeader));
+                // Support both VIDEOINFOHEADER and VIDEOINFOHEADER2
+                if (media.formatType == FormatType.VideoInfo)
+                {
+                    _videoInfoHeader = Marshal.PtrToStructure<VideoInfoHeader>(media.formatPtr);
+                }
+                else if (media.formatType == FormatType.VideoInfo2)
+                {
+                    var vih2 = Marshal.PtrToStructure<VideoInfoHeader2>(media.formatPtr);
+                    _videoInfoHeader = new VideoInfoHeader
+                    {
+                        BmiHeader = new BitmapInfoHeader
+                        {
+                            Width = vih2.BmiHeader.Width,
+                            Height = vih2.BmiHeader.Height,
+                            BitCount = vih2.BmiHeader.BitCount,
+                            Compression = vih2.BmiHeader.Compression,
+                            ImageSize = vih2.BmiHeader.ImageSize
+                        }
+                    };
+                }
+                else
+                {
+                    throw new NotSupportedException("Unsupported Grabber Media Format");
+                }
 
                 Marshal.FreeCoTaskMem(media.formatPtr);
                 media.formatPtr = IntPtr.Zero;
