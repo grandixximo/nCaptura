@@ -12,14 +12,21 @@ namespace Captura.Windows
     {
         public static void Load(IBinder Binder)
         {
-            // MF (Media Foundation) disabled - causes issues on Windows 11 (hanging at "saving video" with 0KB files)
-            // Hardware encoder compatibility problems with some GPU drivers
-            // Users should use FFmpeg instead which has better compatibility
-            //if (Windows8OrAbove)
-            //{
-            //    MfManager.Startup();
-            //    Binder.BindAsInterfaceAndClass<IVideoWriterProvider, MfWriterProvider>();
-            //}
+            if (Windows8OrAbove)
+            {
+                try
+                {
+                    MfManager.Startup();
+                    // MF provider now includes GPU detection and compatibility checks
+                    // Will automatically disable on incompatible hardware (AMD integrated graphics)
+                    Binder.BindAsInterfaceAndClass<IVideoWriterProvider, MfWriterProvider>();
+                }
+                catch
+                {
+                    // If MF fails to initialize, silently skip it
+                    // User will only see FFmpeg and SharpAvi options
+                }
+            }
 
             Binder.BindSingleton<WindowsSettings>();
             Binder.Bind<IPlatformServices, WindowsPlatformServices>();
@@ -36,11 +43,17 @@ namespace Captura.Windows
 
         public static void Unload()
         {
-            // MF disabled
-            //if (Windows8OrAbove)
-            //{
-            //    MfManager.Shutdown();
-            //}
+            if (Windows8OrAbove)
+            {
+                try
+                {
+                    MfManager.Shutdown();
+                }
+                catch
+                {
+                    // Ignore shutdown errors
+                }
+            }
         }
 
         public static bool Windows8OrAbove
