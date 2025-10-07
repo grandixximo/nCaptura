@@ -4,6 +4,8 @@ using System.Linq;
 using System;
 using Captura.SharpAvi;
 using Captura.Video;
+using Captura.Windows;
+using Captura.Windows.MediaFoundation;
 
 namespace Captura.ViewModels
 {
@@ -55,6 +57,22 @@ namespace Captura.ViewModels
             if (_videoWriters.Count > 0)
                 SelectedVideoWriter = _videoWriters[0];
 
+            // Prefer MF encoder selection from settings if MF is active
+            if (SelectedVideoWriterKind is MfWriterProvider)
+            {
+                var mfSettings = ServiceProvider.Get<WindowsSettings>()?.MediaFoundation;
+                var selectedByMfSetting = mfSettings == null
+                    ? null
+                    : AvailableVideoWriters.FirstOrDefault(M => M.ToString() == mfSettings.SelectedEncoder);
+
+                if (selectedByMfSetting != null)
+                {
+                    SelectedVideoWriter = selectedByMfSetting;
+                    return;
+                }
+            }
+
+            // Otherwise, try to restore previous selection by name
             var matchingVideoCodec = AvailableVideoWriters.FirstOrDefault(M => M.ToString() == lastVideoCodecName);
 
             if (matchingVideoCodec != null)
@@ -87,7 +105,22 @@ namespace Captura.ViewModels
         public IVideoWriterItem SelectedVideoWriter
         {
             get => _writer;
-            set => Set(ref _writer, value ?? AvailableVideoWriters.FirstOrDefault());
+            set
+            {
+                var newValue = value ?? AvailableVideoWriters.FirstOrDefault();
+                if (Set(ref _writer, newValue))
+                {
+                    // Keep MF encoder picker and writer selection in sync
+                    if (SelectedVideoWriterKind is MfWriterProvider)
+                    {
+                        var mfSettings = ServiceProvider.Get<WindowsSettings>()?.MediaFoundation;
+                        if (mfSettings != null)
+                        {
+                            mfSettings.SelectedEncoder = _writer?.ToString();
+                        }
+                    }
+                }
+            }
         }
 
         IVideoConverter _postWriter;
