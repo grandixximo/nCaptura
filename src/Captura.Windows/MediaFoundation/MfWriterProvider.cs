@@ -52,17 +52,14 @@ namespace Captura.Windows.MediaFoundation
         {
             try
             {
-                // Check if hardware H.264 encoder is available FIRST
+                // Check for hardware encoder for messaging, but do not disable MF if absent
                 var encoderInfo = DetectHardwareEncoder();
                 _hasHardwareEncoder = encoderInfo.IsAvailable;
-                _isCompatible = encoderInfo.IsAvailable;
                 _warningMessage = encoderInfo.Message;
 
-                // Only try to create device if hardware encoder exists
-                if (_isCompatible)
-                {
-                    _device = new Device(DriverType.Hardware, DeviceCreationFlags.BgraSupport);
-                }
+                // Create a D3D device for capture/processing regardless of hardware encoder presence
+                _device = new Device(DriverType.Hardware, DeviceCreationFlags.BgraSupport);
+                _isCompatible = true;
             }
             catch (Exception ex)
             {
@@ -128,7 +125,7 @@ namespace Captura.Windows.MediaFoundation
 
         public IEnumerator<IVideoWriterItem> GetEnumerator()
         {
-            // Only provide MF options if compatible
+            // Only provide MF options if initialized successfully
             if (_isCompatible && _device != null)
             {
                 // Detect all available hardware encoders
@@ -158,9 +155,11 @@ namespace Captura.Windows.MediaFoundation
             if (CheckForHardwareEncoder(vp9Guid))
                 encoders.Add(("VP9", vp9Guid, ".webm"));
 
-            // Fallback: If no encoders found but we got here, at least offer H.264
+            // Fallback: If no hardware encoders found, still offer H.264 for software MFTs
             if (encoders.Count == 0)
+            {
                 encoders.Add(("H.264", VideoFormatGuids.H264, ".mp4"));
+            }
 
             return encoders;
         }
@@ -231,11 +230,14 @@ namespace Captura.Windows.MediaFoundation
             {
                 if (!_isCompatible)
                     return $"Media Foundation (Disabled: {_warningMessage})";
-                
-                if (!string.IsNullOrEmpty(_warningMessage))
-                    return $"Hardware encoders - {_warningMessage}";
-                
-                return "Hardware-accelerated video encoding using Media Foundation";
+
+                if (_hasHardwareEncoder)
+                    return "Hardware-accelerated video encoding using Media Foundation";
+
+                // Hardware not available, but software fallback may still work
+                return string.IsNullOrEmpty(_warningMessage)
+                    ? "Media Foundation software encoding (hardware encoder not detected)"
+                    : $"Media Foundation - {_warningMessage}";
             }
         }
     }
