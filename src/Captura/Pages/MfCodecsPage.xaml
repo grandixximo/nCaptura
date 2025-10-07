@@ -1,0 +1,34 @@
+<Page x:Class="Captura.MfCodecsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Media Foundation"
+      DataContext="{Binding MfCodecsViewModel, Source={StaticResource ServiceLocator}}">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Label Content="Hardware Encoder"
+               ContentStringFormat="{}{0}: "
+               Margin="0,5,10,5"
+               VerticalAlignment="Center"/>
+
+        <ComboBox Grid.Column="1"
+                  ItemsSource="{Binding AvailableEncoders}"
+                  SelectedValue="{Binding Settings.SelectedEncoder, Mode=TwoWay}"
+                  Margin="0,5"
+                  VerticalAlignment="Center"/>
+
+        <TextBlock Grid.Row="1"
+                   Grid.ColumnSpan="2"
+                   Text="Select the hardware encoder to use for Media Foundation encoding. Only encoders supported by your GPU will be available."
+                   TextWrapping="Wrap"
+                   FontWeight="Light"
+                   Margin="0,10,0,0"/>
+    </Grid>
+</Page>
