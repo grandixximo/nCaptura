@@ -1,4 +1,6 @@
-﻿namespace Captura.Windows
+using Captura.Windows.MediaFoundation;
+
+namespace Captura.Windows
 {
     public class WindowsSettings : PropertyStore
     {
@@ -7,5 +9,7 @@
             get => Get(false);
             set => Set(value);
         }
+
+        public MfSettings MediaFoundation { get; } = new MfSettings();
     }
 }

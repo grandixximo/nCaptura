@@ -131,9 +131,13 @@ namespace Captura.Windows.MediaFoundation
             // Only provide MF options if compatible
             if (_isCompatible && _device != null)
             {
-                // Simple and safe: Just offer H.264
-                // Users can use FFmpeg for H.265, VP9, etc.
-                yield return new MfItem(_device, "H.264", VideoFormatGuids.H264, ".mp4", _warningMessage);
+                // Detect all available hardware encoders
+                var availableEncoders = DetectAllHardwareEncoders();
+
+                foreach (var encoder in availableEncoders)
+                {
+                    yield return new MfItem(_device, encoder.CodecName, encoder.FormatGuid, encoder.Extension, _warningMessage);
+                }
             }
         }
 

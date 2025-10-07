@@ -1,4 +1,4 @@
-﻿using Captura.FFmpeg;
+using Captura.FFmpeg;
 using Captura.Hotkeys;
 using Captura.Models;
 
@@ -21,6 +21,7 @@ namespace Captura.ViewModels
             Binder.BindSingleton<HotkeysViewModel>();
             Binder.BindSingleton<FFmpegLogViewModel>();
             Binder.BindSingleton<FFmpegCodecsViewModel>();
+            Binder.BindSingleton<MfCodecsViewModel>();
             Binder.BindSingleton<ViewConditionsModel>();
 
             Binder.BindSingleton<VideoSourcesViewModel>();

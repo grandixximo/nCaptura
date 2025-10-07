@@ -4,6 +4,7 @@ using Captura.FFmpeg;
 using Captura.Models;
 using Captura.Video;
 using Captura.Webcam;
+using Captura.Windows.MediaFoundation;
 using Reactive.Bindings;
 using Reactive.Bindings.Extensions;
 
@@ -58,6 +59,11 @@ namespace Captura.ViewModels
             IsFFmpeg = VideoWritersViewModel
                 .ObserveProperty(M => M.SelectedVideoWriterKind)
                 .Select(M => M is FFmpegWriterProvider)
+                .ToReadOnlyReactivePropertySlim();
+
+            IsMf = VideoWritersViewModel
+                .ObserveProperty(M => M.SelectedVideoWriterKind)
+                .Select(M => M is MfWriterProvider)
                 .ToReadOnlyReactivePropertySlim();
 
             IsVideoQuality = VideoWritersViewModel
@@ -157,6 +163,8 @@ namespace Captura.ViewModels
         public IReadOnlyReactiveProperty<bool> MultipleVideoWriters { get; }
 
         public IReadOnlyReactiveProperty<bool> IsFFmpeg { get; }
+
+        public IReadOnlyReactiveProperty<bool> IsMf { get; }
 
         public IReadOnlyReactiveProperty<bool> IsVideoQuality { get; }
 
