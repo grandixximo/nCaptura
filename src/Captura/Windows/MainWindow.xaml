@@ -7,20 +7,13 @@
         ResizeMode="CanMinimize"
         Icon="../Images/Captura.ico"
         SizeToContent="Height"
-        MaxWidth="{Binding Settings.UI.UseClassicUI, Converter={StaticResource BoolToMaxWidthConverter}, FallbackValue=440}"
-        Title="{Binding Settings.UI.UseClassicUI, Converter={StaticResource BoolToTitleConverter}}"
+        MaxWidth="440"
+        Title="Captura"
         Left="{Binding Settings.UI.MainWindowLeft, Mode=TwoWay}"
         Top="{Binding Settings.UI.MainWindowTop, Mode=TwoWay}"
         BorderThickness="1"
         BorderBrush="{DynamicResource Accent}"
         Topmost="{Binding Settings.UI.MainWindowTopmost}">
-    <Window.Resources>
-        <!-- Converter for MaxWidth: Classic=450, Modern=440 -->
-        <local:BoolToValueConverter x:Key="BoolToMaxWidthConverter" TrueValue="450" FalseValue="440"/>
-        
-        <!-- Converter for Title: Classic shows timer, Modern just "Captura" -->
-        <local:UIModeTitleConverter x:Key="BoolToTitleConverter"/>
-    </Window.Resources>
     <WindowChrome.WindowChrome>
         <WindowChrome GlassFrameThickness="1"
                       UseAeroCaptionButtons="False"

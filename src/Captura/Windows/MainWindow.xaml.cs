@@ -169,10 +169,16 @@ namespace Captura
 
             if (_helper.Settings.UI.UseClassicUI)
             {
+                // Classic UI settings
+                MaxWidth = 450;
+                Title = "Captura"; // Will be updated by timer if recording
                 LoadClassicLayout();
             }
             else
             {
+                // Modern UI settings
+                MaxWidth = 440;
+                Title = "Captura";
                 LoadModernLayout();
             }
         }
