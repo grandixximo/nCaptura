@@ -279,14 +279,6 @@
                         CommandParameter="/Pages/FFmpegLogsPage.xaml"
                         Padding="10,0"/>
 
-                <Button DockPanel.Dock="Right"
-                        Margin="5,0,0,0"
-                        Visibility="{Binding ViewConditions.IsMf.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}"
-                        Content="Configure"
-                        Command="GoToPage"
-                        CommandParameter="/Pages/MfCodecsPage.xaml"
-                        Padding="10,0"/>
-
                 <ComboBox ItemsSource="{Binding VideoWritersViewModel.AvailableVideoWriters, Source={StaticResource ServiceLocator}}" 
                           SelectedValue="{Binding VideoWritersViewModel.SelectedVideoWriter, Mode=TwoWay, Source={StaticResource ServiceLocator}}"
                           IsEnabled="{Binding ViewConditions.IsEnabled.Value, Source={StaticResource ServiceLocator}}"
@@ -304,6 +296,16 @@
                         </StackPanel>
                     </ComboBox.ToolTip>
                 </ComboBox>
+            </DockPanel>
+
+            <DockPanel Margin="0,5"
+                       IsEnabled="{Binding ViewConditions.IsEnabled.Value, Source={StaticResource ServiceLocator}}"
+                       Visibility="{Binding ViewConditions.IsMf.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Label Content="Hardware Encoder"
+                       ContentStringFormat="{}{0}:"/>
+                <ComboBox ItemsSource="{Binding MfCodecsViewModel.AvailableEncoders, Source={StaticResource ServiceLocator}}"
+                          SelectedValue="{Binding MfCodecsViewModel.Settings.SelectedEncoder, Mode=TwoWay, Source={StaticResource ServiceLocator}}"
+                          Margin="5,0"/>
             </DockPanel>
 
             <DockPanel Margin="0,5"
