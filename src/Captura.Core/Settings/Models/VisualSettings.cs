@@ -1,4 +1,4 @@
-﻿namespace Captura
+namespace Captura
 {
     public class VisualSettings : PropertyStore
     {
@@ -47,6 +47,12 @@
         public string Language
         {
             get => Get("en");
+            set => Set(value);
+        }
+
+        public bool UseClassicUI
+        {
+            get => Get<bool>();
             set => Set(value);
         }
     }

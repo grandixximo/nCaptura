@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 using System.Linq;
 using System.Windows;
 using System.Windows.Forms;
@@ -119,5 +119,22 @@ namespace Captura
         void HideButton_Click(object Sender, RoutedEventArgs Args) => Hide();
 
         void ShowMainWindow(object Sender, RoutedEventArgs E) => this.ShowAndFocus();
+
+        void UIToggleButton_Click(object Sender, RoutedEventArgs Args)
+        {
+            // Toggle the UI mode setting
+            _helper.Settings.UI.UseClassicUI = !_helper.Settings.UI.UseClassicUI;
+            
+            // Save the settings
+            _helper.Settings.Save();
+            
+            // Show a message to inform the user
+            var mode = _helper.Settings.UI.UseClassicUI ? "Classic" : "New";
+            System.Windows.MessageBox.Show(
+                $"UI mode switched to {mode}.\n\nPlease restart the application for changes to take effect.",
+                "UI Mode Changed",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
     }
 }
