@@ -27,6 +27,19 @@ namespace Captura.Windows.MediaFoundation
         All = 0x0000003F
     }
 
+    // P/Invoke for MFTEnumEx (not available in SharpDX)
+    static class MfNative
+    {
+        [DllImport("mfplat.dll", ExactSpelling = true)]
+        public static extern int MFTEnumEx(
+            Guid guidCategory,
+            int flags,
+            IntPtr pInputType,
+            IntPtr pOutputType,
+            out IntPtr pppMFTActivate,
+            out int pnumMFTActivate);
+    }
+
     // ReSharper disable once ClassNeverInstantiated.Global
     public class MfWriterProvider : IVideoWriterProvider
     {
@@ -180,9 +193,10 @@ namespace Captura.Windows.MediaFoundation
             if (CheckForHardwareEncoder(VideoFormatGuids.Hevc))
                 encoders.Add(("H.265 (HEVC)", VideoFormatGuids.Hevc, ".mp4"));
 
-            // Check for VP9 hardware encoder
-            if (CheckForHardwareEncoder(VideoFormatGuids.VP90))
-                encoders.Add(("VP9", VideoFormatGuids.VP90, ".webm"));
+            // VP9 GUID (not in SharpDX VideoFormatGuids)
+            var vp9Guid = new Guid("A3DF5476-2858-4B1D-B9DC-0FC9E7F4F3F5");
+            if (CheckForHardwareEncoder(vp9Guid))
+                encoders.Add(("VP9", vp9Guid, ".webm"));
 
             // Fallback: If no encoders found but we got here, at least offer H.264
             if (encoders.Count == 0)
@@ -193,41 +207,51 @@ namespace Captura.Windows.MediaFoundation
 
         static bool CheckForHardwareEncoder(Guid codecGuid)
         {
+            IntPtr pActivate = IntPtr.Zero;
+            
             try
             {
                 var flags = (int)(MftEnumFlag.Hardware | MftEnumFlag.SortAndFilter);
                 
-                var inputType = new MediaType();
-                inputType.Set(MediaTypeAttributeKeys.MajorType, MediaTypeGuids.Video);
-                
+                // Create output type for the codec we're looking for
                 var outputType = new MediaType();
                 outputType.Set(MediaTypeAttributeKeys.MajorType, MediaTypeGuids.Video);
                 outputType.Set(MediaTypeAttributeKeys.Subtype, codecGuid);
+                
+                // Get native pointer for MFT_REGISTER_TYPE_INFO
+                var pOutputType = outputType.NativePointer;
 
-                var result = MediaFactory.TEnumEx(
+                // Call native MFTEnumEx
+                var result = MfNative.MFTEnumEx(
                     TransformCategoryGuids.VideoEncoder,
                     flags,
-                    inputType,
-                    outputType,
-                    out var transforms,
+                    IntPtr.Zero,  // No input type restriction
+                    pOutputType,  // Output must be our codec
+                    out pActivate,
                     out var count);
 
-                inputType.Dispose();
                 outputType.Dispose();
 
-                if (transforms != null)
+                // Release the MFT activate array
+                if (pActivate != IntPtr.Zero)
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        if (transforms[i] != null)
-                            Marshal.ReleaseComObject(transforms[i]);
+                        var activatePtr = Marshal.ReadIntPtr(pActivate, i * IntPtr.Size);
+                        if (activatePtr != IntPtr.Zero)
+                            Marshal.Release(activatePtr);
                     }
+                    Marshal.FreeCoTaskMem(pActivate);
                 }
 
                 return result == 0 && count > 0;
             }
             catch
             {
+                if (pActivate != IntPtr.Zero)
+                {
+                    try { Marshal.FreeCoTaskMem(pActivate); } catch { }
+                }
                 return false;
             }
         }
