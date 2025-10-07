@@ -68,23 +68,20 @@ namespace Captura.Windows.MediaFoundation
                 var info = new MfCodecInfo { Codec = name };
 
                 // Encoders
-                var encoderActivates = MediaFactory.FindTransform(
-                    TransformCategoryGuids.VideoEncoder,
-                    TransformEnumFlag.Hardware);
-
-                info.Encoder.HardwarePresent = false;
+                info.Encoder.HardwarePresent = HasHardwareEncoder(encodedGuid);
                 info.Encoder.AcceptsNV12 = false;
                 info.Encoder.AcceptsP010 = false;
 
+                // Probe acceptance by attempting to configure available encoders
+                var encoderActivates = MediaFactory.FindTransform(
+                    TransformCategoryGuids.VideoEncoder,
+                    TransformEnumFlag.All);
                 foreach (var activate in encoderActivates)
                 {
                     try
                     {
                         using var transform = activate.ActivateObject<Transform>();
                         transform.ProcessMessage(TMessageType.SetD3DManager, dxgiManager.NativePointer);
-
-                        if (!info.Encoder.HardwarePresent && TryConfigureEncoder(transform, encodedGuid, VideoFormatGuids.NV12))
-                            info.Encoder.HardwarePresent = true;
 
                         if (TryConfigureEncoder(transform, encodedGuid, VideoFormatGuids.NV12))
                             info.Encoder.AcceptsNV12 = true;
@@ -103,23 +100,19 @@ namespace Captura.Windows.MediaFoundation
                 }
 
                 // Decoders
-                var decoderActivates = MediaFactory.FindTransform(
-                    TransformCategoryGuids.VideoDecoder,
-                    TransformEnumFlag.Hardware);
-
-                info.Decoder.HardwarePresent = false;
+                info.Decoder.HardwarePresent = HasHardwareDecoder(encodedGuid);
                 info.Decoder.OutputsNV12 = false;
                 info.Decoder.OutputsP010 = false;
 
+                var decoderActivates = MediaFactory.FindTransform(
+                    TransformCategoryGuids.VideoDecoder,
+                    TransformEnumFlag.All);
                 foreach (var activate in decoderActivates)
                 {
                     try
                     {
                         using var transform = activate.ActivateObject<Transform>();
                         transform.ProcessMessage(TMessageType.SetD3DManager, dxgiManager.NativePointer);
-
-                        if (!info.Decoder.HardwarePresent && TryConfigureDecoder(transform, encodedGuid, VideoFormatGuids.NV12))
-                            info.Decoder.HardwarePresent = true;
 
                         if (TryConfigureDecoder(transform, encodedGuid, VideoFormatGuids.NV12))
                             info.Decoder.OutputsNV12 = true;
