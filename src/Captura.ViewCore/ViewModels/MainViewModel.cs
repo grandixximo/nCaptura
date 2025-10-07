@@ -1,4 +1,4 @@
-﻿using Captura.Models;
+using Captura.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,6 +8,7 @@ using Captura.FFmpeg;
 using Captura.Hotkeys;
 using Captura.Loc;
 using Captura.Video;
+using Captura.Webcam;
 using Reactive.Bindings;
 using Reactive.Bindings.Extensions;
 
@@ -20,6 +21,8 @@ namespace Captura.ViewModels
 
         readonly RememberByName _rememberByName;
         readonly IDialogService _dialogService;
+        readonly WebcamModel _webcamModel;
+        readonly AudioSourceViewModel _audioSource;
 
         public ICommand ShowPreviewCommand { get; }
         public ICommand OpenOutputFolderCommand { get; }
@@ -27,6 +30,7 @@ namespace Captura.ViewModels
         public ICommand SelectFFmpegFolderCommand { get; }
         public ICommand ResetFFmpegFolderCommand { get; }
         public ICommand TrayLeftClickCommand { get; }
+        public ICommand RefreshCommand { get; }
 
         public IReadOnlyReactiveProperty<string> OutFolderDisplay { get; }
 
@@ -37,10 +41,14 @@ namespace Captura.ViewModels
             IDialogService DialogService,
             RecordingModel RecordingModel,
             IFFmpegViewsProvider FFmpegViewsProvider,
-            RememberByName RememberByName) : base(Settings, Loc)
+            RememberByName RememberByName,
+            WebcamModel WebcamModel,
+            AudioSourceViewModel AudioSource) : base(Settings, Loc)
         {
             _dialogService = DialogService;
             _rememberByName = RememberByName;
+            _webcamModel = WebcamModel;
+            _audioSource = AudioSource;
 
             OutFolderDisplay = Settings
                 .ObserveProperty(M => M.OutPath)
@@ -65,7 +73,15 @@ namespace Captura.ViewModels
 
             TrayLeftClickCommand = new ReactiveCommand()
                 .WithSubscribe(() => HotKeyManager.FakeHotkey(Settings.Tray.LeftClickAction));
+
+            RefreshCommand = new DelegateCommand(Refresh);
             #endregion
+        }
+
+        void Refresh()
+        {
+            _webcamModel.Refresh();
+            _audioSource.RefreshCommand.Execute(null);
         }
 
         public void Init(bool Persist, bool Remembered)
