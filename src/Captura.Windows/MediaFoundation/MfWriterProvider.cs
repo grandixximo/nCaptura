@@ -47,9 +47,12 @@ namespace Captura.Windows.MediaFoundation
         readonly bool _isCompatible;
         readonly string _warningMessage;
         readonly bool _hasHardwareEncoder;
+        readonly MfSettings _settings;
 
-        public MfWriterProvider()
+        public MfWriterProvider(WindowsSettings WindowsSettings)
         {
+            _settings = WindowsSettings.MediaFoundation;
+            
             try
             {
                 // Check if hardware H.264 encoder is available FIRST
@@ -133,7 +136,20 @@ namespace Captura.Windows.MediaFoundation
             {
                 // Detect all available hardware encoders
                 var availableEncoders = DetectAllHardwareEncoders();
+                
+                // Filter by selected encoder if specified
+                var selectedEncoder = _settings?.SelectedEncoder;
+                if (!string.IsNullOrEmpty(selectedEncoder))
+                {
+                    var matchingEncoder = availableEncoders.FirstOrDefault(e => e.CodecName == selectedEncoder);
+                    if (matchingEncoder != default)
+                    {
+                        yield return new MfItem(_device, matchingEncoder.CodecName, matchingEncoder.FormatGuid, matchingEncoder.Extension, _warningMessage);
+                        yield break;
+                    }
+                }
 
+                // If no selection or selection not found, offer all encoders
                 foreach (var encoder in availableEncoders)
                 {
                     yield return new MfItem(_device, encoder.CodecName, encoder.FormatGuid, encoder.Extension, _warningMessage);
