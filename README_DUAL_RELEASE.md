@@ -72,9 +72,10 @@ Documentation about the classic UI build on the `classic-ui-modern-fixes` branch
 |--------|------------------|-----------------|
 | **Branch** | main | classic-ui-modern-fixes |
 | **UI Version** | Latest (10.0+) | 8.0.0 style |
-| **About Page** | Multi-contributor | MathewSachin only |
-| **Donation Link** | Hidden | PayPal visible |
-| **GitHub Link** | grandixximo/nCaptura | MathewSachin/Captura |
+| **About Page** | Modern layout | Classic layout |
+| **Author Credits** | All contributors | All contributors |
+| **Donation Link** | PayPal visible | PayPal visible |
+| **GitHub Link** | grandixximo/nCaptura | grandixximo/nCaptura |
 | **Functionality** | 100% identical | 100% identical |
 | **Bug Fixes** | All included | All included |
 

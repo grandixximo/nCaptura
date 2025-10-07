@@ -313,15 +313,15 @@ jobs:
           
           | Feature | nCaptura (Modern) | Captura Classic |
           |---------|------------------|-----------------|
-          | Latest UI improvements | ✅ | ❌ |
+          | Modern UI improvements | ✅ | ❌ |
           | Classic 8.0.0 UI design | ❌ | ✅ |
-          | Original author attribution | ❌ | ✅ |
-          | PayPal donation link | ❌ | ✅ |
+          | All author attributions | ✅ | ✅ |
+          | PayPal donation link | ✅ | ✅ |
           | All bug fixes | ✅ | ✅ |
           | FFmpeg improvements | ✅ | ✅ |
           
           **💡 Recommendation:**
-          - Choose **nCaptura** if you want the latest UI design
+          - Choose **nCaptura** if you want the modern UI design
           - Choose **Captura Classic** if you prefer the original 8.0.0 interface
           
           ---
