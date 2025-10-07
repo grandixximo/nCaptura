@@ -46,6 +46,7 @@ namespace Captura.Windows.MediaFoundation
         readonly Device _device;
         readonly bool _isCompatible;
         readonly string _warningMessage;
+        readonly bool _hasHardwareEncoder;
 
         public MfWriterProvider()
         {
@@ -53,6 +54,7 @@ namespace Captura.Windows.MediaFoundation
             {
                 // Check if hardware H.264 encoder is available FIRST
                 var encoderInfo = DetectHardwareEncoder();
+                _hasHardwareEncoder = encoderInfo.IsAvailable;
                 _isCompatible = encoderInfo.IsAvailable;
                 _warningMessage = encoderInfo.Message;
 
@@ -65,6 +67,7 @@ namespace Captura.Windows.MediaFoundation
             catch (Exception ex)
             {
                 _isCompatible = false;
+                _hasHardwareEncoder = false;
                 _warningMessage = $"Failed to initialize Media Foundation: {ex.Message}";
                 _device = null;
             }
@@ -128,8 +131,23 @@ namespace Captura.Windows.MediaFoundation
             // Only provide MF options if compatible
             if (_isCompatible && _device != null)
             {
-                // Detect all available hardware encoders
-                var availableEncoders = DetectAllHardwareEncoders();
+                List<(string CodecName, Guid FormatGuid, string Extension)> availableEncoders;
+                
+                if (_hasHardwareEncoder)
+                {
+                    // Hardware mode: Only show codecs with hardware support
+                    availableEncoders = DetectAllHardwareEncoders();
+                }
+                else
+                {
+                    // Software mode: Offer all codecs (software encoding)
+                    availableEncoders = new List<(string, Guid, string)>
+                    {
+                        ("H.264", VideoFormatGuids.H264, ".mp4"),
+                        ("H.265 (HEVC)", VideoFormatGuids.Hevc, ".mp4"),
+                        ("VP9", new Guid("A3DF5476-2858-4B1D-B9DC-0FC9E7F4F3F5"), ".webm")
+                    };
+                }
 
                 foreach (var encoder in availableEncoders)
                 {
