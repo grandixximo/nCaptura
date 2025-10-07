@@ -143,37 +143,64 @@ namespace Captura.Windows.MediaFoundation
             var encoders = new List<(string, Guid, string)>();
 
             // Check for H.264 hardware encoder
-            if (CheckForHardwareEncoder(VideoFormatGuids.H264))
+            if (CheckForHardwareEncoderDetailed(VideoFormatGuids.H264, out var h264Error))
+            {
                 encoders.Add(("H.264", VideoFormatGuids.H264, ".mp4"));
+            }
+            else
+            {
+                // Log the reason H.264 failed (for debugging)
+                System.Diagnostics.Debug.WriteLine($"H.264 hardware encoder check failed: {h264Error}");
+            }
 
             // Check for H.265 (HEVC) hardware encoder
-            if (CheckForHardwareEncoder(VideoFormatGuids.Hevc))
+            if (CheckForHardwareEncoderDetailed(VideoFormatGuids.Hevc, out var hevcError))
+            {
                 encoders.Add(("H.265 (HEVC)", VideoFormatGuids.Hevc, ".mp4"));
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"H.265 hardware encoder check failed: {hevcError}");
+            }
 
             // VP9 GUID (not in SharpDX VideoFormatGuids)
             var vp9Guid = new Guid("A3DF5476-2858-4B1D-B9DC-0FC9E7F4F3F5");
-            if (CheckForHardwareEncoder(vp9Guid))
+            if (CheckForHardwareEncoderDetailed(vp9Guid, out var vp9Error))
+            {
                 encoders.Add(("VP9", vp9Guid, ".webm"));
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"VP9 hardware encoder check failed: {vp9Error}");
+            }
 
             // Fallback: If no hardware encoders found, still offer H.264 for software MFTs
             if (encoders.Count == 0)
             {
+                System.Diagnostics.Debug.WriteLine("No hardware encoders detected, falling back to software H.264");
                 encoders.Add(("H.264", VideoFormatGuids.H264, ".mp4"));
             }
 
             return encoders;
         }
 
-        static bool CheckForHardwareEncoder(Guid codecGuid)
+        static bool CheckForHardwareEncoder(Guid codecGuid) => CheckForHardwareEncoderDetailed(codecGuid, out _);
+
+        static bool CheckForHardwareEncoderDetailed(Guid codecGuid, out string errorMessage)
         {
+            errorMessage = null;
             IntPtr pActivate = IntPtr.Zero;
+            Activate activate = null;
+            MediaFoundation.Transform transform = null;
+            MediaType inputType = null;
+            MediaType outputType = null;
             
             try
             {
                 var flags = (int)(MftEnumFlag.Hardware | MftEnumFlag.SortAndFilter);
                 
                 // Create output type for the codec we're looking for
-                var outputType = new MediaType();
+                outputType = new MediaType();
                 outputType.Set(MediaTypeAttributeKeys.MajorType, MediaTypeGuids.Video);
                 outputType.Set(MediaTypeAttributeKeys.Subtype, codecGuid);
                 
@@ -189,29 +216,99 @@ namespace Captura.Windows.MediaFoundation
                     out pActivate,
                     out var count);
 
-                outputType.Dispose();
+                if (result != 0)
+                {
+                    errorMessage = $"MFTEnumEx failed with HRESULT 0x{result:X8}";
+                    return false;
+                }
 
+                if (count == 0)
+                {
+                    errorMessage = "No hardware encoders enumerated for this codec";
+                    return false;
+                }
+
+                // Try to actually instantiate the first encoder to verify it works
+                var firstActivatePtr = Marshal.ReadIntPtr(pActivate, 0);
+                if (firstActivatePtr == IntPtr.Zero)
+                {
+                    errorMessage = "Encoder activate pointer is null";
+                    return false;
+                }
+
+                activate = new Activate(firstActivatePtr);
+                
+                // Actually activate the transform (this tests if it can be created)
+                try
+                {
+                    transform = activate.ActivateObject<MediaFoundation.Transform>();
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = $"Failed to activate encoder: {ex.Message}";
+                    return false;
+                }
+                
+                if (transform == null)
+                {
+                    errorMessage = "Encoder transform is null after activation";
+                    return false;
+                }
+
+                // Try to set basic input/output types to verify encoder is functional
+                // Create a test input type (NV12 is widely supported)
+                inputType = new MediaType();
+                inputType.Set(MediaTypeAttributeKeys.MajorType, MediaTypeGuids.Video);
+                inputType.Set(MediaTypeAttributeKeys.Subtype, VideoFormatGuids.NV12);
+                inputType.Set(MediaTypeAttributeKeys.FrameSize, ((long)1920 << 32) | 1080);
+                inputType.Set(MediaTypeAttributeKeys.FrameRate, ((long)30 << 32) | 1);
+                inputType.Set(MediaTypeAttributeKeys.InterlaceMode, (int)VideoInterlaceMode.Progressive);
+
+                // Try setting the input type - if this fails, encoder is not functional
+                try
+                {
+                    transform.SetInputType(0, inputType, 0);
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = $"Encoder failed to accept input format: {ex.Message}";
+                    return false;
+                }
+
+                // Encoder enumerated and successfully instantiated
+                errorMessage = null;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Unexpected error: {ex.Message}";
+                return false;
+            }
+            finally
+            {
+                // Clean up all COM objects
+                inputType?.Dispose();
+                outputType?.Dispose();
+                transform?.Dispose();
+                activate?.Dispose();
+                
                 // Release the MFT activate array
                 if (pActivate != IntPtr.Zero)
                 {
-                    for (int i = 0; i < count; i++)
+                    try
                     {
-                        var activatePtr = Marshal.ReadIntPtr(pActivate, i * IntPtr.Size);
-                        if (activatePtr != IntPtr.Zero)
+                        // Release up to 10 activate objects (reasonable max)
+                        for (int i = 0; i < 10; i++)
+                        {
+                            var activatePtr = Marshal.ReadIntPtr(pActivate, i * IntPtr.Size);
+                            if (activatePtr == IntPtr.Zero)
+                                break;
                             Marshal.Release(activatePtr);
+                        }
+                        Marshal.FreeCoTaskMem(pActivate);
                     }
-                    Marshal.FreeCoTaskMem(pActivate);
+                    catch { }
                 }
-
-                return result == 0 && count > 0;
-            }
-            catch
-            {
-                if (pActivate != IntPtr.Zero)
-                {
-                    try { Marshal.FreeCoTaskMem(pActivate); } catch { }
-                }
-                return false;
             }
         }
 
