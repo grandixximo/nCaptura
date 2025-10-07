@@ -1,4 +1,4 @@
-﻿using Captura.Audio;
+using Captura.Audio;
 using Captura.Video;
 
 namespace Captura.FFmpeg
@@ -9,7 +9,8 @@ namespace Captura.FFmpeg
         {
             Binder.BindSingleton<FFmpegSettings>();
             Binder.BindAsInterfaceAndClass<IVideoWriterProvider, FFmpegWriterProvider>();
-            Binder.BindAsInterfaceAndClass<IVideoWriterProvider, StreamingWriterProvider>();
+            // Streaming provider removed - was experimental/not working
+            // Binder.BindAsInterfaceAndClass<IVideoWriterProvider, StreamingWriterProvider>();
 
             foreach (var audioItem in FFmpegAudioItem.Items)
             {
