@@ -241,12 +241,13 @@ namespace Captura.Windows.MediaFoundation
 
         public IEnumerable<string> GetAvailableEncoderNames()
         {
-            if (!_isCompatible || _device == null)
+            // Don't require _device for listing encoders - just detect what's available
+            var encoders = DetectAllHardwareEncoders();
+            
+            if (encoders.Count == 0)
                 return Enumerable.Empty<string>();
 
-            return DetectAllHardwareEncoders()
-                .Select(encoder => encoder.CodecName)
-                .ToList();
+            return encoders.Select(encoder => encoder.CodecName).ToList();
         }
     }
 }
