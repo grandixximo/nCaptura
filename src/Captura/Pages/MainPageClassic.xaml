@@ -3,8 +3,7 @@
       xmlns:local="clr-namespace:Captura"
       xmlns:mui="http://firstfloorsoftware.com/ModernUI"
       DataContext="{Binding MainViewModel, Source={StaticResource ServiceLocator}}"
-      x:Class="Captura.MainPage"
-      x:ClassModifier="public">
+      x:Class="Captura.MainPageClassic">
     <DockPanel Margin="-5,0,0,0">
         <DockPanel DockPanel.Dock="Top">
             <StackPanel Orientation="Horizontal"

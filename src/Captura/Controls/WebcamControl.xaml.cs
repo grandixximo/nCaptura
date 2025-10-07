@@ -9,7 +9,7 @@ namespace Captura
     {
         public CaptureWebcam Capture { get; private set; }
 
-        public Filter VideoDevice { get; set; }
+        public Webcam.Filter VideoDevice { get; set; }
 
         public WebcamControl()
         {

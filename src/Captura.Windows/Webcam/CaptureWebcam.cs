@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using DirectShowLib;
@@ -10,7 +10,7 @@ namespace Captura.Webcam
     /// <summary>
     /// Gets the video output of a webcam or other video device.
     /// </summary>
-    class CaptureWebcam : ISampleGrabberCB, IDisposable
+    public class CaptureWebcam : ISampleGrabberCB, IDisposable
     {
         #region Fields
         /// <summary> 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
@@ -9,7 +9,7 @@ namespace Captura.Webcam
     /// <summary>
     ///  Represents a DirectShow filter (e.g. video capture device, compression codec).
     /// </summary>
-    class Filter : IComparable
+    public class Filter : IComparable
     {
         /// <summary> Human-readable name of the filter </summary>
         public string Name { get; }

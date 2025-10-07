@@ -148,8 +148,8 @@ namespace Captura
         {
             if (_helper.Settings.UI.UseClassicUI)
             {
-                // Switch to Classic UI
-                ContentFrame.Source = new Uri("../Pages/MainPage_Classic.xaml", UriKind.Relative);
+                // Switch to Classic UI - use pack URI for proper XAML loading
+                ContentFrame.Navigate(new System.Uri("pack://application:,,,/Captura;component/Pages/MainPageClassic.xaml"));
                 
                 // Hide the integrated preview
                 _helper.Settings.UI.Expanded = false;
@@ -160,7 +160,7 @@ namespace Captura
             else
             {
                 // Switch to Modern UI
-                ContentFrame.Source = new Uri("../Pages/MainPage.xaml", UriKind.Relative);
+                ContentFrame.Navigate(new System.Uri("pack://application:,,,/Captura;component/Pages/MainPage.xaml"));
                 
                 // Close separate preview window if open
                 PreviewWindow.Instance.Hide();
