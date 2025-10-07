@@ -117,51 +117,8 @@ namespace Captura.Windows.MediaFoundation
 
         static bool CheckForH264HardwareEncoder()
         {
-            try
-            {
-                // Query for hardware video encoders
-                var flags = (int)(MftEnumFlag.Hardware | MftEnumFlag.SortAndFilter);
-                
-                // Input type: Uncompressed video (NV12 or RGB32)
-                var inputType = new MediaType();
-                inputType.Set(MediaTypeAttributeKeys.MajorType, MediaTypeGuids.Video);
-                
-                // Output type: H.264 compressed video
-                var outputType = new MediaType();
-                outputType.Set(MediaTypeAttributeKeys.MajorType, MediaTypeGuids.Video);
-                outputType.Set(MediaTypeAttributeKeys.Subtype, VideoFormatGuids.H264);
-
-                // Enumerate hardware encoders that can produce H.264
-                var result = MediaFactory.TEnumEx(
-                    TransformCategoryGuids.VideoEncoder,
-                    flags,
-                    inputType,
-                    outputType,
-                    out var transforms,
-                    out var count);
-
-                // Clean up
-                inputType.Dispose();
-                outputType.Dispose();
-
-                if (transforms != null)
-                {
-                    // Release COM objects
-                    for (int i = 0; i < count; i++)
-                    {
-                        if (transforms[i] != null)
-                            Marshal.ReleaseComObject(transforms[i]);
-                    }
-                }
-
-                // If we found any hardware H.264 encoders, return true
-                return result == 0 && count > 0;
-            }
-            catch
-            {
-                // If enumeration fails, assume no hardware encoder
-                return false;
-            }
+            // Simplified - just use the main CheckForHardwareEncoder method
+            return CheckForHardwareEncoder(VideoFormatGuids.H264);
         }
 
         public string Name => "MF";
