@@ -53,6 +53,17 @@ namespace Captura.ViewModels
                 _videoWriters.Add(writerItem);
             }
 
+            // If the selected provider yields no codecs, fall back to the first provider that has any
+            if (_videoWriters.Count == 0)
+            {
+                var fallbackProvider = VideoWriterProviders.FirstOrDefault(p => p.Any());
+                if (fallbackProvider != null && !ReferenceEquals(fallbackProvider, SelectedVideoWriterKind))
+                {
+                    SelectedVideoWriterKind = fallbackProvider;
+                    return;
+                }
+            }
+
             // Set First
             if (_videoWriters.Count > 0)
                 SelectedVideoWriter = _videoWriters[0];
