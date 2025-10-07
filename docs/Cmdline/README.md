@@ -45,6 +45,8 @@ captura --tray
   Take a ScreenShot
 - [ffmpeg](Verb-FFmpeg.md)  
   Allows installation of ffmpeg from command-line.
+- [mf-hw](Verb-MfHw.md)
+  Print Media Foundation hardware codec support (Windows only)
 - help  
   Provides help on using the console app.
 - version  

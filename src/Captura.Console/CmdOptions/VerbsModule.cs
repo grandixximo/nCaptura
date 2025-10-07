@@ -1,4 +1,4 @@
-﻿namespace Captura
+namespace Captura
 {
     class VerbsModule : IModule
     {
@@ -12,6 +12,7 @@
             Binder.Bind<ICmdlineVerb, ShotCmdOptions>();
             Binder.Bind<ICmdlineVerb, FFmpegCmdOptions>();
             Binder.Bind<ICmdlineVerb, ListCmdOptions>();
+            Binder.Bind<ICmdlineVerb, HwMfCmdOptions>();
             Binder.Bind<ICmdlineVerb, UploadCmdOptions>();
         }
     }
