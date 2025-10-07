@@ -139,6 +139,14 @@ namespace Captura.Webcam
         /// <summary> Resize the preview when the PreviewWindow is resized </summary>
         public void OnPreviewWindowResize(int X, int Y, int Width, int Height)
         {
+            // Ignore zero-size resize requests - they cause the camera to turn off
+            // This happens during WPF layout when elements haven't been sized yet
+            if (Width <= 0 || Height <= 0)
+            {
+                Trace.WriteLine($"[Captura Webcam] Ignoring invalid resize: {Width}x{Height} (zero or negative dimensions)");
+                return;
+            }
+            
             // Position video window in client rect of owner window.
             Trace.WriteLine($"[Captura Webcam] Resizing preview window to: {Width}x{Height} at ({X}, {Y})");
             _videoWindow?.SetWindowPosition(X, Y, Width, Height);
