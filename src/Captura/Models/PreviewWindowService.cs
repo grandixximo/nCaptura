@@ -47,7 +47,7 @@ namespace Captura.Video
                     bitmap.Lock();
                     try
                     {
-                        Frame.CopyTo(bitmap.BackBuffer, bitmap.BackBufferStride);
+                        Frame.CopyTo(bitmap.BackBuffer);
                         bitmap.AddDirtyRect(new System.Windows.Int32Rect(0, 0, Frame.Width, Frame.Height));
                     }
                     finally
