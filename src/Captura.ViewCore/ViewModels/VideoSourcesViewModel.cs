@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Captura.Video;
 
 namespace Captura.ViewModels
@@ -21,6 +22,14 @@ namespace Captura.ViewModels
             _fullScreenProvider = FullScreenProvider;
             _settings = Settings;
             VideoSources = SourceProviders;
+
+            // DEBUG LOGGING
+            var sourcesList = SourceProviders.ToList();
+            System.Diagnostics.Debug.WriteLine($"[VideoSourcesViewModel] Total sources: {sourcesList.Count}");
+            foreach (var source in sourcesList)
+            {
+                System.Diagnostics.Debug.WriteLine($"[VideoSourcesViewModel]   - {source.GetType().Name}: {source.Name} (Icon: {(string.IsNullOrEmpty(source.Icon) ? "EMPTY" : "SET")})");
+            }
 
             SetDefaultSource();
         }
