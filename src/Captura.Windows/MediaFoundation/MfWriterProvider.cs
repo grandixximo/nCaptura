@@ -155,10 +155,80 @@ namespace Captura.Windows.MediaFoundation
 
         public IEnumerator<IVideoWriterItem> GetEnumerator()
         {
-            // Only provide MF option if compatible
+            // Only provide MF options if compatible
             if (_isCompatible && _device != null)
             {
-                yield return new MfItem(_device, _warningMessage);
+                // Detect all available hardware encoders
+                var availableEncoders = DetectAllHardwareEncoders();
+
+                foreach (var encoder in availableEncoders)
+                {
+                    yield return new MfItem(_device, encoder.CodecName, encoder.FormatGuid, encoder.Extension, _warningMessage);
+                }
+            }
+        }
+
+        static List<(string CodecName, Guid FormatGuid, string Extension)> DetectAllHardwareEncoders()
+        {
+            var encoders = new List<(string, Guid, string)>();
+
+            // Check for H.264 hardware encoder
+            if (CheckForHardwareEncoder(VideoFormatGuids.H264))
+                encoders.Add(("H.264", VideoFormatGuids.H264, ".mp4"));
+
+            // Check for H.265 (HEVC) hardware encoder
+            if (CheckForHardwareEncoder(VideoFormatGuids.Hevc))
+                encoders.Add(("H.265 (HEVC)", VideoFormatGuids.Hevc, ".mp4"));
+
+            // Check for VP9 hardware encoder
+            if (CheckForHardwareEncoder(VideoFormatGuids.VP90))
+                encoders.Add(("VP9", VideoFormatGuids.VP90, ".webm"));
+
+            // Fallback: If no encoders found but we got here, at least offer H.264
+            if (encoders.Count == 0)
+                encoders.Add(("H.264", VideoFormatGuids.H264, ".mp4"));
+
+            return encoders;
+        }
+
+        static bool CheckForHardwareEncoder(Guid codecGuid)
+        {
+            try
+            {
+                var flags = (int)(MftEnumFlag.Hardware | MftEnumFlag.SortAndFilter);
+                
+                var inputType = new MediaType();
+                inputType.Set(MediaTypeAttributeKeys.MajorType, MediaTypeGuids.Video);
+                
+                var outputType = new MediaType();
+                outputType.Set(MediaTypeAttributeKeys.MajorType, MediaTypeGuids.Video);
+                outputType.Set(MediaTypeAttributeKeys.Subtype, codecGuid);
+
+                var result = MediaFactory.TEnumEx(
+                    TransformCategoryGuids.VideoEncoder,
+                    flags,
+                    inputType,
+                    outputType,
+                    out var transforms,
+                    out var count);
+
+                inputType.Dispose();
+                outputType.Dispose();
+
+                if (transforms != null)
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (transforms[i] != null)
+                            Marshal.ReleaseComObject(transforms[i]);
+                    }
+                }
+
+                return result == 0 && count > 0;
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -179,9 +249,9 @@ namespace Captura.Windows.MediaFoundation
                     return $"Media Foundation (Disabled: {_warningMessage})";
                 
                 if (!string.IsNullOrEmpty(_warningMessage))
-                    return $"H.264 Hardware encoder - {_warningMessage}";
+                    return $"Hardware encoders - {_warningMessage}";
                 
-                return "Encode to Mp4: H.264 with AAC audio using Media Foundation Hardware encoder";
+                return "Hardware-accelerated video encoding using Media Foundation";
             }
         }
     }
