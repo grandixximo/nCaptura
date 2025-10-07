@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 using System.Linq;
 using System.Windows;
@@ -34,6 +35,9 @@ namespace Captura
                 ServiceProvider.Get<WebcamPage>().SetupPreview();
 
                 _helper.HotkeySetup.ShowUnregistered();
+                
+                // Load the appropriate UI mode on startup
+                SwitchUIMode();
             };
 
             if (App.CmdOptions.Tray || _helper.Settings.Tray.MinToTrayOnStartup)
@@ -128,13 +132,39 @@ namespace Captura
             // Save the settings
             _helper.Settings.Save();
             
+            // Switch UI immediately
+            SwitchUIMode();
+            
             // Show a message to inform the user
-            var mode = _helper.Settings.UI.UseClassicUI ? "Classic" : "New";
+            var mode = _helper.Settings.UI.UseClassicUI ? "Classic" : "Modern";
             System.Windows.MessageBox.Show(
-                $"UI mode switched to {mode}.\n\nPlease restart the application for changes to take effect.",
+                $"UI mode switched to {mode}!",
                 "UI Mode Changed",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
+        }
+
+        void SwitchUIMode()
+        {
+            if (_helper.Settings.UI.UseClassicUI)
+            {
+                // Switch to Classic UI
+                ContentFrame.Source = new Uri("../Pages/MainPage_Classic.xaml", UriKind.Relative);
+                
+                // Hide the integrated preview
+                _helper.Settings.UI.Expanded = false;
+                
+                // Show separate preview window if it was visible
+                // The PreviewWindowService will handle this automatically
+            }
+            else
+            {
+                // Switch to Modern UI
+                ContentFrame.Source = new Uri("../Pages/MainPage.xaml", UriKind.Relative);
+                
+                // Close separate preview window if open
+                PreviewWindow.Instance.Hide();
+            }
         }
     }
 }

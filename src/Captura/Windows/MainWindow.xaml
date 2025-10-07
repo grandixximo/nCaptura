@@ -280,7 +280,8 @@
             </Expander.Header>
             <DockPanel Margin="-5,0"
                        Height="300">
-                <Frame Source="../Pages/MainPage.xaml"
+                <Frame x:Name="ContentFrame"
+                       Source="../Pages/MainPage.xaml"
                        DockPanel.Dock="Top"/>
 
                 <GridSplitter Height="1"
