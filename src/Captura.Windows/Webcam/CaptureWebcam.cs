@@ -99,7 +99,24 @@ namespace Captura.Webcam
 
             _previewWindow = PreviewWindow != IntPtr.Zero ? PreviewWindow : _form.Handle;
 
-            CreateGraph();
+            try
+            {
+                CreateGraph();
+            }
+            catch (Exception ex)
+            {
+                // Provide detailed error message if webcam initialization fails
+                var errorMsg = $"Failed to initialize webcam '{VideoDevice.Name}':\n\n{ex.Message}\n\n" +
+                              "Possible causes:\n" +
+                              "• Webcam is in use by another application\n" +
+                              "• Windows camera permissions are denied\n" +
+                              "• Webcam driver issue\n\n" +
+                              "Try:\n" +
+                              "• Close other apps using the webcam\n" +
+                              "• Check Windows Settings > Privacy > Camera";
+                
+                throw new Exception(errorMsg, ex);
+            }
         }
 
         #region Public Methods
