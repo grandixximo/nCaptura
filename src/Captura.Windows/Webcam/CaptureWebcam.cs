@@ -1,32 +1,39 @@
 using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
-using MediaFoundation;
-using MediaFoundation.Misc;
+using DirectShowLib;
 
 namespace Captura.Webcam
 {
     /// <summary>
-    /// Modern MediaFoundation-based webcam capture implementation
+    /// Clean DirectShow-based webcam capture implementation
     /// </summary>
-    class CaptureWebcam : IDisposable
+    class CaptureWebcam : ISampleGrabberCB, IDisposable
     {
         #region Fields
         readonly Filter _videoDevice;
         readonly IntPtr _previewWindow;
         readonly DummyForm _form;
         readonly Action _onClick;
-
-        IMFMediaSource _mediaSource;
-        IMFSourceReader _sourceReader;
-        IMFActivate _videoDeviceActivate;
-        
-        Size _videoSize;
-        bool _isInitialized;
         readonly object _lock = new object();
-        
-        byte[] _frameBuffer;
+
+        // DirectShow interfaces
+        IGraphBuilder _graphBuilder;
+        ICaptureGraphBuilder2 _captureGraphBuilder;
+        IBaseFilter _videoDeviceFilter;
+        IBaseFilter _sampleGrabberFilter;
+        ISampleGrabber _sampleGrabber;
+        IMediaControl _mediaControl;
+        IVideoWindow _videoWindow;
+
+        // Video properties
+        Size _videoSize = Size.Empty;
         int _stride;
+        byte[] _frameBuffer;
+        VideoInfoHeader _videoInfoHeader;
+        
+        bool _isRunning;
+        bool _isDisposed;
         #endregion
 
         public CaptureWebcam(Filter VideoDevice, Action OnClick, IntPtr PreviewWindow)
@@ -34,18 +41,14 @@ namespace Captura.Webcam
             _videoDevice = VideoDevice ?? throw new ArgumentNullException(nameof(VideoDevice));
             _onClick = OnClick;
 
-            // Create dummy form for preview
+            // Create dummy form for handling clicks
             _form = new DummyForm();
             _form.Show();
             _form.Click += (s, e) => OnClick?.Invoke();
 
             _previewWindow = PreviewWindow != IntPtr.Zero ? PreviewWindow : _form.Handle;
 
-            // Initialize MediaFoundation
-            var hr = MFExterns.MFStartup(MF_VERSION.MF_SDK_VERSION, MFStartup.Full);
-            MFError.ThrowExceptionForHR(hr);
-
-            InitializeDevice();
+            BuildGraph();
         }
 
         public Size Size
@@ -59,341 +62,306 @@ namespace Captura.Webcam
             }
         }
 
-        #region Initialization
+        #region Graph Building
 
-        void InitializeDevice()
+        void BuildGraph()
         {
+            int hr;
+
             try
             {
-                lock (_lock)
-                {
-                    // Get the device activate object from moniker
-                    _videoDeviceActivate = GetDeviceActivate(_videoDevice.MonikerString);
-                    
-                    if (_videoDeviceActivate == null)
-                        throw new InvalidOperationException("Could not find video device");
+                // Create the filter graph
+                _graphBuilder = (IGraphBuilder)new FilterGraph();
 
-                    // Create the media source from the activate object
-                    object sourceObject;
-                    var hr = _videoDeviceActivate.ActivateObject(typeof(IMFMediaSource).GUID, out sourceObject);
-                    MFError.ThrowExceptionForHR(hr);
+                // Create the capture graph builder
+                _captureGraphBuilder = (ICaptureGraphBuilder2)new CaptureGraphBuilder2();
 
-                    _mediaSource = (IMFMediaSource)sourceObject;
+                // Attach the filter graph to the capture graph
+                hr = _captureGraphBuilder.SetFiltergraph(_graphBuilder);
+                DsError.ThrowExceptionForHR(hr);
 
-                    // Create source reader for frame capture
-                    CreateSourceReader();
+                // Add the video device
+                _videoDeviceFilter = CreateVideoDeviceFilter();
+                hr = _graphBuilder.AddFilter(_videoDeviceFilter, "Video Capture");
+                DsError.ThrowExceptionForHR(hr);
 
-                    _isInitialized = true;
-                }
+                // Add and configure the sample grabber
+                _sampleGrabber = (ISampleGrabber)new SampleGrabber();
+                _sampleGrabberFilter = (IBaseFilter)_sampleGrabber;
+
+                ConfigureSampleGrabber();
+
+                hr = _graphBuilder.AddFilter(_sampleGrabberFilter, "Sample Grabber");
+                DsError.ThrowExceptionForHR(hr);
+
+                // Get the media control interface
+                _mediaControl = (IMediaControl)_graphBuilder;
             }
-            catch (Exception ex)
+            catch
             {
                 Cleanup();
-                throw new InvalidOperationException($"Failed to initialize webcam: {ex.Message}", ex);
+                throw;
             }
         }
 
-        IMFActivate GetDeviceActivate(string devicePath)
+        IBaseFilter CreateVideoDeviceFilter()
         {
-            IMFAttributes attributes;
-            var hr = MFExterns.MFCreateAttributes(out attributes, 1);
-            MFError.ThrowExceptionForHR(hr);
-
-            try
+            object source;
+            var hr = Marshal.BindToMoniker(_videoDevice.MonikerString, out source);
+            
+            if (hr < 0 || source == null)
             {
-                // Set attribute to enumerate video capture devices
-                hr = attributes.SetGUID(
-                    MFAttributesClsid.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE,
-                    CLSID.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
-                MFError.ThrowExceptionForHR(hr);
-
-                IMFActivate[] devices;
-                int count;
-                hr = MFExterns.MFEnumDeviceSources(attributes, out devices, out count);
-                MFError.ThrowExceptionForHR(hr);
-
-                // Find device matching our path
-                for (int i = 0; i < count; i++)
-                {
-                    try
-                    {
-                        string symbolicLink;
-                        int linkLength;
-                        hr = devices[i].GetString(
-                            MFAttributesClsid.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK,
-                            out symbolicLink,
-                            out linkLength);
-
-                        if (hr == 0 && devicePath.Contains(symbolicLink))
-                        {
-                            // Found our device, release others
-                            for (int j = 0; j < count; j++)
-                            {
-                                if (i != j && devices[j] != null)
-                                    Marshal.ReleaseComObject(devices[j]);
-                            }
-                            return devices[i];
-                        }
-                    }
-                    catch
-                    {
-                        // Continue to next device
-                    }
-                }
-
-                // If exact match not found, try to use first available device
-                // (devicePath might be from DirectShow, symbolicLink is from MediaFoundation)
-                if (count > 0)
-                {
-                    var firstDevice = devices[0];
-                    for (int j = 1; j < count; j++)
-                    {
-                        if (devices[j] != null)
-                            Marshal.ReleaseComObject(devices[j]);
-                    }
-                    return firstDevice;
-                }
-            }
-            finally
-            {
-                Marshal.ReleaseComObject(attributes);
+                throw new InvalidOperationException($"Cannot bind to device: {_videoDevice.Name}");
             }
 
-            return null;
+            return (IBaseFilter)source;
         }
 
-        void CreateSourceReader()
+        void ConfigureSampleGrabber()
         {
-            // Create attributes for source reader
-            IMFAttributes attributes;
-            var hr = MFExterns.MFCreateAttributes(out attributes, 2);
-            MFError.ThrowExceptionForHR(hr);
-
-            try
+            // Set the media type for RGB32
+            var mediaType = new AMMediaType
             {
-                // Enable video processing (for format conversion)
-                hr = attributes.SetUINT32(MFAttributesClsid.MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, 1);
-                MFError.ThrowExceptionForHR(hr);
+                majorType = MediaType.Video,
+                subType = MediaSubType.RGB32,
+                formatType = FormatType.VideoInfo
+            };
 
-                // Create source reader
-                hr = MFExterns.MFCreateSourceReaderFromMediaSource(_mediaSource, attributes, out _sourceReader);
-                MFError.ThrowExceptionForHR(hr);
+            var hr = _sampleGrabber.SetMediaType(mediaType);
+            DsUtils.FreeAMMediaType(mediaType);
+            DsError.ThrowExceptionForHR(hr);
 
-                // Configure the source reader to give us RGB32 frames
-                ConfigureSourceReader();
-            }
-            finally
-            {
-                Marshal.ReleaseComObject(attributes);
-            }
-        }
+            // Configure grabber to buffer samples
+            hr = _sampleGrabber.SetBufferSamples(true);
+            DsError.ThrowExceptionForHR(hr);
 
-        void ConfigureSourceReader()
-        {
-            // Create media type for RGB32
-            IMFMediaType mediaType;
-            var hr = MFExterns.MFCreateMediaType(out mediaType);
-            MFError.ThrowExceptionForHR(hr);
+            hr = _sampleGrabber.SetOneShot(false);
+            DsError.ThrowExceptionForHR(hr);
 
-            try
-            {
-                // Set video format
-                hr = mediaType.SetGUID(MFAttributesClsid.MF_MT_MAJOR_TYPE, MFMediaType.Video);
-                MFError.ThrowExceptionForHR(hr);
-
-                // Request RGB32 output format (BGRA in memory order)
-                hr = mediaType.SetGUID(MFAttributesClsid.MF_MT_SUBTYPE, MFMediaType.RGB32);
-                MFError.ThrowExceptionForHR(hr);
-
-                // Set this as the current media type
-                hr = _sourceReader.SetCurrentMediaType(MF_SOURCE_READER.FirstVideoStream, null, mediaType);
-                MFError.ThrowExceptionForHR(hr);
-
-                // Get the actual media type that was set (with frame size info)
-                IMFMediaType actualMediaType;
-                hr = _sourceReader.GetCurrentMediaType(MF_SOURCE_READER.FirstVideoStream, out actualMediaType);
-                MFError.ThrowExceptionForHR(hr);
-
-                try
-                {
-                    // Get frame size
-                    long frameSize;
-                    hr = actualMediaType.GetUINT64(MFAttributesClsid.MF_MT_FRAME_SIZE, out frameSize);
-                    MFError.ThrowExceptionForHR(hr);
-
-                    int width = (int)(frameSize >> 32);
-                    int height = (int)(frameSize & 0xFFFFFFFF);
-                    _videoSize = new Size(width, height);
-
-                    // Calculate stride
-                    int stride;
-                    hr = MFExterns.MFGetStrideForBitmapInfoHeader((int)MFMediaType.RGB32.Data1, width, out stride);
-                    if (hr >= 0)
-                    {
-                        _stride = Math.Abs(stride);
-                    }
-                    else
-                    {
-                        _stride = width * 4; // 4 bytes per pixel for RGB32
-                    }
-
-                    // Allocate frame buffer
-                    _frameBuffer = new byte[_stride * height];
-                }
-                finally
-                {
-                    Marshal.ReleaseComObject(actualMediaType);
-                }
-            }
-            finally
-            {
-                Marshal.ReleaseComObject(mediaType);
-            }
+            // Don't need the callback, we'll use GetCurrentBuffer
+            hr = _sampleGrabber.SetCallback(null, 0);
+            DsError.ThrowExceptionForHR(hr);
         }
 
         #endregion
 
-        #region Public Methods
+        #region Preview Management
 
         public void StartPreview()
         {
             lock (_lock)
             {
-                if (!_isInitialized)
-                    throw new InvalidOperationException("Device not initialized");
+                if (_isRunning || _isDisposed)
+                    return;
 
-                // MediaFoundation source reader doesn't require explicit preview start
-                // Just ensure we can read a frame
                 try
                 {
-                    IMFSample sample;
-                    int streamIndex;
-                    MF_SOURCE_READER_FLAG flags;
-                    long timestamp;
+                    RenderPreview();
+                    
+                    // Start the graph
+                    var hr = _mediaControl.Run();
+                    DsError.ThrowExceptionForHR(hr);
 
-                    var hr = _sourceReader.ReadSample(
-                        MF_SOURCE_READER.FirstVideoStream,
-                        MF_SOURCE_READER_CONTROL_FLAG.None,
-                        out streamIndex,
-                        out flags,
-                        out timestamp,
-                        out sample);
-
-                    if (sample != null)
-                        Marshal.ReleaseComObject(sample);
+                    _isRunning = true;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore errors on first frame read
+                    throw new InvalidOperationException("Failed to start preview", ex);
                 }
+            }
+        }
+
+        void RenderPreview()
+        {
+            int hr;
+
+            // Try to render preview pin first, fall back to capture pin
+            var previewPin = DsFindPin.ByCategory(_videoDeviceFilter, PinCategory.Preview, 0);
+            
+            if (previewPin != null)
+            {
+                hr = _captureGraphBuilder.RenderStream(PinCategory.Preview, MediaType.Video, 
+                    _videoDeviceFilter, _sampleGrabberFilter, null);
+                
+                Marshal.ReleaseComObject(previewPin);
+            }
+            else
+            {
+                // No preview pin, use capture pin
+                hr = _captureGraphBuilder.RenderStream(PinCategory.Capture, MediaType.Video,
+                    _videoDeviceFilter, _sampleGrabberFilter, null);
+            }
+
+            if (hr < 0)
+            {
+                DsError.ThrowExceptionForHR(hr);
+            }
+
+            // Get the actual media type that was connected
+            var mediaType = new AMMediaType();
+            hr = _sampleGrabber.GetConnectedMediaType(mediaType);
+            DsError.ThrowExceptionForHR(hr);
+
+            try
+            {
+                if (mediaType.formatType == FormatType.VideoInfo && mediaType.formatPtr != IntPtr.Zero)
+                {
+                    _videoInfoHeader = (VideoInfoHeader)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader));
+                    _videoSize = new Size(_videoInfoHeader.BmiHeader.Width, Math.Abs(_videoInfoHeader.BmiHeader.Height));
+                    _stride = _videoSize.Width * 4;
+                    _frameBuffer = new byte[_stride * _videoSize.Height];
+                }
+                else if (mediaType.formatType == FormatType.VideoInfo2 && mediaType.formatPtr != IntPtr.Zero)
+                {
+                    var videoInfoHeader2 = (VideoInfoHeader2)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader2));
+                    _videoSize = new Size(videoInfoHeader2.BmiHeader.Width, Math.Abs(videoInfoHeader2.BmiHeader.Height));
+                    _stride = _videoSize.Width * 4;
+                    _frameBuffer = new byte[_stride * _videoSize.Height];
+                    
+                    // Create a VideoInfoHeader for compatibility
+                    _videoInfoHeader = new VideoInfoHeader
+                    {
+                        BmiHeader = videoInfoHeader2.BmiHeader
+                    };
+                }
+                else
+                {
+                    throw new InvalidOperationException("Unsupported video format");
+                }
+            }
+            finally
+            {
+                DsUtils.FreeAMMediaType(mediaType);
+            }
+
+            // Setup video window for preview
+            SetupVideoWindow();
+        }
+
+        void SetupVideoWindow()
+        {
+            // Get the video window interface
+            _videoWindow = _graphBuilder as IVideoWindow;
+            
+            if (_videoWindow != null)
+            {
+                var hr = _videoWindow.put_Owner(_previewWindow);
+                DsError.ThrowExceptionForHR(hr);
+
+                hr = _videoWindow.put_MessageDrain(_form.Handle);
+                DsError.ThrowExceptionForHR(hr);
+
+                // Set window style for child window
+                hr = _videoWindow.put_WindowStyle(WindowStyle.Child | WindowStyle.ClipChildren | WindowStyle.ClipSiblings);
+                DsError.ThrowExceptionForHR(hr);
             }
         }
 
         public void StopPreview()
         {
-            // MediaFoundation automatically handles stopping when reader is released
+            lock (_lock)
+            {
+                if (!_isRunning)
+                    return;
+
+                try
+                {
+                    _mediaControl?.Stop();
+                    
+                    if (_videoWindow != null)
+                    {
+                        _videoWindow.put_Visible(OABool.False);
+                        _videoWindow.put_Owner(IntPtr.Zero);
+                    }
+
+                    _isRunning = false;
+                }
+                catch
+                {
+                    // Ignore errors when stopping
+                }
+            }
         }
 
         public void OnPreviewWindowResize(int X, int Y, int Width, int Height)
         {
-            // Preview positioning is handled by the parent control
-            // This method is kept for interface compatibility
+            if (_videoWindow != null && _isRunning)
+            {
+                try
+                {
+                    _videoWindow.SetWindowPosition(X, Y, Width, Height);
+                }
+                catch
+                {
+                    // Ignore errors
+                }
+            }
         }
+
+        #endregion
+
+        #region Frame Capture
 
         public Captura.IBitmapImage GetFrame(Captura.IBitmapLoader BitmapLoader)
         {
             lock (_lock)
             {
-                if (!_isInitialized || _sourceReader == null)
+                if (!_isRunning || _sampleGrabber == null || _frameBuffer == null)
                     return null;
 
                 try
                 {
-                    IMFSample sample = null;
-                    int streamIndex;
-                    MF_SOURCE_READER_FLAG flags;
-                    long timestamp;
-
-                    var hr = _sourceReader.ReadSample(
-                        MF_SOURCE_READER.FirstVideoStream,
-                        MF_SOURCE_READER_CONTROL_FLAG.None,
-                        out streamIndex,
-                        out flags,
-                        out timestamp,
-                        out sample);
-
-                    if (hr < 0 || sample == null)
+                    // Get buffer size
+                    int bufferSize = 0;
+                    var hr = _sampleGrabber.GetCurrentBuffer(ref bufferSize, IntPtr.Zero);
+                    
+                    if (hr < 0 || bufferSize <= 0)
                         return null;
 
+                    // Ensure our buffer is large enough
+                    if (_frameBuffer.Length < bufferSize)
+                        _frameBuffer = new byte[bufferSize];
+
+                    // Pin the buffer and get the data
+                    var handle = GCHandle.Alloc(_frameBuffer, GCHandleType.Pinned);
                     try
                     {
-                        // Get the media buffer from the sample
-                        IMFMediaBuffer buffer;
-                        hr = sample.ConvertToContiguousBuffer(out buffer);
-                        if (hr < 0)
-                        {
-                            // Try getting buffer directly
-                            hr = sample.GetBufferByIndex(0, out buffer);
-                        }
+                        var ptr = handle.AddrOfPinnedObject();
+                        hr = _sampleGrabber.GetCurrentBuffer(ref bufferSize, ptr);
                         
-                        if (hr < 0 || buffer == null)
+                        if (hr < 0)
                             return null;
 
-                        try
-                        {
-                            // Lock the buffer and copy data
-                            IntPtr pData;
-                            int maxLength, currentLength;
-
-                            hr = buffer.Lock(out pData, out maxLength, out currentLength);
-                            if (hr < 0)
-                                return null;
-
-                            try
-                            {
-                                // Copy frame data to our buffer
-                                if (currentLength > 0 && currentLength <= _frameBuffer.Length)
-                                {
-                                    Marshal.Copy(pData, _frameBuffer, 0, currentLength);
-
-                                    // Pin the buffer and create bitmap
-                                    var handle = GCHandle.Alloc(_frameBuffer, GCHandleType.Pinned);
-                                    try
-                                    {
-                                        var address = handle.AddrOfPinnedObject();
-                                        
-                                        // RGB32 from MediaFoundation is actually BGRA32 in memory
-                                        // Need to flip vertically as MF gives bottom-up bitmaps
-                                        return BitmapLoader.CreateBitmapBgr32(_videoSize, address + (_videoSize.Height - 1) * _stride, -_stride);
-                                    }
-                                    finally
-                                    {
-                                        handle.Free();
-                                    }
-                                }
-                            }
-                            finally
-                            {
-                                buffer.Unlock();
-                            }
-                        }
-                        finally
-                        {
-                            Marshal.ReleaseComObject(buffer);
-                        }
+                        // DirectShow gives us bottom-up bitmaps, so we need to flip
+                        // Move to the last line and use negative stride
+                        var dataPtr = ptr + (_videoSize.Height - 1) * _stride;
+                        
+                        return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -_stride);
                     }
                     finally
                     {
-                        Marshal.ReleaseComObject(sample);
+                        handle.Free();
                     }
                 }
                 catch
                 {
                     return null;
                 }
-
-                return null;
             }
+        }
+
+        #endregion
+
+        #region ISampleGrabberCB Implementation
+
+        int ISampleGrabberCB.SampleCB(double SampleTime, IMediaSample pSample)
+        {
+            return 0;
+        }
+
+        int ISampleGrabberCB.BufferCB(double SampleTime, IntPtr pBuffer, int BufferLen)
+        {
+            return 0;
         }
 
         #endregion
@@ -404,41 +372,67 @@ namespace Captura.Webcam
         {
             lock (_lock)
             {
-                _isInitialized = false;
+                _isRunning = false;
 
-                if (_sourceReader != null)
-                {
-                    try { Marshal.ReleaseComObject(_sourceReader); }
-                    catch { }
-                    _sourceReader = null;
-                }
+                // Stop the graph
+                try { _mediaControl?.Stop(); } catch { }
 
-                if (_mediaSource != null)
+                // Release video window
+                if (_videoWindow != null)
                 {
                     try
                     {
-                        _mediaSource.Shutdown();
-                        Marshal.ReleaseComObject(_mediaSource);
+                        _videoWindow.put_Visible(OABool.False);
+                        _videoWindow.put_Owner(IntPtr.Zero);
                     }
                     catch { }
-                    _mediaSource = null;
+                    _videoWindow = null;
                 }
 
-                if (_videoDeviceActivate != null)
+                // Release interfaces
+                _mediaControl = null;
+
+                if (_sampleGrabber != null)
                 {
-                    try
-                    {
-                        _videoDeviceActivate.ShutdownObject();
-                        Marshal.ReleaseComObject(_videoDeviceActivate);
-                    }
-                    catch { }
-                    _videoDeviceActivate = null;
+                    try { Marshal.ReleaseComObject(_sampleGrabber); } catch { }
+                    _sampleGrabber = null;
                 }
+
+                if (_sampleGrabberFilter != null)
+                {
+                    try { Marshal.ReleaseComObject(_sampleGrabberFilter); } catch { }
+                    _sampleGrabberFilter = null;
+                }
+
+                if (_videoDeviceFilter != null)
+                {
+                    try { Marshal.ReleaseComObject(_videoDeviceFilter); } catch { }
+                    _videoDeviceFilter = null;
+                }
+
+                if (_captureGraphBuilder != null)
+                {
+                    try { Marshal.ReleaseComObject(_captureGraphBuilder); } catch { }
+                    _captureGraphBuilder = null;
+                }
+
+                if (_graphBuilder != null)
+                {
+                    try { Marshal.ReleaseComObject(_graphBuilder); } catch { }
+                    _graphBuilder = null;
+                }
+
+                _frameBuffer = null;
             }
         }
 
         public void Dispose()
         {
+            if (_isDisposed)
+                return;
+
+            _isDisposed = true;
+
             Cleanup();
 
             try
@@ -446,17 +440,6 @@ namespace Captura.Webcam
                 _form?.Dispose();
             }
             catch { }
-
-            try
-            {
-                MFExterns.MFShutdown();
-            }
-            catch
-            {
-                // Ignore shutdown errors
-            }
-
-            _frameBuffer = null;
         }
 
         #endregion

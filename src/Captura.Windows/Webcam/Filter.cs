@@ -3,45 +3,35 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using DirectShowLib;
-using MediaFoundation;
-using MediaFoundation.Misc;
 
 namespace Captura.Webcam
 {
     /// <summary>
-    /// Represents a video capture device filter.
-    /// Uses MediaFoundation for device enumeration with DirectShow fallback.
+    /// Represents a DirectShow video capture device filter
     /// </summary>
     class Filter : IComparable
     {
         /// <summary> Human-readable name of the filter </summary>
         public string Name { get; }
 
-        /// <summary> Unique string referencing this filter </summary>
+        /// <summary> Unique string referencing this filter (moniker string) </summary>
         public string MonikerString { get; }
 
-        /// <summary> Create a new filter from device information </summary>
-        public Filter(string name, string monikerString)
-        {
-            Name = name ?? "Unknown Device";
-            MonikerString = monikerString ?? throw new ArgumentNullException(nameof(monikerString));
-        }
-
-        /// <summary> Create a new filter from DirectShow moniker (legacy) </summary>
+        /// <summary> Create a new filter from its moniker </summary>
         public Filter(IMoniker Moniker)
         {
             Name = GetName(Moniker);
             MonikerString = GetMonikerString(Moniker);
         }
 
-        /// <summary> Retrieve the a moniker's display name </summary>
+        /// <summary> Retrieve the moniker's display name (unique identifier) </summary>
         static string GetMonikerString(IMoniker Moniker)
         {
             Moniker.GetDisplayName(null, null, out var s);
             return s;
         }
 
-        /// <summary> Retrieve the human-readable name of the filter from DirectShow </summary>
+        /// <summary> Retrieve the human-readable name of the filter </summary>
         static string GetName(IMoniker Moniker)
         {
             object bagObj = null;
@@ -59,7 +49,7 @@ namespace Captura.Webcam
                 var ret = val as string;
 
                 if (string.IsNullOrEmpty(ret))
-                    throw new NotImplementedException("Device FriendlyName");
+                    return "Unknown Device";
                 
                 return ret;
             }
@@ -75,7 +65,7 @@ namespace Captura.Webcam
         }
 
         /// <summary>
-        /// Compares the current instance with another object of the same type.
+        /// Compares the current instance with another object of the same type
         /// </summary>
         public int CompareTo(object Obj)
         {
@@ -89,179 +79,78 @@ namespace Captura.Webcam
         public override string ToString() => Name;
 
         /// <summary>
-        /// Enumerate video input devices using MediaFoundation (preferred) with DirectShow fallback
+        /// Enumerate all video input devices using DirectShow
         /// </summary>
         public static IEnumerable<Filter> VideoInputDevices
         {
             get
             {
-                var devices = new List<Filter>();
-
-                // Try MediaFoundation first (modern API)
-                try
-                {
-                    var mfDevices = EnumerateMediaFoundationDevices();
-                    devices.AddRange(mfDevices);
-                }
-                catch
-                {
-                    // MediaFoundation failed, will try DirectShow
-                }
-
-                // If no MediaFoundation devices found, fallback to DirectShow
-                if (devices.Count == 0)
-                {
-                    try
-                    {
-                        var dsDevices = EnumerateDirectShowDevices();
-                        devices.AddRange(dsDevices);
-                    }
-                    catch
-                    {
-                        // Both methods failed
-                    }
-                }
-
-                return devices;
-            }
-        }
-
-        static IEnumerable<Filter> EnumerateMediaFoundationDevices()
-        {
-            var devices = new List<Filter>();
-
-            // Initialize MediaFoundation
-            var hr = MFExterns.MFStartup(MF_VERSION.MF_SDK_VERSION, MFStartup.Full);
-            if (hr < 0)
-                return devices;
-
-            try
-            {
-                // Create attributes for device enumeration
-                IMFAttributes attributes;
-                hr = MFExterns.MFCreateAttributes(out attributes, 1);
-                if (hr < 0)
-                    return devices;
+                object comObj = null;
+                IEnumMoniker enumMon = null;
+                var mon = new IMoniker[1];
 
                 try
                 {
-                    // Set attribute to enumerate video capture devices
-                    hr = attributes.SetGUID(
-                        MFAttributesClsid.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE,
-                        CLSID.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
+                    // Get the system device enumerator
+                    comObj = new CreateDevEnum();
+                    var enumDev = (ICreateDevEnum)comObj;
 
-                    if (hr < 0)
-                        return devices;
+                    var category = FilterCategory.VideoInputDevice;
 
-                    // Enumerate devices
-                    IMFActivate[] activateArray;
-                    int count;
-                    hr = MFExterns.MFEnumDeviceSources(attributes, out activateArray, out count);
+                    // Create an enumerator to find filters in the video input category
+                    var hr = enumDev.CreateClassEnumerator(category, out enumMon, 0);
+                    
+                    if (hr != 0 || enumMon == null)
+                        yield break;
 
-                    if (hr < 0 || count == 0)
-                        return devices;
-
-                    // Iterate through devices
-                    for (int i = 0; i < count; i++)
+                    // Loop through all devices
+                    while (true)
                     {
+                        // Get next device
+                        hr = enumMon.Next(1, mon, IntPtr.Zero);
+
+                        if (hr != 0 || mon[0] == null)
+                            break;
+
+                        Filter filter = null;
                         try
                         {
-                            var activate = activateArray[i];
-
-                            // Get friendly name
-                            string friendlyName;
-                            int nameLength;
-                            hr = activate.GetString(
-                                MFAttributesClsid.MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME,
-                                out friendlyName,
-                                out nameLength);
-
-                            if (hr < 0)
-                                friendlyName = $"Camera {i + 1}";
-
-                            // Get symbolic link (unique identifier)
-                            string symbolicLink;
-                            int linkLength;
-                            hr = activate.GetString(
-                                MFAttributesClsid.MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK,
-                                out symbolicLink,
-                                out linkLength);
-
-                            if (hr < 0)
-                                symbolicLink = Guid.NewGuid().ToString();
-
-                            devices.Add(new Filter(friendlyName, symbolicLink));
+                            // Create filter object
+                            filter = new Filter(mon[0]);
+                            
+                            // Only return filters with valid names
+                            if (!string.IsNullOrEmpty(filter.Name) && filter.Name != "Unknown Device")
+                            {
+                                yield return filter;
+                            }
                         }
                         catch
                         {
-                            // Skip this device on error
+                            // Skip devices that cause errors
                         }
                         finally
                         {
-                            if (activateArray[i] != null)
-                                Marshal.ReleaseComObject(activateArray[i]);
+                            // Release the moniker
+                            if (mon[0] != null)
+                            {
+                                Marshal.ReleaseComObject(mon[0]);
+                                mon[0] = null;
+                            }
                         }
                     }
                 }
                 finally
                 {
-                    Marshal.ReleaseComObject(attributes);
+                    // Cleanup
+                    if (mon[0] != null)
+                        Marshal.ReleaseComObject(mon[0]);
+
+                    if (enumMon != null)
+                        Marshal.ReleaseComObject(enumMon);
+
+                    if (comObj != null)
+                        Marshal.ReleaseComObject(comObj);
                 }
-            }
-            finally
-            {
-                MFExterns.MFShutdown();
-            }
-
-            return devices;
-        }
-
-        static IEnumerable<Filter> EnumerateDirectShowDevices()
-        {
-            object comObj = null;
-            IEnumMoniker enumMon = null;
-            var mon = new IMoniker[1];
-
-            try
-            {
-                // Get the system device enumerator
-                comObj = new CreateDevEnum();
-                var enumDev = (ICreateDevEnum)comObj;
-
-                var category = FilterCategory.VideoInputDevice;
-
-                // Create an enumerator to find filters in category
-                var hr = enumDev.CreateClassEnumerator(category, out enumMon, 0);
-                if (hr != 0 || enumMon == null)
-                    yield break;
-
-                // Loop through the enumerator
-                while (true)
-                {
-                    // Next filter
-                    hr = enumMon.Next(1, mon, IntPtr.Zero);
-
-                    if (hr != 0 || mon[0] == null)
-                        break;
-
-                    // Add the filter
-                    yield return new Filter(mon[0]);
-
-                    // Release resources
-                    Marshal.ReleaseComObject(mon[0]);
-                    mon[0] = null;
-                }
-            }
-            finally
-            {
-                if (mon[0] != null)
-                    Marshal.ReleaseComObject(mon[0]);
-
-                if (enumMon != null)
-                    Marshal.ReleaseComObject(enumMon);
-
-                if (comObj != null)
-                    Marshal.ReleaseComObject(comObj);
             }
         }
     }
