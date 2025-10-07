@@ -200,9 +200,15 @@ namespace Captura
                     (int)((Region.ActualWidth - 2 * LeftOffset) * Dpi.X),
                     (int)((Region.ActualHeight - 2 * TopOffset) * Dpi.Y)));
 
-            _regionItem.Name = _region.ToString().Replace("{", "")
+            var regionName = _region.ToString().Replace("{", "")
                 .Replace("}", "")
                 .Replace(",", ", ");
+            
+            System.Diagnostics.Debug.WriteLine($"[RegionSelector] UpdateRegion: {regionName}");
+            System.Diagnostics.Debug.WriteLine($"[RegionSelector]   Window Position: Left={Left}, Top={Top}");
+            System.Diagnostics.Debug.WriteLine($"[RegionSelector]   Region Size: W={Region.ActualWidth}, H={Region.ActualHeight}");
+            
+            _regionItem.Name = regionName;
         }
 
         // Ignoring Borders and Header
@@ -220,6 +226,8 @@ namespace Captura
                 if (value == Rectangle.Empty)
                     return;
                 
+                System.Diagnostics.Debug.WriteLine($"[RegionSelector] SelectedRegion setter called with: {value}");
+                
                 Dispatcher.Invoke(() =>
                 {
                     Region.Width = value.Width / Dpi.X + 2 * LeftOffset;
@@ -227,6 +235,9 @@ namespace Captura
 
                     Left = value.Left / Dpi.X - LeftOffset;
                     Top = value.Top / Dpi.Y - TopOffset;
+                    
+                    System.Diagnostics.Debug.WriteLine($"[RegionSelector] Set Window Position: Left={Left}, Top={Top}");
+                    System.Diagnostics.Debug.WriteLine($"[RegionSelector] Set Region Size: W={Region.Width}, H={Region.Height}");
                     
                     // Update the region name immediately after setting the size
                     UpdateRegion();
