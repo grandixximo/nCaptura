@@ -17,10 +17,7 @@ namespace Captura
             NavigationService?.Navigate(new CrashLogsPage());
         }
 
-        void OpenImageEditor(object Sender, RoutedEventArgs E)
-        {
-            MessageBox.Show("Image Editor has been removed in this version.", "Feature Removed", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
+        // OpenImageEditor method removed - internal image editor was removed from codebase
 
         void OpenAudioVideoTrimmer(object Sender, RoutedEventArgs E)
         {
