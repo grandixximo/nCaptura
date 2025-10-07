@@ -73,6 +73,14 @@ namespace Captura.Webcam
                     try
                     {
                         _captureWebcam = new CaptureWebcam(_filter, _onClick, Window.Handle);
+                        
+                        // Set the window size BEFORE starting preview
+                        // This ensures the DirectShow video window has valid dimensions when the graph starts
+                        if (Location.Width > 0 && Location.Height > 0)
+                        {
+                            _captureWebcam.OnPreviewWindowResize(Location.X, Location.Y, Location.Width, Location.Height);
+                        }
+                        
                         _captureWebcam.StartPreview();
                         _lastWin = Window.Handle;
                     }
@@ -94,8 +102,11 @@ namespace Captura.Webcam
                         throw new Exception($"Failed to start camera preview for '{_filter.Name}': {ex.Message}", ex);
                     }
                 }
-
-                _captureWebcam?.OnPreviewWindowResize(Location.X, Location.Y, Location.Width, Location.Height);
+                else
+                {
+                    // Window handle hasn't changed, just update position/size
+                    _captureWebcam?.OnPreviewWindowResize(Location.X, Location.Y, Location.Width, Location.Height);
+                }
             });
         }
     }
