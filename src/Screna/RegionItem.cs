@@ -1,4 +1,4 @@
-﻿namespace Captura.Video
+namespace Captura.Video
 {
     public class RegionItem : NotifyPropertyChanged, IVideoItem
     {
@@ -23,7 +23,12 @@
         public string Name
         {
             get => _name;
-            set => Set(ref _name, value);
+            set
+            {
+                System.Diagnostics.Debug.WriteLine($"[RegionItem] Name setter called. Old: '{_name}', New: '{value}'");
+                Set(ref _name, value);
+                System.Diagnostics.Debug.WriteLine($"[RegionItem] Name property changed notification sent");
+            }
         }
 
         public override string ToString() => Name;

@@ -36,8 +36,22 @@ namespace Captura.Video
 
         public Rectangle SelectedRegion
         {
-            get => _viewModel.SelectedRegion;
-            set => _viewModel.SelectedRegion = value;
+            get => _regionSelector.IsValueCreated ? _regionSelector.Value.SelectedRegion : _viewModel.SelectedRegion;
+            set
+            {
+                System.Diagnostics.Debug.WriteLine($"[RegionSelectorProvider] SelectedRegion setter: {value}");
+                _viewModel.SelectedRegion = value;
+                
+                // Also update the actual RegionSelector window if it's been created
+                if (_regionSelector.IsValueCreated)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[RegionSelectorProvider] Forwarding to RegionSelector window");
+                    _regionSelector.Value.SelectedRegion = value;
+                }
+                
+                // Update the region item name
+                _regionItem.Name = value.ToString().Replace("{", "").Replace("}", "").Replace(",", ", ");
+            }
         }
 
         public IVideoItem VideoSource => _regionItem;

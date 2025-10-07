@@ -8,7 +8,7 @@
         Icon="../Images/Captura.ico"
         SizeToContent="Height"
         MaxWidth="450"
-        Title="Captura"
+        Title="{Binding TimerModel.TimeSpan, Source={StaticResource ServiceLocator}, StringFormat='Captura - {0}', TargetNullValue='Captura', FallbackValue='Captura'}"
         Left="{Binding Settings.UI.MainWindowLeft}"
         Top="{Binding Settings.UI.MainWindowTop}"
         BorderThickness="1"
