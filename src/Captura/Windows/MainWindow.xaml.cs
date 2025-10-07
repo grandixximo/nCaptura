@@ -369,7 +369,7 @@ namespace Captura
 
             // FPS Label
             var fpsLabel = new System.Windows.Controls.Label { Margin = new Thickness(5, 0, 5, 0) };
-            var viewConditions = ServiceProvider.Get<ViewConditions>();
+            var viewConditions = ServiceProvider.Get<ViewConditionsModel>();
             var fpsBinding = new System.Windows.Data.Binding("FpsVisibility.Value")
             {
                 Source = viewConditions
@@ -717,7 +717,7 @@ namespace Captura
             btn.SetBinding(FrameworkElement.ToolTipProperty, tooltipBinding);
 
             // Command
-            var cmd = _helper.MainViewModel.RecordingViewModel.PauseCommand;
+            var cmd = _helper.RecordingViewModel.PauseCommand;
             btn.Command = cmd;
 
             // IconData
