@@ -51,15 +51,22 @@ namespace Captura.Windows.MediaFoundation
         {
             try
             {
-                // Check if hardware H.264 encoder is available FIRST
+                // Always try to create device first
+                _device = new Device(DriverType.Hardware, DeviceCreationFlags.BgraSupport);
+                
+                // Check if hardware H.264 encoder is available
                 var encoderInfo = DetectHardwareEncoder();
                 _isCompatible = encoderInfo.IsAvailable;
                 _warningMessage = encoderInfo.Message;
-
-                // Only try to create device if hardware encoder exists
-                if (_isCompatible)
+                
+                // Even if no hardware encoder, allow MF (will use software encoding)
+                if (!_isCompatible && _device != null)
                 {
-                    _device = new Device(DriverType.Hardware, DeviceCreationFlags.BgraSupport);
+                    _isCompatible = true; // Allow MF to appear
+                    if (string.IsNullOrEmpty(_warningMessage))
+                    {
+                        _warningMessage = "No hardware encoder detected. MF will use software encoding (slower).";
+                    }
                 }
             }
             catch (Exception ex)
