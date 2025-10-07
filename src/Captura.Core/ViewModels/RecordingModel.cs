@@ -247,13 +247,13 @@ namespace Captura.ViewModels
 
         public bool StartRecording(RecordingModelParams RecordingParams, string FileName = null)
         {
-            // DEBUG LOGGING
-            System.Diagnostics.Debug.WriteLine($"[RecordingModel] StartRecording called");
-            System.Diagnostics.Debug.WriteLine($"[RecordingModel]   VideoSourceKind: {RecordingParams.VideoSourceKind?.GetType().Name} - {RecordingParams.VideoSourceKind?.Name}");
-            System.Diagnostics.Debug.WriteLine($"[RecordingModel]   VideoSourceKind.Source: {RecordingParams.VideoSourceKind?.Source?.Name}");
-            System.Diagnostics.Debug.WriteLine($"[RecordingModel]   VideoWriter: {RecordingParams.VideoWriter}");
-            
             IsVideo = !(RecordingParams.VideoSourceKind is NoVideoSourceProvider);
+
+            if (RecordingParams.VideoWriter == null)
+            {
+                ServiceProvider.MessageProvider.ShowError("No video writer selected. Please select a video codec.");
+                return false;
+            }
 
             var extension = RecordingParams.VideoWriter.Extension;
 
@@ -541,18 +541,10 @@ namespace Captura.ViewModels
 
         IImageProvider GetImageProvider(RecordingModelParams RecordingParams)
         {
-            var provider = RecordingParams
+            return RecordingParams
                 .VideoSourceKind
                 ?.Source
                 ?.GetImageProvider(Settings.IncludeCursor);
-                
-            // DEBUG LOGGING
-            System.Diagnostics.Debug.WriteLine($"[RecordingModel] GetImageProvider:");
-            System.Diagnostics.Debug.WriteLine($"[RecordingModel]   VideoSourceKind: {RecordingParams.VideoSourceKind?.GetType().Name}");
-            System.Diagnostics.Debug.WriteLine($"[RecordingModel]   Source: {RecordingParams.VideoSourceKind?.Source?.GetType().Name}");
-            System.Diagnostics.Debug.WriteLine($"[RecordingModel]   ImageProvider: {provider?.GetType().Name ?? "NULL"}");
-            
-            return provider;
         }
 
         public string CurrentFileName { get; private set; }
