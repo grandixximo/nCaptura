@@ -82,10 +82,7 @@
 
             <StackPanel IsEnabled="{Binding RecordingViewModel.RecorderState, Source={StaticResource ServiceLocator}, Converter={StaticResource NotRecordingConverter}}"
                         Margin="0,20,0,0">
-                <CheckBox IsChecked="{Binding Settings.Audio.PlaybackRecordingRealTime}"
-                          Content="{Binding PlayRecAudio, Source={StaticResource Loc}, Mode=OneWay}"
-                          IsEnabled="{Binding Settings.Audio.SeparateFilePerSource, Converter={StaticResource NegatingConverter}}"
-                          Margin="0,5"/>
+                <!-- PlaybackRecordingRealTime checkbox removed - deprecated feature -->
 
                 <CheckBox IsChecked="{Binding Settings.Audio.SeparateFilePerSource}"
                           Content="{Binding SeparateAudioFiles, Source={StaticResource Loc}, Mode=OneWay}"

@@ -1,4 +1,4 @@
-﻿<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:local="clr-namespace:Captura"
       xmlns:mui="http://firstfloorsoftware.com/ModernUI"
@@ -11,9 +11,7 @@
                 <local:ModernButton ToolTip="{Binding Refresh, Source={StaticResource Loc}, Mode=OneWay}"
                                     Command="{Binding RefreshCommand}"
                                     IconData="{Binding Icons.Refresh, Source={StaticResource ServiceLocator}}"/>
-                <local:ModernButton ToolTip="Open Canvas"
-                                    Click="OpenCanvas"
-                                    IconData="{Binding Icons.Brush, Source={StaticResource ServiceLocator}}"/>
+                <!-- Canvas/Image Editor button removed - feature was removed from codebase -->
                 <local:ModernButton ToolTip="{Binding OpenOutFolder, Source={StaticResource Loc}, Mode=OneWay}"
                                     Command="{Binding OpenOutputFolderCommand}"
                                     IconData="{Binding Icons.Folder, Source={StaticResource ServiceLocator}}"/>
