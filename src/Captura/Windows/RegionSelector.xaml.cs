@@ -227,6 +227,9 @@ namespace Captura
 
                     Left = value.Left / Dpi.X - LeftOffset;
                     Top = value.Top / Dpi.Y - TopOffset;
+                    
+                    // Update the region name immediately after setting the size
+                    UpdateRegion();
                 });
             }
         }
