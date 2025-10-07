@@ -140,6 +140,7 @@ namespace Captura.Webcam
         public void OnPreviewWindowResize(int X, int Y, int Width, int Height)
         {
             // Position video window in client rect of owner window.
+            Trace.WriteLine($"[Captura Webcam] Resizing preview window to: {Width}x{Height} at ({X}, {Y})");
             _videoWindow?.SetWindowPosition(X, Y, Width, Height);
         }
 
@@ -475,8 +476,10 @@ namespace Captura.Webcam
 
                 // Get the IVideoWindow interface
                 _videoWindow = (IVideoWindow)_graphBuilder;
+                Trace.WriteLine($"[Captura Webcam] Got IVideoWindow interface");
 
                 // Set the video window to be a child of the main window
+                Trace.WriteLine($"[Captura Webcam] Setting video window owner (handle: 0x{_previewWindow.ToInt64():X})");
                 hr = _videoWindow.put_Owner(_previewWindow);
 
                 _videoWindow.put_MessageDrain(_form.Handle);
@@ -485,16 +488,20 @@ namespace Captura.Webcam
                     Marshal.ThrowExceptionForHR(hr);
 
                 // Set video window style
+                Trace.WriteLine($"[Captura Webcam] Setting video window style");
                 hr = _videoWindow.put_WindowStyle(WindowStyle.Child | WindowStyle.ClipChildren | WindowStyle.ClipSiblings);
 
                 if (hr < 0)
                     Marshal.ThrowExceptionForHR(hr);
 
                 // Make the video window visible, now that it is properly positioned
+                Trace.WriteLine($"[Captura Webcam] Making video window visible");
                 hr = _videoWindow.put_Visible(OABool.True);
 
                 if (hr < 0)
                     Marshal.ThrowExceptionForHR(hr);
+                
+                Trace.WriteLine($"[Captura Webcam] Video window is now visible");
 
                 _isPreviewRendered = true;
                 didSomething = true;
@@ -527,11 +534,24 @@ namespace Captura.Webcam
             // Render preview 
             if (_wantPreviewRendered && _isPreviewRendered)
             {
+                Trace.WriteLine($"[Captura Webcam] Starting media control to turn on camera...");
                 // Run the graph (ignore errors)
                 // We can run the entire graph becuase the capture
                 // stream should not be rendered (and that is enforced
                 // in the if statement above)
-                _mediaControl.Run();
+                var hr = _mediaControl.Run();
+                if (hr >= 0)
+                {
+                    Trace.WriteLine($"[Captura Webcam] SUCCESS: Media control started (HRESULT: 0x{hr:X8})");
+                }
+                else
+                {
+                    Trace.WriteLine($"[Captura Webcam] WARNING: Media control Run() failed (HRESULT: 0x{hr:X8})");
+                }
+            }
+            else
+            {
+                Trace.WriteLine($"[Captura Webcam] Skipping media control - wantPreview: {_wantPreviewRendered}, isRendered: {_isPreviewRendered}");
             }
         }
 
