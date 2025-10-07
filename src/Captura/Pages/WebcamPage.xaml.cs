@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Reactive.Linq;
 using WSize = System.Windows.Size;
@@ -147,6 +147,7 @@ namespace Captura
 
         void UpdateWebcamPreview()
         {
+            // Try to get the HwndSource from this element
             if (PresentationSource.FromVisual(this) is HwndSource source)
             {
                 var win = _platformServices.GetWindow(source.Handle);
@@ -154,6 +155,31 @@ namespace Captura
                 var rect = GetPreviewWindowRect();
 
                 _webcamCapture?.Value?.UpdatePreview(win, rect);
+            }
+            else
+            {
+                // Fallback: If PresentationSource is null, try getting the parent window directly
+                var parentWindow = VisualTreeHelperEx.FindAncestorByType<Window>(this);
+                
+                if (parentWindow != null && PresentationSource.FromVisual(parentWindow) is HwndSource windowSource)
+                {
+                    var win = _platformServices.GetWindow(windowSource.Handle);
+
+                    var rect = GetPreviewWindowRect();
+
+                    _webcamCapture?.Value?.UpdatePreview(win, rect);
+                }
+                else
+                {
+                    // Still no window? Schedule retry when layout updates
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        if (_webcamCapture != null && IsVisible)
+                        {
+                            UpdateWebcamPreview();
+                        }
+                    }), System.Windows.Threading.DispatcherPriority.Loaded);
+                }
             }
         }
     }
