@@ -311,18 +311,12 @@ jobs:
           
           ### 🤔 Which Should I Choose?
           
-          | Feature | nCaptura (Modern) | Captura Classic |
-          |---------|------------------|-----------------|
-          | Modern UI improvements | ✅ | ❌ |
-          | Classic 8.0.0 UI design | ❌ | ✅ |
-          | All author attributions | ✅ | ✅ |
-          | PayPal donation link | ✅ | ✅ |
-          | All bug fixes | ✅ | ✅ |
-          | FFmpeg improvements | ✅ | ✅ |
+          Both versions have **identical functionality** - the only difference is the UI design:
           
-          **💡 Recommendation:**
-          - Choose **nCaptura** if you want the modern UI design
-          - Choose **Captura Classic** if you prefer the original 8.0.0 interface
+          - **nCaptura (Modern UI)** - Modern interface with updated layout
+          - **Captura Classic** - Original 8.0.0 UI design with vertical button layout
+          
+          **💡 Recommendation:** Choose based on your UI preference - both have all the same features and bug fixes!
           
           ---
           
