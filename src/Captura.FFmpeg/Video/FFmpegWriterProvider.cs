@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -23,8 +23,16 @@ namespace Captura.FFmpeg
             yield return new X264VideoCodec();
             yield return new XvidVideoCodec();
 
-            // Hardware
+            // Hardware encoders
+            // AMD AMF (inspired by OBS Studio)
+            yield return AmfVideoCodec.CreateH264();
+            yield return AmfVideoCodec.CreateHevc();
+            yield return AmfVideoCodec.CreateAv1();
+            
+            // Intel QuickSync
             yield return new QsvHevcVideoCodec();
+            
+            // NVIDIA NVENC
             yield return NvencVideoCodec.CreateH264();
             yield return NvencVideoCodec.CreateHevc();
 
