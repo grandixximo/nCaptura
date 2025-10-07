@@ -46,7 +46,7 @@
                 </StackPanel>
             </Border>
 
-            <captura:VideoSourceKindList/>
+            <captura:VideoSourceKindList Name="VideoSourcesList"/>
 
             <CheckBox Margin="0,5"
                       Content="Drawing Tools"

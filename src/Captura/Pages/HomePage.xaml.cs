@@ -6,7 +6,12 @@ namespace Captura
         {
             InitializeComponent();
             
-            // MainViewModel.Refreshed event removed - shake animations no longer needed
+            ServiceProvider.Get<MainViewModel>().Refreshed += () =>
+            {
+                AudioDropdown?.Shake();
+                VideoWriterComboBox?.Shake();
+                VideoSourcesList?.Shake();
+            };
         }
     }
 }

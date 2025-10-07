@@ -82,7 +82,13 @@ namespace Captura.ViewModels
         {
             _webcamModel.Refresh();
             _audioSource.RefreshCommand.Execute(null);
+            _videoWritersViewModel.RefreshCodecs();
+            
+            // Notify UI elements to shake
+            Refreshed?.Invoke();
         }
+
+        public event Action Refreshed;
 
         public void Init(bool Persist, bool Remembered)
         {
@@ -136,6 +142,14 @@ namespace Captura.ViewModels
         {
             // Remember things if not console.
             if (!_persist)
+                return;
+
+            _rememberByName.Remember();
+
+            Settings.Save();
+        }
+    }
+} if (!_persist)
                 return;
 
             _rememberByName.Remember();

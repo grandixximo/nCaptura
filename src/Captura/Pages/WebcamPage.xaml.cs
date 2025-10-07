@@ -8,7 +8,10 @@ namespace Captura
         {
             InitializeComponent();
             
-            // MainViewModel.Refreshed event removed - shake animations no longer needed
+            ServiceProvider.Get<MainViewModel>().Refreshed += () =>
+            {
+                WebcamComboBox?.Shake();
+            };
         }
 
         void Preview_Click(object Sender, RoutedEventArgs E)

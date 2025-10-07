@@ -14,6 +14,11 @@ namespace Captura
             };
 
             InitializeComponent();
+            
+            ServiceProvider.Get<MainViewModel>().Refreshed += () =>
+            {
+                AudioSourcesPanel?.Shake();
+            };
         }
     }
 }
