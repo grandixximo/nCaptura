@@ -307,6 +307,9 @@ namespace Captura
             DragMove();
         }
 
+        System.Threading.Timer _updateTimer;
+        bool _updatePending;
+
         void Thumb_OnDragDelta(object Sender, DragDeltaEventArgs E)
         {
             if (Sender is FrameworkElement element)
@@ -415,12 +418,30 @@ namespace Captura
                         DoRight();
                         break;
                 }
+
+                // Throttle updates to avoid hundreds of calls per second
+                // Update at most every 50ms (20 updates per second)
+                if (!_updatePending)
+                {
+                    _updatePending = true;
+                    _updateTimer?.Dispose();
+                    _updateTimer = new System.Threading.Timer(_ =>
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            UpdateRegion();
+                            _updatePending = false;
+                        });
+                    }, null, 50, System.Threading.Timeout.Infinite);
+                }
             }
         }
 
         void Thumb_OnDragCompleted(object Sender, DragCompletedEventArgs E)
         {
-            // Update region coordinates after drag completes and layout is done
+            // Final update when drag completes to ensure accuracy
+            _updateTimer?.Dispose();
+            _updatePending = false;
             Dispatcher.BeginInvoke(new Action(() => UpdateRegion()), System.Windows.Threading.DispatcherPriority.Loaded);
         }
     }
