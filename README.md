@@ -20,20 +20,40 @@ Capture Screen, WebCam, Audio, Cursor, Mouse Clicks and Keystrokes.
 
 ## About This Fork
 
-I use **Captura** regularly and love it because it's **small, portable, and just works**. The original [Captura](https://github.com/MathewSachin/Captura) was developed by **Mathew Sachin**, and I'm incredibly grateful for his work creating this excellent tool. While the original project was discontinued, [Mr. Chip (mrchipset)](https://github.com/mrchipset/nCaptura) did a great job maintaining a fork and keeping it alive.
+This is a maintained fork of **Captura**, the excellent screen recording tool originally created by **Mathew Sachin** and later maintained by **Mr. Chip (mrchipset)**. This fork aims to keep the software working smoothly with modern systems while preserving its core philosophy: **small, portable, and just works**.
 
-I forked this repository from mrchipset's version because I actively use this software and want to ensure it continues working smoothly. With the help of **Cursor** and **Claude**, I've made some important fixes:
+### Recent Updates (v10.3.0)
 
+With the help of **Cursor** and **Claude**, significant improvements have been made:
+
+**Classic UI Fixes:**
+- ✅ Fixed all data binding errors for proper MVVM architecture
+- ✅ Restored video source and webcam preview windows
+- ✅ Fixed region selector live coordinate updates
+- ✅ Implemented refresh button shake animations for visual feedback
+- ✅ Fixed audio/webcam source listing and selection
+- ✅ Removed deprecated features and cleaned up UI
+- ✅ Fixed drawing tools toggle and region selection workflow
+
+**Modern UI & Infrastructure:**
 - ✅ Fixed the FFmpeg download window initialization issue
 - ✅ Updated FFmpeg download mirrors to ensure reliability
 - ✅ Improved build and release workflows
+- ✅ Dual UI build system (Classic and Modern)
 
-**This is not an attempt to reboot the project**—it's simply maintained by someone who uses and appreciates it. I'll continue to apply fixes as needed (like updating download mirrors or addressing compatibility issues) to keep this wonderful tool working for everyone who relies on it.
+### UI Versions
 
-**Huge thanks to:**
-- **Mathew Sachin** for creating Captura
-- **Mr. Chip (mrchipset)** for his excellent maintenance work
-- **Cursor & Claude** for helping make these fixes possible
+**Classic UI** - The traditional, compact interface loved by long-time users. Fully restored and working with all features including separate preview windows and the classic layout.
+
+**Modern UI** - A refreshed interface with in-window preview and updated styling for users who prefer a more contemporary look.
+
+Both versions share the same powerful capture engine and feature set. Choose the one that fits your workflow!
+
+**Credits:**
+- **Mathew Sachin** - Original creator of Captura
+- **Mr. Chip (mrchipset)** - Maintained the fork and kept it alive
+- **grandixximo** - Current maintenance and classic UI restoration
+- **Cursor & Claude** - AI assistance for complex debugging and fixes
 
 ![Captura-Repository](docs/Screenshots/Captura_Github_Repo.png)
 

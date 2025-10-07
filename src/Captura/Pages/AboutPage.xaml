@@ -15,7 +15,7 @@
                         Margin="10">
                 <DockPanel>
                     <mui:ModernButton Command="{Binding HyperlinkCommand}"
-                                      CommandParameter="https://github.com/MathewSachin/Captura/"
+                                      CommandParameter="https://github.com/grandixximo/nCaptura/"
                                       Margin="3"
                                       DockPanel.Dock="Right"
                                       IconData="{Binding Icons.GitHub, Source={StaticResource ServiceLocator}}"
@@ -29,28 +29,14 @@
                                LineHeight="30"
                                Style="{StaticResource TextColor}">
                         <Run FontSize="20" Text="Captura"/> <Run Text="{Binding AppVersion, Mode=OneWay}"/><LineBreak/>
-                        © <Run Text="{Binding Year, Source={x:Static sys:DateTime.Now}, Mode=OneWay}"/> <Hyperlink CommandParameter="https://github.com/MathewSachin">Mathew Sachin</Hyperlink>
+                        © 2018 <Hyperlink CommandParameter="https://github.com/MathewSachin">Mathew Sachin</Hyperlink><LineBreak/>
+                        © 2024 <Hyperlink CommandParameter="https://github.com/mrchipset">Mr. Chip</Hyperlink><LineBreak/>
+                        © 2025 <Hyperlink CommandParameter="https://github.com/grandixximo">grandixximo</Hyperlink>
                     </TextBlock>
                 </DockPanel>
 
                 <Button Command="{Binding HyperlinkCommand}"
-                        CommandParameter="https://www.paypal.me/MathewSachin"
-                        Margin="3">
-                    <DockPanel>
-                        <Path Data="{Binding Icons.PayPal, Source={StaticResource ServiceLocator}}"
-                              Width="15"
-                              Height="15"
-                              Stretch="Uniform"
-                              Margin="0,0,10,0"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"/>
-
-                        <TextBlock Text="{Binding Donate, Source={StaticResource Loc}, Mode=OneWay}"/>
-                    </DockPanel>
-                </Button>
-
-                <Button Command="{Binding HyperlinkCommand}"
-                        CommandParameter="https://MathewSachin.github.io/Captura"
+                        CommandParameter="https://github.com/grandixximo/nCaptura"
                         Margin="3">
                     <DockPanel>
                         <Path Data="{Binding Icons.Web, Source={StaticResource ServiceLocator}}"
