@@ -47,6 +47,7 @@
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center"/>
 
+<<<<<<< Updated upstream
                         <TextBlock Text="{Binding Website, Source={StaticResource Loc}, Mode=OneWay}"/>
                     </DockPanel>
                 </Button>
@@ -62,6 +63,13 @@
                               Margin="0,0,10,0"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center"/>
+=======
+                    <captura:ModernButton Content="{Binding Website, Source={StaticResource Loc}, Mode=OneWay}"
+                                          IconData="{Binding Icons.Web, Source={StaticResource ServiceLocator}}"
+                                          Command="{Binding HyperlinkCommand}"
+                                          CommandParameter="https://github.com/grandixximo/nCaptura"/>
+                </WrapPanel>
+>>>>>>> Stashed changes
 
                         <TextBlock Text="{Binding WantToTranslate, Source={StaticResource Loc}, Mode=OneWay}"/>
                     </DockPanel>
