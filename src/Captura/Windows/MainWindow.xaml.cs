@@ -3,11 +3,14 @@ using System.Drawing;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Forms;
 using System.Windows.Forms.Integration;
 using System.Windows.Input;
 using System.Windows.Markup;
 using Captura.Models;
+using Captura.ViewModels;
+using Captura.Video;
+using PictureBox = System.Windows.Forms.PictureBox;
+using PictureBoxSizeMode = System.Windows.Forms.PictureBoxSizeMode;
 
 namespace Captura
 {
@@ -363,7 +366,7 @@ namespace Captura
             dockPanel.Children.Add(splitter1);
 
             // FPS Label
-            var fpsLabel = new Label { Margin = new Thickness(5, 0, 5, 0) };
+            var fpsLabel = new System.Windows.Controls.Label { Margin = new Thickness(5, 0, 5, 0) };
             var fpsBinding = new System.Windows.Data.Binding("ViewConditions.FpsVisibility.Value")
             {
                 Source = ServiceProvider.Get<ViewConditions>()
@@ -402,7 +405,7 @@ namespace Captura
             var dockPanel = new DockPanel { Margin = new Thickness(-5, 0, 0, 0), MaxHeight = 650 };
 
             // Copyright label
-            var copyrightLabel = new Label
+            var copyrightLabel = new System.Windows.Controls.Label
             {
                 Content = "© Mathew Sachin",
                 Opacity = 0.9,
@@ -443,7 +446,7 @@ namespace Captura
             var grid = new Grid();
 
             // Preview label
-            var previewLabel = new Label
+            var previewLabel = new System.Windows.Controls.Label
             {
                 Content = "Preview",
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
@@ -459,7 +462,7 @@ namespace Captura
 
             // D3DImage
             D3DImage = new System.Windows.Interop.D3DImage();
-            var image = new Image { Source = D3DImage };
+            var image = new System.Windows.Controls.Image { Source = D3DImage };
             grid.Children.Add(image);
 
             return grid;
@@ -494,16 +497,16 @@ namespace Captura
             };
 
             // TimeSpan label
-            var timeLabel = new Label();
+            var timeLabel = new System.Windows.Controls.Label();
             var timeBinding = new System.Windows.Data.Binding("TimerModel.TimeSpan")
             {
                 Source = ServiceProvider.Get<TimerModel>()
             };
-            timeLabel.SetBinding(Label.ContentProperty, timeBinding);
+            timeLabel.SetBinding(System.Windows.Controls.Label.ContentProperty, timeBinding);
             durationStack.Children.Add(timeLabel);
 
             // Duration label
-            var durationLabel = new Label
+            var durationLabel = new System.Windows.Controls.Label
             {
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
                 FontSize = 8
@@ -512,7 +515,7 @@ namespace Captura
             {
                 Converter = new SecondsToTimeSpanConverter()
             };
-            durationLabel.SetBinding(Label.ContentProperty, durationBinding);
+            durationLabel.SetBinding(System.Windows.Controls.Label.ContentProperty, durationBinding);
             durationStack.Children.Add(durationLabel);
 
             var visibilityBinding = new System.Windows.Data.Binding("TimerModel.Countdown")
@@ -526,7 +529,7 @@ namespace Captura
             grid.Children.Add(durationStack);
 
             // Countdown label
-            var countdownLabel = new Label
+            var countdownLabel = new System.Windows.Controls.Label
             {
                 Margin = new Thickness(0, -1, 0, -1),
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Center
@@ -536,7 +539,7 @@ namespace Captura
             {
                 Source = ServiceProvider.Get<TimerModel>()
             };
-            countdownLabel.SetBinding(Label.ContentProperty, countdownBinding);
+            countdownLabel.SetBinding(System.Windows.Controls.Label.ContentProperty, countdownBinding);
 
             var countdownVisBinding = new System.Windows.Data.Binding("Visibility")
             {
@@ -569,16 +572,16 @@ namespace Captura
             };
 
             // TimeSpan label
-            var timeLabel = new Label();
+            var timeLabel = new System.Windows.Controls.Label();
             var timeBinding = new System.Windows.Data.Binding("TimerModel.TimeSpan")
             {
                 Source = ServiceProvider.Get<TimerModel>()
             };
-            timeLabel.SetBinding(Label.ContentProperty, timeBinding);
+            timeLabel.SetBinding(System.Windows.Controls.Label.ContentProperty, timeBinding);
             durationStack.Children.Add(timeLabel);
 
             // Duration label
-            var durationLabel = new Label
+            var durationLabel = new System.Windows.Controls.Label
             {
                 ContentStringFormat = "{0}",
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
@@ -588,7 +591,7 @@ namespace Captura
             {
                 Converter = new SecondsToTimeSpanConverter()
             };
-            durationLabel.SetBinding(Label.ContentProperty, durationBinding);
+            durationLabel.SetBinding(System.Windows.Controls.Label.ContentProperty, durationBinding);
             var visibilityDurationBinding = new System.Windows.Data.Binding("Settings.Duration")
             {
                 Converter = new NotNullConverter()
@@ -607,7 +610,7 @@ namespace Captura
             grid.Children.Add(durationStack);
 
             // Countdown label
-            var countdownLabel = new Label
+            var countdownLabel = new System.Windows.Controls.Label
             {
                 Margin = new Thickness(0, -1, 0, -1),
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Center
@@ -617,7 +620,7 @@ namespace Captura
             {
                 Source = ServiceProvider.Get<TimerModel>()
             };
-            countdownLabel.SetBinding(Label.ContentProperty, countdownBinding);
+            countdownLabel.SetBinding(System.Windows.Controls.Label.ContentProperty, countdownBinding);
 
             var countdownVisBinding = new System.Windows.Data.Binding("Visibility")
             {
