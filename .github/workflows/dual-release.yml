@@ -1,0 +1,325 @@
+# Dual Release Workflow
+# Builds both nCaptura (modern UI) and Captura (classic UI)
+# Creates 4 packages: 2 installers + 2 portable versions
+
+name: Dual Release - Modern & Classic UI
+
+# Only runs when a version tag is pushed (e.g., v10.3.0)
+# Creates production release with both UI versions
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-modern-ui:
+    name: Build nCaptura (Modern UI)
+    runs-on: windows-2022
+    
+    env:
+      Solution_Name: src/Captura.sln
+
+    steps:
+    - name: Checkout main branch
+      uses: actions/checkout@v4
+      with:
+        ref: main
+        fetch-depth: 0
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore the application
+      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=Release
+
+    - name: Build the application
+      run: msbuild $env:Solution_Name -t:rebuild -verbosity:minimal -property:Configuration=Release
+
+    - name: Prepare distribution folder
+      run: |
+        New-Item -ItemType Directory -Force -Path dist
+        New-Item -ItemType Directory -Force -Path temp
+        
+        $consoleBinFolder = "src/Captura.Console/bin/Release"
+        $uiBinFolder = "src/Captura/bin/Release"
+        
+        # Copy License files
+        Copy-Item -Path "licenses" -Destination "dist/licenses" -Recurse -Force
+        
+        # Copy Languages
+        Copy-Item -Path "$uiBinFolder/Languages" -Destination "dist/languages" -Recurse -Force
+        
+        # Copy executables
+        Copy-Item -Path "$consoleBinFolder/*.exe" -Destination "dist/" -Force
+        Copy-Item -Path "$uiBinFolder/*.exe" -Destination "dist/" -Force
+        
+        # Copy config files
+        if (Test-Path "$consoleBinFolder/captura-cli.exe.config") {
+          Copy-Item -Path "$consoleBinFolder/captura-cli.exe.config" -Destination "dist/" -Force
+        }
+        if (Test-Path "$uiBinFolder/captura.exe.config") {
+          Copy-Item -Path "$uiBinFolder/captura.exe.config" -Destination "dist/" -Force
+        }
+        
+        # Copy Keymap files
+        Copy-Item -Path "$uiBinFolder/keymaps" -Destination "dist/keymaps" -Recurse -Force
+        
+        # Create lib directory and copy DLL contents
+        New-Item -ItemType Directory -Force -Path "dist/lib" | Out-Null
+        
+        if (Test-Path "$consoleBinFolder/lib") {
+          Copy-Item -Path "$consoleBinFolder/lib/*" -Destination "dist/lib" -Recurse -Force
+        }
+        if (Test-Path "$uiBinFolder/lib") {
+          Copy-Item -Path "$uiBinFolder/lib/*" -Destination "dist/lib" -Recurse -Force
+        }
+      shell: pwsh
+
+    - name: Package portable version
+      run: |
+        # Create portable directories
+        New-Item -ItemType Directory -Force -Path "dist/Settings"
+        New-Item -ItemType Directory -Force -Path "dist/Codecs"
+        
+        $version = "${{ github.ref_name }}"
+        $portableZip = "nCaptura-${version}-Portable.zip"
+        Compress-Archive -Path "dist/*" -DestinationPath $portableZip
+        echo "MODERN_PORTABLE=$portableZip" >> $env:GITHUB_OUTPUT
+        
+        # Remove portable-specific directories for installer
+        Remove-Item -Path "dist/Settings" -Recurse -Force
+        Remove-Item -Path "dist/Codecs" -Recurse -Force
+      shell: pwsh
+      id: package_modern
+
+    - name: Install Inno Setup
+      run: choco install innosetup -y
+      shell: pwsh
+
+    - name: Build installer with Inno Setup
+      run: |
+        $version = "${{ github.ref_name }}".TrimStart('v')
+        $innoPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+        
+        # Create custom Inno script for nCaptura
+        $innoContent = Get-Content "Inno.iss" -Raw
+        $innoContent = $innoContent -replace '#define MyAppName "Captura"', '#define MyAppName "nCaptura"'
+        $innoContent = $innoContent -replace 'OutputBaseFilename=Captura-Setup', 'OutputBaseFilename=nCaptura-Setup'
+        $innoContent | Set-Content "Inno-modern.iss"
+        
+        & $innoPath "/DMyAppVersion=$version" "Inno-modern.iss"
+        
+        # Rename output file
+        $installerName = "nCaptura-${{ github.ref_name }}-Setup.exe"
+        Move-Item -Path "temp/nCaptura-Setup.exe" -Destination $installerName -Force
+        echo "MODERN_INSTALLER=$installerName" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+      id: installer_modern
+
+    - name: Upload modern UI artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nCaptura-Modern-UI
+        path: |
+          ${{ steps.package_modern.outputs.MODERN_PORTABLE }}
+          ${{ steps.installer_modern.outputs.MODERN_INSTALLER }}
+
+  build-classic-ui:
+    name: Build Captura (Classic UI)
+    runs-on: windows-2022
+    
+    env:
+      Solution_Name: src/Captura.sln
+
+    steps:
+    - name: Checkout classic-ui-modern-fixes branch
+      uses: actions/checkout@v4
+      with:
+        ref: classic-ui-modern-fixes
+        fetch-depth: 0
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore the application
+      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=Release
+
+    - name: Build the application
+      run: msbuild $env:Solution_Name -t:rebuild -verbosity:minimal -property:Configuration=Release
+
+    - name: Prepare distribution folder
+      run: |
+        New-Item -ItemType Directory -Force -Path dist
+        New-Item -ItemType Directory -Force -Path temp
+        
+        $consoleBinFolder = "src/Captura.Console/bin/Release"
+        $uiBinFolder = "src/Captura/bin/Release"
+        
+        # Copy License files
+        Copy-Item -Path "licenses" -Destination "dist/licenses" -Recurse -Force
+        
+        # Copy Languages
+        Copy-Item -Path "$uiBinFolder/Languages" -Destination "dist/languages" -Recurse -Force
+        
+        # Copy executables
+        Copy-Item -Path "$consoleBinFolder/*.exe" -Destination "dist/" -Force
+        Copy-Item -Path "$uiBinFolder/*.exe" -Destination "dist/" -Force
+        
+        # Copy config files
+        if (Test-Path "$consoleBinFolder/captura-cli.exe.config") {
+          Copy-Item -Path "$consoleBinFolder/captura-cli.exe.config" -Destination "dist/" -Force
+        }
+        if (Test-Path "$uiBinFolder/captura.exe.config") {
+          Copy-Item -Path "$uiBinFolder/captura.exe.config" -Destination "dist/" -Force
+        }
+        
+        # Copy Keymap files
+        Copy-Item -Path "$uiBinFolder/keymaps" -Destination "dist/keymaps" -Recurse -Force
+        
+        # Create lib directory and copy DLL contents
+        New-Item -ItemType Directory -Force -Path "dist/lib" | Out-Null
+        
+        if (Test-Path "$consoleBinFolder/lib") {
+          Copy-Item -Path "$consoleBinFolder/lib/*" -Destination "dist/lib" -Recurse -Force
+        }
+        if (Test-Path "$uiBinFolder/lib") {
+          Copy-Item -Path "$uiBinFolder/lib/*" -Destination "dist/lib" -Recurse -Force
+        }
+      shell: pwsh
+
+    - name: Package portable version
+      run: |
+        # Create portable directories
+        New-Item -ItemType Directory -Force -Path "dist/Settings"
+        New-Item -ItemType Directory -Force -Path "dist/Codecs"
+        
+        $version = "${{ github.ref_name }}"
+        $portableZip = "Captura-${version}-Classic-Portable.zip"
+        Compress-Archive -Path "dist/*" -DestinationPath $portableZip
+        echo "CLASSIC_PORTABLE=$portableZip" >> $env:GITHUB_OUTPUT
+        
+        # Remove portable-specific directories for installer
+        Remove-Item -Path "dist/Settings" -Recurse -Force
+        Remove-Item -Path "dist/Codecs" -Recurse -Force
+      shell: pwsh
+      id: package_classic
+
+    - name: Install Inno Setup
+      run: choco install innosetup -y
+      shell: pwsh
+
+    - name: Build installer with Inno Setup
+      run: |
+        $version = "${{ github.ref_name }}".TrimStart('v')
+        $innoPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+        
+        # Use original Inno script (keeps Captura name)
+        & $innoPath "/DMyAppVersion=$version" "Inno.iss"
+        
+        # Rename output file
+        $installerName = "Captura-${{ github.ref_name }}-Classic-Setup.exe"
+        Move-Item -Path "temp/Captura-Setup.exe" -Destination $installerName -Force
+        echo "CLASSIC_INSTALLER=$installerName" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+      id: installer_classic
+
+    - name: Upload classic UI artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Captura-Classic-UI
+        path: |
+          ${{ steps.package_classic.outputs.CLASSIC_PORTABLE }}
+          ${{ steps.installer_classic.outputs.CLASSIC_INSTALLER }}
+
+  create-release:
+    name: Create Dual Release
+    needs: [build-modern-ui, build-classic-ui]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Download modern UI artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: nCaptura-Modern-UI
+        path: ./artifacts/modern
+
+    - name: Download classic UI artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: Captura-Classic-UI
+        path: ./artifacts/classic
+
+    - name: Delete existing release (if exists)
+      continue-on-error: true
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release delete ${{ github.ref_name }} --yes --repo ${{ github.repository }} || true
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ./artifacts/modern/*
+          ./artifacts/classic/*
+        draft: false
+        prerelease: false
+        name: "Release ${{ github.ref_name }}"
+        body: |
+          ## 🎉 Dual Release: Choose Your UI! 
+          
+          This release includes **both UI versions** with all the latest fixes and improvements!
+          
+          ---
+          
+          ### 🆕 nCaptura (Modern UI)
+          
+          The updated interface with modern design improvements.
+          
+          **Download:**
+          - 💾 **Installer**: `nCaptura-${{ github.ref_name }}-Setup.exe` *(Recommended)*
+          - 📦 **Portable**: `nCaptura-${{ github.ref_name }}-Portable.zip` *(No installation required)*
+          
+          ---
+          
+          ### 🎨 Captura Classic (8.0.0 UI)
+          
+          Original interface design with all modern fixes - best of both worlds!
+          
+          **Download:**
+          - 💾 **Installer**: `Captura-${{ github.ref_name }}-Classic-Setup.exe` *(Recommended)*
+          - 📦 **Portable**: `Captura-${{ github.ref_name }}-Classic-Portable.zip` *(No installation required)*
+          
+          ---
+          
+          ### ✅ What's Included in Both Versions
+          
+          - ✅ **Fixed FFmpeg Downloader** - Reliable mirrors with automatic fallback
+          - ✅ **Windows 11 Compatible** - Tested on latest Windows versions
+          - ✅ **.NET Framework Fixes** - Better compatibility with older systems
+          - ✅ **All Bug Fixes** - Latest stability improvements
+          
+          ### 🤔 Which Should I Choose?
+          
+          Both versions have **identical functionality** - the only difference is the UI design:
+          
+          - **nCaptura (Modern UI)** - Modern interface with updated layout
+          - **Captura Classic** - Original 8.0.0 UI design with vertical button layout
+          
+          **💡 Recommendation:** Choose based on your UI preference - both have all the same features and bug fixes!
+          
+          ---
+          
+          **Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ github.ref_name }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

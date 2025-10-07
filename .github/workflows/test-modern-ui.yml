@@ -1,0 +1,45 @@
+name: Test Modern UI Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Modern UI (nCaptura)
+    runs-on: windows-2022
+    
+    env:
+      Solution_Name: src/Captura.sln
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore the application
+      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=Debug
+
+    - name: Build the application
+      run: msbuild $env:Solution_Name -t:rebuild -verbosity:minimal -property:Configuration=Debug
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nCaptura-Modern-UI-Debug
+        path: src/Captura/bin/Debug/*
+        retention-days: 7

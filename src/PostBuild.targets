@@ -36,7 +36,14 @@
       <XmlDocFiles Include="$(OutputPath)*.xml" />
     </ItemGroup>
 
-    <Message Text="Moving Libraries to lib folder" Importance="High" />
+    <Message Text="========================================" Importance="High" />
+    <Message Text="PostBuild: Moving Libraries to lib folder" Importance="High" />
+    <Message Text="Configuration: $(Configuration)" Importance="High" />
+    <Message Text="DoMoveLibs: $(DoMoveLibs)" Importance="High" />
+    <Message Text="OutputPath: $(OutputPath)" Importance="High" />
+    <Message Text="Destination: $(CopyDestionationPath)" Importance="High" />
+    <Message Text="DLL count: @(LibFiles->Count())" Importance="High" />
+    <Message Text="========================================" Importance="High" />
 
     <Move SourceFiles="@(LibFiles)" 
           DestinationFolder="$(CopyDestionationPath)" />
