@@ -22,6 +22,7 @@
             <Style TargetType="Thumb">
                 <Setter Property="Opacity" Value="0.01"/>
                 <EventSetter Event="DragDelta" Handler="Thumb_OnDragDelta"/>
+                <EventSetter Event="DragCompleted" Handler="Thumb_OnDragCompleted"/>
             </Style>
             <Style x:Key="CornerThumb" TargetType="Thumb" BasedOn="{StaticResource {x:Type Thumb}}">
                 <Setter Property="Height" Value="5"/>

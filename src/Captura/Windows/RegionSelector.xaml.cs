@@ -415,10 +415,13 @@ namespace Captura
                         DoRight();
                         break;
                 }
-                
-                // Update region coordinates after layout completes (ActualWidth/ActualHeight are updated)
-                Dispatcher.BeginInvoke(new Action(() => UpdateRegion()), System.Windows.Threading.DispatcherPriority.Loaded);
             }
+        }
+
+        void Thumb_OnDragCompleted(object Sender, DragCompletedEventArgs E)
+        {
+            // Update region coordinates after drag completes and layout is done
+            Dispatcher.BeginInvoke(new Action(() => UpdateRegion()), System.Windows.Threading.DispatcherPriority.Loaded);
         }
     }
 }
