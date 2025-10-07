@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -248,6 +248,12 @@ namespace Captura.ViewModels
         public bool StartRecording(RecordingModelParams RecordingParams, string FileName = null)
         {
             IsVideo = !(RecordingParams.VideoSourceKind is NoVideoSourceProvider);
+
+            if (RecordingParams.VideoWriter == null)
+            {
+                ServiceProvider.MessageProvider.ShowError("No video writer selected. Please select a video codec.");
+                return false;
+            }
 
             var extension = RecordingParams.VideoWriter.Extension;
 

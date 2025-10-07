@@ -21,18 +21,22 @@ namespace Captura.Windows.MediaFoundation
         {
             try
             {
-                // Try to create device
-                _device = new Device(DriverType.Hardware, DeviceCreationFlags.BgraSupport);
-                
-                // Check GPU compatibility
+                // Check GPU compatibility FIRST before creating device
                 var gpuInfo = DetectGPU();
                 _isCompatible = gpuInfo.IsCompatible;
                 _warningMessage = gpuInfo.Warning;
+
+                // Only try to create device if compatible
+                if (_isCompatible)
+                {
+                    _device = new Device(DriverType.Hardware, DeviceCreationFlags.BgraSupport);
+                }
             }
             catch (Exception ex)
             {
                 _isCompatible = false;
                 _warningMessage = $"Failed to initialize Media Foundation: {ex.Message}";
+                _device = null;
             }
         }
 
