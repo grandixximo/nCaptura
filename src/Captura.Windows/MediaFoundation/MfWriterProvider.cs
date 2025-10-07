@@ -131,12 +131,31 @@ namespace Captura.Windows.MediaFoundation
 
         public IEnumerator<IVideoWriterItem> GetEnumerator()
         {
-            // Only provide MF options if compatible
-            if (_isCompatible && _device != null)
-            {
-                // Detect all available hardware encoders and offer them all
-                var availableEncoders = DetectAllHardwareEncoders();
+            // Detect all available hardware encoders and offer them all
+            var availableEncoders = DetectAllHardwareEncoders();
 
+            // If we have encoders but no device, try to create it now
+            if (availableEncoders.Count > 0 && _device == null)
+            {
+                try
+                {
+                    var device = new Device(DriverType.Hardware, DeviceCreationFlags.BgraSupport);
+                    
+                    foreach (var encoder in availableEncoders)
+                    {
+                        yield return new MfItem(device, encoder.CodecName, encoder.FormatGuid, encoder.Extension, _warningMessage);
+                    }
+                    yield break;
+                }
+                catch
+                {
+                    // If device creation fails, fall through
+                }
+            }
+
+            // Normal path - use existing device
+            if (_device != null && availableEncoders.Count > 0)
+            {
                 foreach (var encoder in availableEncoders)
                 {
                     yield return new MfItem(_device, encoder.CodecName, encoder.FormatGuid, encoder.Extension, _warningMessage);
