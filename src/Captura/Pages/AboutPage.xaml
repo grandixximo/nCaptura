@@ -51,6 +51,22 @@
                     </DockPanel>
                 </Button>
 
+                <Button Command="{Binding HyperlinkCommand}"
+                        CommandParameter="https://www.paypal.me/MathewSachin"
+                        Margin="3">
+                    <DockPanel>
+                        <Path Data="{Binding Icons.PayPal, Source={StaticResource ServiceLocator}}"
+                              Width="15"
+                              Height="15"
+                              Stretch="Uniform"
+                              Margin="0,0,10,0"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"/>
+
+                        <TextBlock Text="{Binding Donate, Source={StaticResource Loc}, Mode=OneWay}"/>
+                    </DockPanel>
+                </Button>
+
                 <Button Margin="3,15"
                         Command="{Binding HyperlinkCommand}"
                         CommandParameter="https://mathewsachin.github.io/Captura/translation">
