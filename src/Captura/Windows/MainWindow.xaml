@@ -7,13 +7,20 @@
         ResizeMode="CanMinimize"
         Icon="../Images/Captura.ico"
         SizeToContent="Height"
-        MaxWidth="440"
-        Title="Captura"
+        MaxWidth="{Binding Settings.UI.UseClassicUI, Converter={StaticResource BoolToMaxWidthConverter}, FallbackValue=440}"
+        Title="{Binding Settings.UI.UseClassicUI, Converter={StaticResource BoolToTitleConverter}}"
         Left="{Binding Settings.UI.MainWindowLeft, Mode=TwoWay}"
         Top="{Binding Settings.UI.MainWindowTop, Mode=TwoWay}"
         BorderThickness="1"
         BorderBrush="{DynamicResource Accent}"
         Topmost="{Binding Settings.UI.MainWindowTopmost}">
+    <Window.Resources>
+        <!-- Converter for MaxWidth: Classic=450, Modern=440 -->
+        <local:BoolToValueConverter x:Key="BoolToMaxWidthConverter" TrueValue="450" FalseValue="440"/>
+        
+        <!-- Converter for Title: Classic shows timer, Modern just "Captura" -->
+        <local:UIModeTitleConverter x:Key="BoolToTitleConverter"/>
+    </Window.Resources>
     <WindowChrome.WindowChrome>
         <WindowChrome GlassFrameThickness="1"
                       UseAeroCaptionButtons="False"
@@ -201,124 +208,15 @@
             </tb:TaskbarIcon.ContextMenu>
         </tb:TaskbarIcon>
 
-        <Expander Padding="5,0,0,0"
-                  Grid.Row="0"
-                  IsExpanded="{Binding Settings.UI.Expanded}">
-            <Expander.Header>
-                <Grid>
-                    <Border CornerRadius="15,15,25,25"
-                            BorderThickness="0"
-                            Margin="0,2,0,0"
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Top"
-                            Width="70"
-                            Height="33"
-                            Background="{DynamicResource ButtonBackgroundHover}"/>
-                    <DockPanel VerticalAlignment="Center">
-                        <local:CollapsedBar DockPanel.Dock="Bottom"
-                                            Margin="-30,0,0,0"/>
-
-                        <local:ScreenShotButton/>
-                        <local:ModernButton ToolTip="{Binding RecordStop, Source={StaticResource Loc}, Mode=OneWay}"
-                                            Command="{Binding RecordingViewModel.RecordCommand, Source={StaticResource ServiceLocator}}"
-                                            Foreground="#ee2c2c"
-                                            IconData="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource StateToRecordButtonGeometryConverter}}"/>
-                        <local:PauseButton/>
-                        <local:ModernButton ToolTip="{Binding Close, Source={StaticResource Loc}, Mode=OneWay}"
-                                            Click="CloseButton_Click"
-                                            Foreground="#77ef5350"
-                                            IconData="{Binding Icons.Close, Source={StaticResource ServiceLocator}}"
-                                            DockPanel.Dock="Right"/>
-                        <local:ModernButton ToolTip="{Binding MinTray, Source={StaticResource Loc}, Mode=OneWay}"
-                                            Click="HideButton_Click"
-                                            IconData="{Binding Icons.DoubleDown, Source={StaticResource ServiceLocator}}"
-                                            Opacity="0.7"
-                                            DockPanel.Dock="Right"/>
-                        <local:ModernButton ToolTip="{Binding Minimize, Source={StaticResource Loc}, Mode=OneWay}"
-                                            Click="MinButton_Click"
-                                            IconData="{Binding Icons.Minimize, Source={StaticResource ServiceLocator}}"
-                                            Opacity="0.7"
-                                            DockPanel.Dock="Right"/>
-                        
-                        <local:ModernButton x:Name="UIToggleButton"
-                                            ToolTip="Toggle UI Mode (New/Classic)"
-                                            Click="UIToggleButton_Click"
-                                            IconData="{Binding Icons.Contrast, Source={StaticResource ServiceLocator}}"
-                                            Opacity="0.7"
-                                            DockPanel.Dock="Right"/>
-
-                        <Grid Margin="0,-2"
-                              PreviewMouseLeftButtonDown="Grid_PreviewMouseLeftButtonDown"
-                              Background="#01000000">
-                            <Border CornerRadius="15"
-                                    BorderThickness="0"
-                                    Margin="30,5"
-                                    Background="{DynamicResource ButtonBackgroundHover}"/>
-
-                            <StackPanel Margin="10,-1"
-                                        Visibility="{Binding TimerModel.Countdown, Source={StaticResource ServiceLocator}, Converter={StaticResource IsLessThanConverter}, ConverterParameter=1}"
-                                        Name="DurationLabel"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center">
-                                <Label Content="{Binding TimerModel.TimeSpan, Source={StaticResource ServiceLocator}}"/>
-
-                                <Label Content="{Binding Settings.Duration, Converter={StaticResource SecondsToTimeSpanConverter}}"
-                                       ContentStringFormat="{}{0}"
-                                       HorizontalAlignment="Center"
-                                       FontSize="8"
-                                       Visibility="{Binding Settings.Duration, Converter={StaticResource NotNullConverter}}"/>
-                            </StackPanel>
-
-                            <Label Visibility="{Binding Visibility, ElementName=DurationLabel, Converter={StaticResource NegatingConverter}}"
-                                   Margin="0,-1"
-                                   Style="{StaticResource CountdownLabel}"
-                                   HorizontalAlignment="Center"
-                                   Content="{Binding TimerModel.Countdown, Source={StaticResource ServiceLocator}}"/>
-                        </Grid>
-                    </DockPanel>
-                </Grid>
-            </Expander.Header>
-            <DockPanel Margin="-5,0"
-                       Height="300">
-                <Frame x:Name="ContentFrame"
-                       Source="../Pages/MainPage.xaml"
-                       DockPanel.Dock="Top"/>
-
-                <GridSplitter Height="1"
-                              Margin="0,2"
-                              DockPanel.Dock="Top"
-                              IsEnabled="False"/>
-
-                <Label DockPanel.Dock="Bottom"
-                       Margin="5,0"
-                       Visibility="{Binding ViewConditions.FpsVisibility.Value, Source={StaticResource ServiceLocator}}">
-                    <TextBlock>
-                        FPS: <Run Text="{Binding FpsManager.Fps, Source={StaticResource ServiceLocator}, Mode=OneWay}"/>
-                    </TextBlock>
-                </Label>
-
-                <GridSplitter Height="1"
-                              Margin="0,2"
-                              DockPanel.Dock="Bottom"
-                              IsEnabled="False"/>
-
-                <Grid xmlns:wf="clr-namespace:System.Windows.Forms;assembly=System.Windows.Forms"
-                      xmlns:interop="clr-namespace:System.Windows.Interop;assembly=PresentationCore">
-                    <Label Content="Preview"
-                           HorizontalAlignment="Center"
-                           Opacity="0.7"/>
-                    <WindowsFormsHost Name="WinFormsHost"
-                                      Visibility="Collapsed">
-                        <wf:PictureBox x:Name="DisplayImage"
-                                       SizeMode="Zoom"/>
-                    </WindowsFormsHost>
-                    <Image>
-                        <Image.Source>
-                            <interop:D3DImage x:Name="D3DImage"/>
-                        </Image.Source>
-                    </Image>
-                </Grid>
-            </DockPanel>
-        </Expander>
+        <!-- Main Content - Swaps between Modern and Classic layouts -->
+        <ContentControl x:Name="MainContent" Grid.Row="0"/>
+        
+        <!-- CollapsedBar for Modern UI only -->
+        <Grid x:Name="CollapsedBarContainer" 
+              Grid.Row="1"
+              Margin="2,0,0,5"
+              Visibility="Collapsed">
+            <local:CollapsedBar/>
+        </Grid>
     </Grid>
 </Window>
