@@ -1,0 +1,110 @@
+name: Debug Builds
+
+# Manual workflow - choose which UI to build for testing
+on:
+  workflow_dispatch:
+    inputs:
+      ui_version:
+        description: 'Which UI version to build?'
+        required: true
+        type: choice
+        options:
+          - modern
+          - classic
+          - both
+
+jobs:
+  build-modern:
+    name: Build Modern UI (Debug)
+    runs-on: windows-2022
+    if: ${{ github.event.inputs.ui_version == 'modern' || github.event.inputs.ui_version == 'both' }}
+    
+    env:
+      Solution_Name: src/Captura.sln
+
+    steps:
+    - name: Checkout main branch
+      uses: actions/checkout@v4
+      with:
+        ref: main
+        fetch-depth: 0
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore NuGet packages
+      run: nuget restore $env:Solution_Name
+
+    - name: Build solution (Debug)
+      run: msbuild $env:Solution_Name /p:Configuration=Debug /p:Platform="Any CPU"
+
+    - name: Upload Modern UI Debug Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: nCaptura-Debug
+        path: |
+          src/Captura/bin/Debug/
+          !src/Captura/bin/Debug/*.pdb
+          !src/Captura/bin/Debug/*.xml
+        retention-days: 7
+
+  build-classic:
+    name: Build Classic UI (Debug)
+    runs-on: windows-2022
+    if: ${{ github.event.inputs.ui_version == 'classic' || github.event.inputs.ui_version == 'both' }}
+    
+    env:
+      Solution_Name: src/Captura.sln
+
+    steps:
+    - name: Checkout classic-ui-modern-fixes branch
+      uses: actions/checkout@v4
+      with:
+        ref: classic-ui-modern-fixes
+        fetch-depth: 0
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore NuGet packages
+      run: nuget restore $env:Solution_Name
+
+    - name: Build solution (Debug)
+      run: msbuild $env:Solution_Name /p:Configuration=Debug /p:Platform="Any CPU"
+
+    - name: Upload Classic UI Debug Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: Captura-Classic-Debug
+        path: |
+          src/Captura/bin/Debug/
+          !src/Captura/bin/Debug/*.pdb
+          !src/Captura/bin/Debug/*.xml
+        retention-days: 7
+
+  summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [build-modern, build-classic]
+    if: always()
+    
+    steps:
+    - name: Check Build Results
+      run: |
+        echo "### Debug Build Complete! 🎉" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "UI Version: ${{ github.event.inputs.ui_version }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Check the **Artifacts** section below to download your debug builds." >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Note:** Debug builds are kept for 7 days only." >> $GITHUB_STEP_SUMMARY

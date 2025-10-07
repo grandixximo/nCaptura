@@ -4,11 +4,12 @@
 
 name: Dual Release - Modern & Classic UI
 
+# Only runs when a version tag is pushed (e.g., v10.3.0)
+# Creates production release with both UI versions
 on:
   push:
     tags:
       - "v*"
-  workflow_dispatch:
 
 jobs:
   build-modern-ui:
