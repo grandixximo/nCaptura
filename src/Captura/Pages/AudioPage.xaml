@@ -13,52 +13,53 @@
                       FontSize="15"/>
 
             <ScrollViewer IsEnabled="{Binding Settings.Audio.Enabled}"
-                          MaxHeight="130">
+                          MaxHeight="200">
                 <StackPanel IsEnabled="{Binding RecordingViewModel.RecorderState, Source={StaticResource ServiceLocator}, Converter={StaticResource NotRecordingConverter}}"
                             Name="AudioSourcesPanel">
-                    <ItemsControl ItemsSource="{Binding AudioSource.AvailableMicrophones, Source={StaticResource ServiceLocator}}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <CheckBox Margin="0,5"
-                                          IsChecked="{Binding Active, Mode=TwoWay}">
-                                    <DockPanel>
-                                        <Path Data="{Binding Icons.Mic, Source={StaticResource ServiceLocator}}"
-                                              Width="15"
-                                              Height="15"
-                                              Margin="5,0"
-                                              Stretch="Uniform"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              ToolTip="{Binding MicSource, Source={StaticResource Loc}, Mode=OneWay}"/>
+                    
+                    <!-- Microphone Selection -->
+                    <CheckBox Margin="0,5"
+                              IsChecked="{Binding Settings.Audio.RecordMicrophone, Mode=TwoWay}">
+                        <DockPanel>
+                            <Path Data="{Binding Icons.Mic, Source={StaticResource ServiceLocator}}"
+                                  Width="15"
+                                  Height="15"
+                                  Margin="0,0,5,0"
+                                  Stretch="Uniform"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  ToolTip="{Binding MicSource, Source={StaticResource Loc}, Mode=OneWay}"/>
+                            <TextBlock Text="{Binding MicSource, Source={StaticResource Loc}, Mode=OneWay}"/>
+                        </DockPanel>
+                    </CheckBox>
+                    
+                    <ComboBox ItemsSource="{Binding AudioSource.AvailableMicrophones, Source={StaticResource ServiceLocator}}"
+                              SelectedItem="{Binding AudioSource.SelectedMicrophone, Mode=TwoWay, Source={StaticResource ServiceLocator}}"
+                              DisplayMemberPath="Name"
+                              IsEnabled="{Binding Settings.Audio.RecordMicrophone}"
+                              Margin="20,0,0,5"/>
 
-                                        <TextBlock Text="{Binding Name, Mode=OneWay}"/>
-                                    </DockPanel>
-                                </CheckBox>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <ItemsControl ItemsSource="{Binding AudioSource.AvailableSpeakers, Source={StaticResource ServiceLocator}}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <CheckBox Margin="0,5,0,5"
-                                          IsChecked="{Binding Active, Mode=TwoWay}">
-                                    <DockPanel>
-                                        <Path Data="{Binding Icons.Speaker, Source={StaticResource ServiceLocator}}"
-                                              Width="15"
-                                              Height="15"
-                                              Margin="5,0"
-                                              Stretch="Uniform"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              ToolTip="{Binding LoopbackSource, Source={StaticResource Loc}, Mode=OneWay}"/>
-
-                                        <TextBlock Text="{Binding Name, Mode=OneWay}"/>
-                                    </DockPanel>
-                                </CheckBox>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <!-- Speaker/Loopback Selection -->
+                    <CheckBox Margin="0,5"
+                              IsChecked="{Binding Settings.Audio.RecordSpeaker, Mode=TwoWay}">
+                        <DockPanel>
+                            <Path Data="{Binding Icons.Speaker, Source={StaticResource ServiceLocator}}"
+                                  Width="15"
+                                  Height="15"
+                                  Margin="0,0,5,0"
+                                  Stretch="Uniform"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  ToolTip="{Binding LoopbackSource, Source={StaticResource Loc}, Mode=OneWay}"/>
+                            <TextBlock Text="{Binding LoopbackSource, Source={StaticResource Loc}, Mode=OneWay}"/>
+                        </DockPanel>
+                    </CheckBox>
+                    
+                    <ComboBox ItemsSource="{Binding AudioSource.AvailableSpeakers, Source={StaticResource ServiceLocator}}"
+                              SelectedItem="{Binding AudioSource.SelectedSpeaker, Mode=TwoWay, Source={StaticResource ServiceLocator}}"
+                              DisplayMemberPath="Name"
+                              IsEnabled="{Binding Settings.Audio.RecordSpeaker}"
+                              Margin="20,0,0,5"/>
                 </StackPanel>
             </ScrollViewer>
 

@@ -415,6 +415,9 @@ namespace Captura
                         DoRight();
                         break;
                 }
+                
+                // Update region coordinates after manual resize
+                UpdateRegion();
             }
         }
     }
