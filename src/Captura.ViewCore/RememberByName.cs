@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Captura.Video;
 using Captura.ViewModels;
@@ -37,25 +37,37 @@ namespace Captura.Models
         public void Remember()
         {
             // Remember Video Source
-            _settings.Video.SourceKind = _videoSourcesViewModel
-                .SelectedVideoSourceKind
-                .Name;
+            if (_videoSourcesViewModel?.SelectedVideoSourceKind != null)
+            {
+                _settings.Video.SourceKind = _videoSourcesViewModel
+                    .SelectedVideoSourceKind
+                    .Name;
 
-            _settings.Video.Source = _videoSourcesViewModel
-                .SelectedVideoSourceKind
-                .Serialize();
+                _settings.Video.Source = _videoSourcesViewModel
+                    .SelectedVideoSourceKind
+                    .Serialize();
+            }
 
             // Remember Video Codec
-            _settings.Video.WriterKind = _videoWritersViewModel
-                .SelectedVideoWriterKind
-                .Name;
+            if (_videoWritersViewModel?.SelectedVideoWriterKind != null)
+            {
+                _settings.Video.WriterKind = _videoWritersViewModel
+                    .SelectedVideoWriterKind
+                    .Name;
+            }
 
-            _settings.Video.Writer = _videoWritersViewModel
-                .SelectedVideoWriter
-                .ToString();
+            if (_videoWritersViewModel?.SelectedVideoWriter != null)
+            {
+                _settings.Video.Writer = _videoWritersViewModel
+                    .SelectedVideoWriter
+                    .ToString();
+            }
 
             // Remember Post Writer
-            _settings.Video.PostWriter = _videoWritersViewModel.SelectedPostWriter.ToString();
+            if (_videoWritersViewModel?.SelectedPostWriter != null)
+            {
+                _settings.Video.PostWriter = _videoWritersViewModel.SelectedPostWriter.ToString();
+            }
 
             // Remember Audio Sources
             _settings.Audio.Microphone = _audioSourceViewModel.SelectedMicrophone?.Name;
@@ -70,9 +82,12 @@ namespace Captura.Models
                 .ToArray();
 
             // Remember Webcam
-            _settings.Video.Webcam = _webcamModel
-                .SelectedCam
-                .Name;
+            if (_webcamModel?.SelectedCam != null)
+            {
+                _settings.Video.Webcam = _webcamModel
+                    .SelectedCam
+                    .Name;
+            }
 
             // Remember Steps writer
             _settings.Steps.Writer = _videoWritersViewModel
