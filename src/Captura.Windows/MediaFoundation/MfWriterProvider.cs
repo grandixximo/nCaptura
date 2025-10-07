@@ -131,28 +131,9 @@ namespace Captura.Windows.MediaFoundation
             // Only provide MF options if compatible
             if (_isCompatible && _device != null)
             {
-                List<(string CodecName, Guid FormatGuid, string Extension)> availableEncoders;
-                
-                if (_hasHardwareEncoder)
-                {
-                    // Hardware mode: Only show codecs with hardware support
-                    availableEncoders = DetectAllHardwareEncoders();
-                }
-                else
-                {
-                    // Software mode: Offer all codecs (software encoding)
-                    availableEncoders = new List<(string, Guid, string)>
-                    {
-                        ("H.264", VideoFormatGuids.H264, ".mp4"),
-                        ("H.265 (HEVC)", VideoFormatGuids.Hevc, ".mp4"),
-                        ("VP9", new Guid("A3DF5476-2858-4B1D-B9DC-0FC9E7F4F3F5"), ".webm")
-                    };
-                }
-
-                foreach (var encoder in availableEncoders)
-                {
-                    yield return new MfItem(_device, encoder.CodecName, encoder.FormatGuid, encoder.Extension, _warningMessage);
-                }
+                // Simple and safe: Just offer H.264
+                // Users can use FFmpeg for H.265, VP9, etc.
+                yield return new MfItem(_device, "H.264", VideoFormatGuids.H264, ".mp4", _warningMessage);
             }
         }
 
