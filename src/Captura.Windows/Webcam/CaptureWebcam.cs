@@ -520,7 +520,9 @@ namespace Captura.Webcam
                 // We can run the entire graph becuase the capture
                 // stream should not be rendered (and that is enforced
                 // in the if statement above)
-                _mediaControl.Run();
+                var hr = _mediaControl.Run();
+                if (hr < 0)
+                    Marshal.ThrowExceptionForHR(hr);
             }
         }
 
