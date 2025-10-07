@@ -4,11 +4,12 @@
 
 name: Dual Release - Modern & Classic UI
 
+# Only runs when a version tag is pushed (e.g., v10.3.0)
+# Creates production release with both UI versions
 on:
   push:
     tags:
       - "v*"
-  workflow_dispatch:
 
 jobs:
   build-modern-ui:
@@ -257,6 +258,13 @@ jobs:
       with:
         name: Captura-Classic-UI
         path: ./artifacts/classic
+
+    - name: Delete existing release (if exists)
+      continue-on-error: true
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release delete ${{ github.ref_name }} --yes --repo ${{ github.repository }} || true
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
