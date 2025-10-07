@@ -161,13 +161,5 @@ namespace Captura
             }
         }
 
-        public IntPtr GetBackBufferPtr()
-        {
-            return DisplayImage.Dispatcher.Invoke(() =>
-            {
-                var hwndSource = PresentationSource.FromVisual(DisplayImage) as System.Windows.Interop.HwndSource;
-                return hwndSource?.Handle ?? IntPtr.Zero;
-            });
-        }
     }
 }
