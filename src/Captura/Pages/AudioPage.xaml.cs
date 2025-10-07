@@ -1,4 +1,5 @@
 using Captura.Models;
+using Captura.ViewModels;
 
 namespace Captura
 {

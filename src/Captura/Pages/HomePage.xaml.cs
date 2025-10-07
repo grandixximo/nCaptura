@@ -1,3 +1,5 @@
+using Captura.ViewModels;
+
 namespace Captura
 {
     public partial class HomePage
