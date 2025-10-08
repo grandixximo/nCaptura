@@ -32,6 +32,9 @@ namespace Captura.FFmpeg
             _ffmpegProcess = FFmpegService.StartFFmpeg(argsBuilder.GetArgs(), FileName, out _);
             
             _ffmpegIn = _ffmpegProcess.StandardInput.BaseStream;
+
+            // Ensure stdin is not buffered indefinitely
+            try { _ffmpegProcess.StandardInput.AutoFlush = true; } catch { }
         }
 
         public void Dispose()
@@ -39,7 +42,14 @@ namespace Captura.FFmpeg
             try
             {
                 Flush();
-                _ffmpegIn.Close();
+                try
+                {
+                    _ffmpegIn.Close();
+                }
+                catch { }
+
+                // Ask FFmpeg to quit gracefully
+                FFmpegService.TryGracefulStop(_ffmpegProcess);
 
                 if (!_ffmpegProcess.WaitForExit(10000))
                 {

@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
@@ -8,6 +10,19 @@ namespace Captura.FFmpeg
     public static class FFmpegService
     {
         const string FFmpegExeName = "ffmpeg.exe";
+
+        // Track started FFmpeg processes to ensure cleanup on app exit.
+        static readonly List<Process> _processes = new List<Process>();
+        static readonly object _processesLock = new object();
+
+        static FFmpegService()
+        {
+            try
+            {
+                AppDomain.CurrentDomain.ProcessExit += (s, e) => KillAll();
+            }
+            catch { /* Best-effort; ignore environment limitations */ }
+        }
 
         static FFmpegSettings GetSettings() => ServiceProvider.Get<FFmpegSettings>();
 
@@ -95,6 +110,8 @@ namespace Captura.FFmpeg
 
             process.BeginErrorReadLine();
             
+            Register(process);
+            
             return process;
         }
 
@@ -110,6 +127,62 @@ namespace Captura.FFmpeg
             }
 
             return false;
+        }
+
+        static void Register(Process process)
+        {
+            lock (_processesLock)
+            {
+                _processes.Add(process);
+            }
+
+            process.Exited += (s, e) =>
+            {
+                lock (_processesLock)
+                {
+                    _processes.Remove(process);
+                }
+            };
+        }
+
+        public static void TryGracefulStop(Process process)
+        {
+            try
+            {
+                if (process != null && !process.HasExited)
+                {
+                    try
+                    {
+                        // Ask FFmpeg to quit gracefully.
+                        process.StandardInput.WriteLine("q");
+                        process.StandardInput.Flush();
+                        process.StandardInput.Close();
+                    }
+                    catch { /* Ignore if stdin not available */ }
+                }
+            }
+            catch { }
+        }
+
+        public static void KillAll()
+        {
+            lock (_processesLock)
+            {
+                foreach (var process in _processes.ToArray())
+                {
+                    try
+                    {
+                        if (!process.HasExited)
+                        {
+                            process.Kill();
+                            process.WaitForExit(2000);
+                        }
+                    }
+                    catch { }
+                }
+
+                _processes.Clear();
+            }
         }
     }
 }

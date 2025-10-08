@@ -13,9 +13,11 @@ namespace Captura.FFmpeg
     class FFmpegWriter : IVideoFileWriter
     {
         readonly NamedPipeServerStream _audioPipe;
+        Task _audioConnectTask;
 
         readonly Process _ffmpegProcess;
         readonly NamedPipeServerStream _ffmpegIn;
+        Task _videoConnectTask;
         byte[] _videoBuffer;
 
         // This semaphore helps prevent FFmpeg audio/video pipes getting deadlocked.
@@ -97,15 +99,37 @@ namespace Captura.FFmpeg
                                             * wf.Channels
                                             * (wf.BitsPerSample / 8.0));
 
-                // UpdatePeriod * Frequency * (Bytes per Second) * Channels * 2
-                var audioBufferSize = (int)((1000.0 / Args.FrameRate) * 44.1 * 2 * 2 * 2);
+                // Modest buffer size to avoid stalls without huge allocation
+                var audioBufferSize = 16384;
 
                 _audioPipe = new NamedPipeServerStream(audioPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, audioBufferSize);
             }
 
             _ffmpegIn = new NamedPipeServerStream(videoPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, _videoBuffer.Length);
 
+            // Put both pipes into listening state BEFORE launching FFmpeg
+            _videoConnectTask = BeginListening(_ffmpegIn);
+            if (_audioPipe != null) _audioConnectTask = BeginListening(_audioPipe);
+
             _ffmpegProcess = FFmpegService.StartFFmpeg(argsBuilder.GetArgs(), Args.FileName, out _);
+        }
+
+        static Task BeginListening(NamedPipeServerStream pipe)
+        {
+            try
+            {
+                var tcs = new TaskCompletionSource<object>();
+                pipe.BeginWaitForConnection(ar =>
+                {
+                    try { pipe.EndWaitForConnection(ar); tcs.TrySetResult(null); }
+                    catch (Exception e) { tcs.TrySetException(e); }
+                }, null);
+                return tcs.Task;
+            }
+            catch (Exception e)
+            {
+                return Task.FromException(e);
+            }
         }
 
         public void Dispose()
@@ -122,8 +146,12 @@ namespace Captura.FFmpeg
                 }
                 catch { }
 
-                _ffmpegIn?.Dispose();
-                _audioPipe?.Dispose();
+                // Close input pipes first so FFmpeg sees EOF
+                try { _ffmpegIn?.Dispose(); } catch { }
+                try { _audioPipe?.Dispose(); } catch { }
+
+                // Then ask FFmpeg to quit if still running
+                FFmpegService.TryGracefulStop(_ffmpegProcess);
 
                 if (!_ffmpegProcess.WaitForExit(10000))
                 {
@@ -169,11 +197,11 @@ namespace Captura.FFmpeg
 
             if (_firstAudio)
             {
-                if (!_audioPipe.WaitForConnection(5000))
+                if (_audioConnectTask != null)
                 {
-                    throw new Exception("Cannot connect Audio pipe to FFmpeg");
+                    if (!_audioConnectTask.Wait(5000))
+                        throw new Exception("Cannot connect Audio pipe to FFmpeg");
                 }
-
                 _firstAudio = false;
             }
 
@@ -228,11 +256,11 @@ namespace Captura.FFmpeg
             
             if (_firstFrame)
             {
-                if (!_ffmpegIn.WaitForConnection(5000))
+                if (_videoConnectTask != null)
                 {
-                    throw new Exception("Cannot connect Video pipe to FFmpeg");
+                    if (!_videoConnectTask.Wait(5000))
+                        throw new Exception("Cannot connect Video pipe to FFmpeg");
                 }
-
                 _firstFrame = false;
             }
 
@@ -280,17 +308,11 @@ namespace Captura.FFmpeg
                     _lastFrameTask.Wait();
                 }
 
-                _lastFrameTask = _lastFrameTask.ContinueWith(async M =>
-                {
-                    try
-                    {
-                        await _ffmpegIn.WriteAsync(_videoBuffer, 0, _videoBuffer.Length);
-                    }
-                    finally
-                    {
-                        _spVideo.Release();
-                    }
-                });
+                // Chain writes sequentially and ensure the task represents the async write completion
+                _lastFrameTask = _lastFrameTask
+                    .ContinueWith(_ => _ffmpegIn.WriteAsync(_videoBuffer, 0, _videoBuffer.Length))
+                    .Unwrap()
+                    .ContinueWith(_ => _spVideo.Release());
             }
             catch (Exception e) when (_ffmpegProcess.HasExited)
             {
