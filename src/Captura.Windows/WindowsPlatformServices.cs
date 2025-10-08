@@ -131,7 +131,7 @@ namespace Captura.Windows
                 return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
             }
             
-            throw new Exception("No screen output found for Desktop Duplication. Enable WGC or GDI mode in settings.");
+            throw new NotSupportedException("Desktop Duplication is unavailable on this GPU/driver. Try Windows Graphics Capture (WGC) or GDI mode in Settings → Video.");
         }
 
         static Output1 FindOutput(IScreen Screen)
@@ -161,11 +161,8 @@ namespace Captura.Windows
                 return GetRegionProvider(DesktopRectangle, IncludeCursor);
             }
             
-            if (WindowsModule.ShouldUseWgc)
-            {
-                return new WgcScreenImageProvider(DesktopRectangle, _previewWindow);
-            }
-            
+            // Prefer Desktop Duplication for full-desktop (multi-monitor) capture.
+            // WGC can only capture one monitor at a time; using it here would miss other displays.
             return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
         }
     }

@@ -11,11 +11,13 @@
     <UseAppConfigForCompiler>true</UseAppConfigForCompiler>
     <ApplicationIcon>Images\Captura.ico</ApplicationIcon>
     <Prefer32Bit>false</Prefer32Bit>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
     <None Include="app.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="app.manifest" />
   </ItemGroup>
   <Target Name="CopyAppConfig" AfterTargets="Build">
     <Copy SourceFiles="app.config" DestinationFiles="$(OutputPath)$(AssemblyName).exe.config" />

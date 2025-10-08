@@ -18,12 +18,10 @@ namespace Captura.Windows.DesktopDuplication
 
         readonly object _syncLock = new object();
 
-        public DuplCapture(Output1 Output)
+        public DuplCapture(Output1 Output, Device device)
         {
-            // Separate Device required otherwise AccessViolationException happens
-            using (var adapter = Output.GetParent<Adapter>())
-                _device = new Device(adapter);
-
+            // Use the provided device (shared with the editor session) so all textures live on the same device
+            _device = device ?? throw new ArgumentNullException(nameof(device));
             _output = Output;
 
             var bound = Output.Description.DesktopBounds;
@@ -43,7 +41,7 @@ namespace Captura.Windows.DesktopDuplication
 
                 _bkpTexture?.Dispose();
 
-                _device.Dispose();
+                // Device is owned by the editor session, do not dispose here
                 _device = null;
             }
         }

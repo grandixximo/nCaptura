@@ -1,4 +1,4 @@
-﻿// Adapted from https://github.com/jasonpang/desktop-duplication-net
+// Adapted from https://github.com/jasonpang/desktop-duplication-net
 
 using SharpDX.DXGI;
 using System;
@@ -15,7 +15,7 @@ namespace Captura.Windows.DesktopDuplication
 
         public DesktopDuplicator(bool IncludeCursor, Output1 Output, IPreviewWindow PreviewWindow)
         {
-            _duplCapture = new DuplCapture(Output);
+            _duplCapture = new DuplCapture(Output, _editorSession.Device);
 
             var bounds = Output.Description.DesktopBounds;
             var width = bounds.Right - bounds.Left;

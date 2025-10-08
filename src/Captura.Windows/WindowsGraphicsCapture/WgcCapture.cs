@@ -23,20 +23,20 @@ namespace Captura.Windows.WindowsGraphicsCapture
         readonly int _width;
         readonly int _height;
         
-        public WgcCapture(IntPtr handle, int width, int height, bool isMonitor = false)
+        public WgcCapture(Device device, IntPtr handle, int width, int height, bool isMonitor = false)
         {
             _width = width;
             _height = height;
             
-            _device = new Device(SharpDX.Direct3D.DriverType.Hardware, 
-                DeviceCreationFlags.BgraSupport);
+            // Use the same D3D11 device as the editor session to avoid cross-device copies
+            _device = device ?? throw new ArgumentNullException(nameof(device));
             
             _captureItem = isMonitor 
                 ? CaptureHelper.CreateItemForMonitor(handle)
                 : CaptureHelper.CreateItemForWindow(handle);
             
             if (_captureItem == null)
-                throw new Exception("Failed to create GraphicsCaptureItem");
+                throw new NotSupportedException("Windows Graphics Capture is unavailable on this system. Switch Screen Capture Method to Desktop Duplication or GDI in Settings → Video.");
             
             var d3dDevice = CreateDirect3DDevice(_device);
             
@@ -89,7 +89,6 @@ namespace Captura.Windows.WindowsGraphicsCapture
                 _session?.Dispose();
                 _framePool?.Dispose();
                 _lastFrame?.Dispose();
-                _device?.Dispose();
             }
         }
         

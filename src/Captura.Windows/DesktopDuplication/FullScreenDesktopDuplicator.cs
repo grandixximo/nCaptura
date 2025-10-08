@@ -1,4 +1,4 @@
-﻿// Adapted from https://github.com/jasonpang/desktop-duplication-net
+// Adapted from https://github.com/jasonpang/desktop-duplication-net
 
 using SharpDX.DXGI;
 using System;
@@ -42,7 +42,7 @@ namespace Captura.Windows.DesktopDuplication
 
                 return new DeskDuplOutputEntry
                 {
-                    DuplCapture = new DuplCapture(output1),
+                    DuplCapture = new DuplCapture(output1, _editorSession.Device),
                     Location = new SharpDX.Point(rect.Left - bounds.Left, rect.Top - bounds.Top),
                     MousePointer = IncludeCursor ? new DxMousePointer(_editorSession) : null
                 };

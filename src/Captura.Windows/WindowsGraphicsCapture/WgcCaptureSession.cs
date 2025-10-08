@@ -12,7 +12,8 @@ namespace Captura.Windows.WindowsGraphicsCapture
         public WgcCaptureSession(IntPtr handle, int width, int height, IPreviewWindow previewWindow, bool isMonitor = false)
         {
             _editorSession = new Direct2DEditorSession(width, height, previewWindow);
-            _wgcCapture = new WgcCapture(handle, width, height, isMonitor);
+            // Share the same D3D11 device with WGC to ensure textures are compatible
+            _wgcCapture = new WgcCapture(_editorSession.Device, handle, width, height, isMonitor);
         }
         
         public IEditableFrame Capture()
