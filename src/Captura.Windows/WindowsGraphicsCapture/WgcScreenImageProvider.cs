@@ -10,7 +10,7 @@ namespace Captura.Windows.WindowsGraphicsCapture
         readonly WgcCaptureSession _capture;
         readonly Rectangle _screenBounds;
         
-        public WgcScreenImageProvider(Rectangle screenBounds, IPreviewWindow previewWindow)
+        public WgcScreenImageProvider(Rectangle screenBounds, IPreviewWindow previewWindow, IntPtr? monitorHandle = null)
         {
             _screenBounds = screenBounds;
             Width = screenBounds.Width;
@@ -18,7 +18,8 @@ namespace Captura.Windows.WindowsGraphicsCapture
             
             PointTransform = P => new Point(P.X - screenBounds.Left, P.Y - screenBounds.Top);
             
-            var hmon = MonitorHelper.GetMonitorFromRect(screenBounds);
+            // Use provided monitor handle if available, otherwise fallback to MonitorHelper
+            var hmon = monitorHandle ?? MonitorHelper.GetMonitorFromRect(screenBounds);
             _capture = new WgcCaptureSession(hmon, Width, Height, previewWindow, isMonitor: true);
         }
         
