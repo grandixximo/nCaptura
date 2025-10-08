@@ -23,7 +23,7 @@ namespace Captura.FFmpeg
 
         readonly ConcurrentQueue<byte[]> _bufferPool = new ConcurrentQueue<byte[]>();
         readonly SemaphoreSlim _spVideo = new SemaphoreSlim(5);
-        readonly TimeSpan _spTimeout = TimeSpan.FromMilliseconds(50);
+        readonly TimeSpan _spTimeout = TimeSpan.FromMilliseconds(500);
 
         static string GetPipeName() => $"captura-{Guid.NewGuid()}";
 
@@ -101,10 +101,10 @@ namespace Captura.FFmpeg
                 // Modest buffer size to avoid stalls without huge allocation
                 var audioBufferSize = 16384;
 
-                _audioPipe = new NamedPipeServerStream(audioPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, audioBufferSize);
+                _audioPipe = new NamedPipeServerStream(audioPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, audioBufferSize, audioBufferSize);
             }
 
-            _ffmpegIn = new NamedPipeServerStream(videoPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, _videoBuffer.Length);
+            _ffmpegIn = new NamedPipeServerStream(videoPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, _videoBuffer.Length, _videoBuffer.Length);
 
             // Put both pipes into listening state BEFORE launching FFmpeg
             _videoConnectTask = BeginListening(_ffmpegIn);
@@ -202,9 +202,9 @@ namespace Captura.FFmpeg
                 _firstAudio = false;
             }
 
-            if (_lastAudio != null && !_lastAudio.Wait(5000))
+            if (_lastAudio != null)
             {
-                throw new Exception("Audio write timeout");
+                try { _lastAudio.Wait(1000); } catch { }
             }
 
             // Drop audio bytes to sync with video once we've reached stability from frame side.
