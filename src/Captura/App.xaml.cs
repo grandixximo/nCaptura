@@ -1,4 +1,4 @@
-﻿using FirstFloor.ModernUI.Presentation;
+using FirstFloor.ModernUI.Presentation;
 using System;
 using System.IO;
 using System.Linq;
@@ -66,6 +66,23 @@ namespace Captura
             BindLanguageSetting(settings);
 
             BindKeymapSetting(settings);
+        }
+
+        void Application_Exit(object Sender, ExitEventArgs E)
+        {
+            try
+            {
+                // Ensure modules and services are disposed first
+                ServiceProvider.Dispose();
+            }
+            catch { }
+
+            try
+            {
+                // Best-effort FFmpeg cleanup in case any is still running
+                Captura.FFmpeg.FFmpegService.KillAll();
+            }
+            catch { }
         }
 
         void OnCurrentDomainOnUnhandledException(object S, UnhandledExceptionEventArgs E)

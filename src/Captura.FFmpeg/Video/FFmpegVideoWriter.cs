@@ -97,8 +97,8 @@ namespace Captura.FFmpeg
                                             * wf.Channels
                                             * (wf.BitsPerSample / 8.0));
 
-                // UpdatePeriod * Frequency * (Bytes per Second) * Channels * 2
-                var audioBufferSize = (int)((1000.0 / Args.FrameRate) * 44.1 * 2 * 2 * 2);
+                // Use ~1s buffer based on frequency/channels/16-bit samples to avoid stalls
+                var audioBufferSize = Args.Frequency * Args.Channels * 2;
 
                 _audioPipe = new NamedPipeServerStream(audioPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, audioBufferSize);
             }
@@ -106,6 +106,20 @@ namespace Captura.FFmpeg
             _ffmpegIn = new NamedPipeServerStream(videoPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, _videoBuffer.Length);
 
             _ffmpegProcess = FFmpegService.StartFFmpeg(argsBuilder.GetArgs(), Args.FileName, out _);
+
+            // Eagerly accept pipe connections to avoid FFmpeg blocking on missing connections
+            Task.Run(() =>
+            {
+                try { _ffmpegIn.WaitForConnection(5000); } catch { }
+            });
+
+            if (_audioPipe != null)
+            {
+                Task.Run(() =>
+                {
+                    try { _audioPipe.WaitForConnection(5000); } catch { }
+                });
+            }
         }
 
         public void Dispose()
@@ -122,11 +136,12 @@ namespace Captura.FFmpeg
                 }
                 catch { }
 
-                // Signal FFmpeg to exit gracefully before disposing pipes.
-                FFmpegService.TryGracefulStop(_ffmpegProcess);
+                // Close input pipes first so FFmpeg sees EOF
+                try { _ffmpegIn?.Dispose(); } catch { }
+                try { _audioPipe?.Dispose(); } catch { }
 
-                _ffmpegIn?.Dispose();
-                _audioPipe?.Dispose();
+                // Then ask FFmpeg to quit if still running
+                FFmpegService.TryGracefulStop(_ffmpegProcess);
 
                 if (!_ffmpegProcess.WaitForExit(10000))
                 {
@@ -172,9 +187,12 @@ namespace Captura.FFmpeg
 
             if (_firstAudio)
             {
-                if (!_audioPipe.WaitForConnection(5000))
+                if (!_audioPipe.IsConnected)
                 {
-                    throw new Exception("Cannot connect Audio pipe to FFmpeg");
+                    if (!_audioPipe.WaitForConnection(5000))
+                    {
+                        throw new Exception("Cannot connect Audio pipe to FFmpeg");
+                    }
                 }
 
                 _firstAudio = false;
@@ -283,17 +301,11 @@ namespace Captura.FFmpeg
                     _lastFrameTask.Wait();
                 }
 
-                _lastFrameTask = _lastFrameTask.ContinueWith(async M =>
-                {
-                    try
-                    {
-                        await _ffmpegIn.WriteAsync(_videoBuffer, 0, _videoBuffer.Length);
-                    }
-                    finally
-                    {
-                        _spVideo.Release();
-                    }
-                });
+                // Chain writes sequentially and ensure the task represents the async write completion
+                _lastFrameTask = _lastFrameTask
+                    .ContinueWith(_ => _ffmpegIn.WriteAsync(_videoBuffer, 0, _videoBuffer.Length))
+                    .Unwrap()
+                    .ContinueWith(_ => _spVideo.Release());
             }
             catch (Exception e) when (_ffmpegProcess.HasExited)
             {

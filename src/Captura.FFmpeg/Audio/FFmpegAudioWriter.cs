@@ -32,6 +32,9 @@ namespace Captura.FFmpeg
             _ffmpegProcess = FFmpegService.StartFFmpeg(argsBuilder.GetArgs(), FileName, out _);
             
             _ffmpegIn = _ffmpegProcess.StandardInput.BaseStream;
+
+            // Ensure stdin is not buffered indefinitely
+            try { _ffmpegProcess.StandardInput.AutoFlush = true; } catch { }
         }
 
         public void Dispose()
