@@ -102,13 +102,6 @@ namespace Captura.Windows
 
         public IImageProvider GetScreenProvider(IScreen Screen, bool IncludeCursor, bool StepsMode)
         {
-            // Force GDI mode - Desktop Duplication has reliability issues
-            // See: https://github.com/grandixximo/nCaptura/issues
-            // Desktop Duplication can fail with E_INVALIDARG, leave resources in bad state,
-            // or fail inconsistently between recordings
-            return GetRegionProvider(Screen.Rectangle, IncludeCursor);
-            
-            /* Disabled Desktop Duplication due to reliability issues
             if (!WindowsModule.ShouldUseGdi && !StepsMode)
             {
                 var output = FindOutput(Screen);
@@ -123,17 +116,20 @@ namespace Captura.Windows
                     {
                         System.Diagnostics.Debug.WriteLine($"Desktop Duplication failed (0x{ex.ResultCode.Code:X8}), falling back to GDI: {ex.Message}");
                         output?.Dispose();
+                        
+                        // Fall through to GDI
                     }
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Desktop Duplication initialization failed, falling back to GDI: {ex.Message}");
                         output?.Dispose();
+                        
+                        // Fall through to GDI
                     }
                 }
             }
 
             return GetRegionProvider(Screen.Rectangle, IncludeCursor);
-            */
         }
 
         static Output1 FindOutput(IScreen Screen)
@@ -158,11 +154,6 @@ namespace Captura.Windows
 
         public IImageProvider GetAllScreensProvider(bool IncludeCursor, bool StepsMode)
         {
-            // Force GDI mode - Desktop Duplication has reliability issues
-            // See: https://github.com/grandixximo/nCaptura/issues
-            return GetRegionProvider(DesktopRectangle, IncludeCursor);
-            
-            /* Disabled Desktop Duplication due to reliability issues
             if (!WindowsModule.ShouldUseGdi && !StepsMode)
             {
                 try
@@ -172,15 +163,18 @@ namespace Captura.Windows
                 catch (SharpDX.SharpDXException ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Desktop Duplication (full screen) failed (0x{ex.ResultCode.Code:X8}), falling back to GDI: {ex.Message}");
+                    
+                    // Fall through to GDI
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Desktop Duplication (full screen) initialization failed, falling back to GDI: {ex.Message}");
+                    
+                    // Fall through to GDI
                 }
             }
 
             return GetRegionProvider(DesktopRectangle, IncludeCursor);
-            */
         }
     }
 }
