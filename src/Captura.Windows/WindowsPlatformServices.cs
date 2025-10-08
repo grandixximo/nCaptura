@@ -115,30 +115,7 @@ namespace Captura.Windows
 
         public IImageProvider GetScreenProvider(IScreen Screen, bool IncludeCursor, bool StepsMode)
         {
-            if (WindowsModule.ShouldUseGdi || StepsMode)
-            {
-                return GetRegionProvider(Screen.Rectangle, IncludeCursor);
-            }
-            
-            if (WindowsModule.ShouldUseWgc)
-            {
-                try
-                {
-                    return new WgcScreenImageProvider(Screen.Rectangle, _previewWindow);
-                }
-                catch
-                {
-                    // WGC failed, fallback to Desktop Duplication
-                }
-            }
-            
-            var output = FindOutput(Screen);
-            if (output != null)
-            {
-                return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
-            }
-            
-            throw new Exception("No screen output found. Enable GDI mode in settings.");
+            return GetRegionProvider(Screen.Rectangle, IncludeCursor);
         }
 
         static Output1 FindOutput(IScreen Screen)
@@ -163,24 +140,7 @@ namespace Captura.Windows
 
         public IImageProvider GetAllScreensProvider(bool IncludeCursor, bool StepsMode)
         {
-            if (WindowsModule.ShouldUseGdi || StepsMode)
-            {
-                return GetRegionProvider(DesktopRectangle, IncludeCursor);
-            }
-            
-            if (WindowsModule.ShouldUseWgc)
-            {
-                try
-                {
-                    return new WgcScreenImageProvider(DesktopRectangle, _previewWindow);
-                }
-                catch
-                {
-                    // WGC failed, fallback to Desktop Duplication
-                }
-            }
-            
-            return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
+            return GetRegionProvider(DesktopRectangle, IncludeCursor);
         }
     }
 }
