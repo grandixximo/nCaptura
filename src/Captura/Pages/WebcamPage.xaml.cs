@@ -20,18 +20,15 @@ namespace Captura
         readonly ScreenShotModel _screenShotModel;
         readonly IPlatformServices _platformServices;
         readonly WebcamOverlayReactor _reactor;
-        readonly VideoSourcesViewModel _videoSourcesViewModel;
 
         public WebcamPage(WebcamModel WebcamModel,
             ScreenShotModel ScreenShotModel,
             IPlatformServices PlatformServices,
-            WebcamOverlaySettings WebcamSettings,
-            VideoSourcesViewModel VideoSourcesViewModel)
+            WebcamOverlaySettings WebcamSettings)
         {
             _webcamModel = WebcamModel;
             _screenShotModel = ScreenShotModel;
             _platformServices = PlatformServices;
-            _videoSourcesViewModel = VideoSourcesViewModel;
 
             _reactor = new WebcamOverlayReactor(WebcamSettings);
 
@@ -39,8 +36,6 @@ namespace Captura
 
             InitializeComponent();
         }
-        
-        bool IsWebcamMode => _videoSourcesViewModel.SelectedVideoSourceKind is WebcamSourceProvider;
 
         bool _loaded;
 
@@ -55,27 +50,15 @@ namespace Captura
 
             var control = PreviewTarget;
 
-            // Only bind overlay controls when NOT in webcam mode
-            if (!IsWebcamMode)
-            {
-                control.BindOne(MarginProperty,
-                    _reactor.Location.Select(M => new Thickness(M.X, M.Y, 0, 0)).ToReadOnlyReactivePropertySlim());
+            control.BindOne(MarginProperty,
+                _reactor.Location.Select(M => new Thickness(M.X, M.Y, 0, 0)).ToReadOnlyReactivePropertySlim());
 
-                control.BindOne(WidthProperty,
-                    _reactor.Size.Select(M => M.Width).ToReadOnlyReactivePropertySlim());
-                control.BindOne(HeightProperty,
-                    _reactor.Size.Select(M => M.Height).ToReadOnlyReactivePropertySlim());
+            control.BindOne(WidthProperty,
+                _reactor.Size.Select(M => M.Width).ToReadOnlyReactivePropertySlim());
+            control.BindOne(HeightProperty,
+                _reactor.Size.Select(M => M.Height).ToReadOnlyReactivePropertySlim());
 
-                control.BindOne(OpacityProperty, _reactor.Opacity);
-            }
-            else
-            {
-                // In webcam mode, show full camera preview without overlay
-                control.Margin = new Thickness(0);
-                control.Width = double.NaN; // Auto-size to fill
-                control.Height = double.NaN;
-                control.Opacity = 1.0;
-            }
+            control.BindOne(OpacityProperty, _reactor.Opacity);
         }
 
         async Task UpdateBackground()

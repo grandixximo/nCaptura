@@ -127,38 +127,28 @@ namespace Captura.Webcam
 
         void ConfigureSampleGrabber()
         {
-            int hr;
-            
-            // For maximum compatibility, don't specify format at all initially
-            // Let DirectShow negotiate the format during connection
+            // Request RGB32 format for compatibility
             var mediaType = new AMMediaType
             {
-                majorType = MediaType.Video
+                majorType = MediaType.Video,
+                subType = MediaSubType.RGB32,
+                formatType = FormatType.VideoInfo
             };
 
-            hr = _sampleGrabber.SetMediaType(mediaType);
+            var hr = _sampleGrabber.SetMediaType(mediaType);
             DsUtils.FreeAMMediaType(mediaType);
-            
-            if (hr < 0)
-            {
-                // If even that fails, try with no restrictions
-                hr = _sampleGrabber.SetMediaType(null);
-                if (hr < 0)
-                {
-                    throw new InvalidOperationException($"Failed to configure sample grabber (HR: 0x{hr:X8})");
-                }
-            }
+            DsError.ThrowExceptionForHR(hr);
 
             // Configure grabber to buffer samples
             hr = _sampleGrabber.SetBufferSamples(true);
-            if (hr < 0) throw new InvalidOperationException("Failed to set buffer samples");
+            DsError.ThrowExceptionForHR(hr);
 
             hr = _sampleGrabber.SetOneShot(false);
-            if (hr < 0) throw new InvalidOperationException("Failed to set one shot mode");
+            DsError.ThrowExceptionForHR(hr);
 
             // Don't need the callback, we'll use GetCurrentBuffer
             hr = _sampleGrabber.SetCallback(null, 0);
-            if (hr < 0) throw new InvalidOperationException("Failed to set callback");
+            DsError.ThrowExceptionForHR(hr);
         }
 
         #endregion
@@ -185,10 +175,6 @@ namespace Captura.Webcam
                     }
 
                     _isRunning = true;
-                    
-                    // Give DirectShow a moment to start filling the buffer
-                    // This prevents grey frames at the start of recording
-                    System.Threading.Thread.Sleep(100);
                 }
                 catch (InvalidOperationException)
                 {
@@ -262,26 +248,14 @@ namespace Captura.Webcam
                 {
                     _videoInfoHeader = (VideoInfoHeader)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader));
                     _videoSize = new Size(_videoInfoHeader.BmiHeader.Width, Math.Abs(_videoInfoHeader.BmiHeader.Height));
-                    
-                    // Calculate stride based on bit depth (typically 32 bits for RGB32, but could be different)
-                    var bitsPerPixel = _videoInfoHeader.BmiHeader.BitCount;
-                    _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
-                    
-                    // Align stride to 4-byte boundary (standard for DIBs)
-                    _stride = (_stride + 3) & ~3;
-                    
+                    _stride = _videoSize.Width * 4; // RGB32 = 4 bytes per pixel
                     _frameBuffer = new byte[_stride * _videoSize.Height];
                 }
                 else if (mediaType.formatType == FormatType.VideoInfo2 && mediaType.formatPtr != IntPtr.Zero)
                 {
                     var videoInfoHeader2 = (VideoInfoHeader2)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader2));
                     _videoSize = new Size(videoInfoHeader2.BmiHeader.Width, Math.Abs(videoInfoHeader2.BmiHeader.Height));
-                    
-                    // Calculate stride based on bit depth
-                    var bitsPerPixel = videoInfoHeader2.BmiHeader.BitCount;
-                    _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
-                    _stride = (_stride + 3) & ~3;
-                    
+                    _stride = _videoSize.Width * 4; // RGB32 = 4 bytes per pixel
                     _frameBuffer = new byte[_stride * _videoSize.Height];
                     
                     // Create a VideoInfoHeader for compatibility
@@ -387,62 +361,48 @@ namespace Captura.Webcam
 
         public Captura.IBitmapImage GetFrame(Captura.IBitmapLoader BitmapLoader)
         {
-            // Use trylock to avoid blocking if another thread is accessing
-            // This prevents slowdowns when overlay + preview both want frames
-            bool lockTaken = false;
-            try
+            lock (_lock)
             {
-                System.Threading.Monitor.TryEnter(_lock, 10, ref lockTaken);
-                if (!lockTaken)
-                    return null; // Can't get lock quickly, skip this frame
-
                 if (!_isRunning || _sampleGrabber == null || _frameBuffer == null)
                     return null;
 
-                // Get buffer size (first call)
-                int bufferSize = 0;
-                var hr = _sampleGrabber.GetCurrentBuffer(ref bufferSize, IntPtr.Zero);
-                
-                if (hr < 0 || bufferSize <= 0)
-                {
-                    // No frame available yet - this is normal at start
-                    return null;
-                }
-
-                // Ensure our buffer is large enough
-                if (_frameBuffer.Length < bufferSize)
-                    _frameBuffer = new byte[bufferSize];
-
-                // Pin the buffer and get the data (second call)
-                var handle = GCHandle.Alloc(_frameBuffer, GCHandleType.Pinned);
                 try
                 {
-                    var ptr = handle.AddrOfPinnedObject();
-                    hr = _sampleGrabber.GetCurrentBuffer(ref bufferSize, ptr);
+                    // Get buffer size
+                    int bufferSize = 0;
+                    var hr = _sampleGrabber.GetCurrentBuffer(ref bufferSize, IntPtr.Zero);
                     
-                    if (hr < 0)
+                    if (hr < 0 || bufferSize <= 0)
                         return null;
 
-                    // DirectShow gives us bottom-up bitmaps, so we need to flip
-                    // Move to the last line and use negative stride
-                    var dataPtr = ptr + (_videoSize.Height - 1) * _stride;
-                    
-                    return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -_stride);
+                    // Ensure our buffer is large enough
+                    if (_frameBuffer.Length < bufferSize)
+                        _frameBuffer = new byte[bufferSize];
+
+                    // Pin the buffer and get the data
+                    var handle = GCHandle.Alloc(_frameBuffer, GCHandleType.Pinned);
+                    try
+                    {
+                        var ptr = handle.AddrOfPinnedObject();
+                        hr = _sampleGrabber.GetCurrentBuffer(ref bufferSize, ptr);
+                        
+                        if (hr < 0)
+                            return null;
+
+                        // DirectShow gives us bottom-up bitmaps, so we need to flip
+                        var dataPtr = ptr + (_videoSize.Height - 1) * _stride;
+                        
+                        return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -_stride);
+                    }
+                    finally
+                    {
+                        handle.Free();
+                    }
                 }
-                finally
+                catch
                 {
-                    handle.Free();
+                    return null;
                 }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"GetFrame failed: {ex.Message}");
-                return null;
-            }
-            finally
-            {
-                if (lockTaken)
-                    System.Threading.Monitor.Exit(_lock);
             }
         }
 
