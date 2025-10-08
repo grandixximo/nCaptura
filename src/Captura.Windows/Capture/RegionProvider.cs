@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using Captura.Native;
 using Captura.Windows;
@@ -38,11 +38,17 @@ namespace Captura.Video
 
             _hdcSrc = User32.GetDC(IntPtr.Zero);
 
+            // Force GDI mode - DXGI/Desktop Duplication has reliability issues
+            // Using GDI for consistent, reliable region capture
+            _dcTarget = new GdiTargetDeviceContext(_hdcSrc, Width, Height);
+            
+            /* Disabled DXGI due to Desktop Duplication reliability issues
             if (WindowsModule.ShouldUseGdi)
             {
                 _dcTarget = new GdiTargetDeviceContext(_hdcSrc, Width, Height);
             }
             else _dcTarget = new DxgiTargetDeviceContext(PreviewWindow, Width, Height);
+            */
         }
 
         public void Dispose()
