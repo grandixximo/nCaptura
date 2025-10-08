@@ -106,10 +106,18 @@ namespace Captura.Webcam
 
         IBaseFilter CreateVideoDeviceFilter()
         {
-            object source;
-            var hr = Marshal.BindToMoniker(_videoDevice.MonikerString, out source);
+            object source = null;
             
-            if (hr < 0 || source == null)
+            try
+            {
+                source = Marshal.BindToMoniker(_videoDevice.MonikerString);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Cannot bind to device: {_videoDevice.Name}", ex);
+            }
+            
+            if (source == null)
             {
                 throw new InvalidOperationException($"Cannot bind to device: {_videoDevice.Name}");
             }

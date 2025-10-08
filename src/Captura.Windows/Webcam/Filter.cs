@@ -103,6 +103,9 @@ namespace Captura.Webcam
                     if (hr != 0 || enumMon == null)
                         yield break;
 
+                    // Collect filters in a list first (can't use yield in try-catch)
+                    var filters = new List<Filter>();
+                    
                     // Loop through all devices
                     while (true)
                     {
@@ -112,16 +115,15 @@ namespace Captura.Webcam
                         if (hr != 0 || mon[0] == null)
                             break;
 
-                        Filter filter = null;
                         try
                         {
                             // Create filter object
-                            filter = new Filter(mon[0]);
+                            var filter = new Filter(mon[0]);
                             
-                            // Only return filters with valid names
+                            // Only collect filters with valid names
                             if (!string.IsNullOrEmpty(filter.Name) && filter.Name != "Unknown Device")
                             {
-                                yield return filter;
+                                filters.Add(filter);
                             }
                         }
                         catch
@@ -137,6 +139,12 @@ namespace Captura.Webcam
                                 mon[0] = null;
                             }
                         }
+                    }
+                    
+                    // Return collected filters
+                    foreach (var filter in filters)
+                    {
+                        yield return filter;
                     }
                 }
                 finally
