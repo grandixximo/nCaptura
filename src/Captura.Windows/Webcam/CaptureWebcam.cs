@@ -127,7 +127,9 @@ namespace Captura.Webcam
 
         void ConfigureSampleGrabber()
         {
-            // Set the media type for RGB32
+            int hr;
+            
+            // Set the media type for RGB32 (preferred format)
             var mediaType = new AMMediaType
             {
                 majorType = MediaType.Video,
@@ -135,9 +137,21 @@ namespace Captura.Webcam
                 formatType = FormatType.VideoInfo
             };
 
-            var hr = _sampleGrabber.SetMediaType(mediaType);
+            hr = _sampleGrabber.SetMediaType(mediaType);
             DsUtils.FreeAMMediaType(mediaType);
-            DsError.ThrowExceptionForHR(hr);
+            
+            // If RGB32 fails, try without specifying format (let DirectShow choose)
+            if (hr < 0)
+            {
+                mediaType = new AMMediaType
+                {
+                    majorType = MediaType.Video
+                };
+                
+                hr = _sampleGrabber.SetMediaType(mediaType);
+                DsUtils.FreeAMMediaType(mediaType);
+                DsError.ThrowExceptionForHR(hr);
+            }
 
             // Configure grabber to buffer samples
             hr = _sampleGrabber.SetBufferSamples(true);
@@ -168,13 +182,21 @@ namespace Captura.Webcam
                     
                     // Start the graph
                     var hr = _mediaControl.Run();
-                    DsError.ThrowExceptionForHR(hr);
+                    if (hr < 0)
+                    {
+                        var error = DsError.GetErrorText(hr);
+                        throw new InvalidOperationException($"Failed to start media control (HR: 0x{hr:X8}): {error}");
+                    }
 
                     _isRunning = true;
                 }
+                catch (InvalidOperationException)
+                {
+                    throw;
+                }
                 catch (Exception ex)
                 {
-                    throw new InvalidOperationException("Failed to start preview", ex);
+                    throw new InvalidOperationException($"Failed to start preview: {ex.Message}", ex);
                 }
             }
         }
@@ -195,14 +217,15 @@ namespace Captura.Webcam
             }
             else
             {
-                // No preview pin, use capture pin
+                // No preview pin, use capture pin (common for virtual cameras)
                 hr = _captureGraphBuilder.RenderStream(PinCategory.Capture, MediaType.Video,
                     _videoDeviceFilter, _sampleGrabberFilter, null);
             }
 
             if (hr < 0)
             {
-                DsError.ThrowExceptionForHR(hr);
+                var error = DsError.GetErrorText(hr);
+                throw new InvalidOperationException($"Failed to render video stream (HR: 0x{hr:X8}): {error}. The camera may not support RGB32 format or may be in use.");
             }
 
             // Get the actual media type that was connected
@@ -216,14 +239,26 @@ namespace Captura.Webcam
                 {
                     _videoInfoHeader = (VideoInfoHeader)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader));
                     _videoSize = new Size(_videoInfoHeader.BmiHeader.Width, Math.Abs(_videoInfoHeader.BmiHeader.Height));
-                    _stride = _videoSize.Width * 4;
+                    
+                    // Calculate stride based on bit depth (typically 32 bits for RGB32, but could be different)
+                    var bitsPerPixel = _videoInfoHeader.BmiHeader.BitCount;
+                    _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
+                    
+                    // Align stride to 4-byte boundary (standard for DIBs)
+                    _stride = (_stride + 3) & ~3;
+                    
                     _frameBuffer = new byte[_stride * _videoSize.Height];
                 }
                 else if (mediaType.formatType == FormatType.VideoInfo2 && mediaType.formatPtr != IntPtr.Zero)
                 {
                     var videoInfoHeader2 = (VideoInfoHeader2)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader2));
                     _videoSize = new Size(videoInfoHeader2.BmiHeader.Width, Math.Abs(videoInfoHeader2.BmiHeader.Height));
-                    _stride = _videoSize.Width * 4;
+                    
+                    // Calculate stride based on bit depth
+                    var bitsPerPixel = videoInfoHeader2.BmiHeader.BitCount;
+                    _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
+                    _stride = (_stride + 3) & ~3;
+                    
                     _frameBuffer = new byte[_stride * _videoSize.Height];
                     
                     // Create a VideoInfoHeader for compatibility
@@ -234,7 +269,7 @@ namespace Captura.Webcam
                 }
                 else
                 {
-                    throw new InvalidOperationException("Unsupported video format");
+                    throw new InvalidOperationException($"Unsupported video format: {mediaType.formatType}");
                 }
             }
             finally
@@ -253,15 +288,32 @@ namespace Captura.Webcam
             
             if (_videoWindow != null)
             {
-                var hr = _videoWindow.put_Owner(_previewWindow);
-                DsError.ThrowExceptionForHR(hr);
-
-                hr = _videoWindow.put_MessageDrain(_form.Handle);
-                DsError.ThrowExceptionForHR(hr);
-
-                // Set window style for child window
-                hr = _videoWindow.put_WindowStyle(WindowStyle.Child | WindowStyle.ClipChildren | WindowStyle.ClipSiblings);
-                DsError.ThrowExceptionForHR(hr);
+                try
+                {
+                    var hr = _videoWindow.put_Owner(_previewWindow);
+                    if (hr >= 0)
+                    {
+                        hr = _videoWindow.put_MessageDrain(_form.Handle);
+                        if (hr >= 0)
+                        {
+                            // Set window style for child window
+                            hr = _videoWindow.put_WindowStyle(WindowStyle.Child | WindowStyle.ClipChildren | WindowStyle.ClipSiblings);
+                        }
+                    }
+                    
+                    // If any setup failed, video window won't work but frame capture still can
+                    // Virtual cameras (like OBS) often don't support video windows
+                    if (hr < 0)
+                    {
+                        _videoWindow = null; // Mark as unavailable
+                    }
+                }
+                catch
+                {
+                    // Video window setup failed - this is OK for virtual cameras
+                    // Frame capture can still work without the preview window
+                    _videoWindow = null;
+                }
             }
         }
 
