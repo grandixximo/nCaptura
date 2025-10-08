@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Threading;
@@ -108,21 +108,38 @@ namespace Captura.FFmpeg
             _ffmpegProcess = FFmpegService.StartFFmpeg(argsBuilder.GetArgs(), Args.FileName, out _);
         }
 
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
         public void Dispose()
         {
-            _lastFrameTask?.Wait();
-            _lastAudio?.Wait();
+            try
+            {
+                _lastFrameTask?.Wait();
+                _lastAudio?.Wait();
 
-            _ffmpegIn.Dispose();
+                try
+                {
+                    _ffmpegIn?.Flush();
+                    _audioPipe?.Flush();
+                }
+                catch { }
 
-            _audioPipe?.Dispose();
+                _ffmpegIn?.Dispose();
+                _audioPipe?.Dispose();
 
-            _ffmpegProcess.WaitForExit();
-
-            _videoBuffer = null;
+                if (!_ffmpegProcess.WaitForExit(10000))
+                {
+                    try
+                    {
+                        _ffmpegProcess.Kill();
+                        _ffmpegProcess.WaitForExit(2000);
+                    }
+                    catch { }
+                }
+            }
+            finally
+            {
+                _ffmpegProcess?.Dispose();
+                _videoBuffer = null;
+            }
         }
 
         /// <summary>

@@ -6,6 +6,8 @@ using System.Windows.Forms;
 using Captura.Native;
 using Captura.Video;
 using Captura.Windows.DesktopDuplication;
+using Captura.Windows.Gdi;
+using Captura.Windows.WindowsGraphicsCapture;
 using SharpDX.DXGI;
 
 namespace Captura.Windows
@@ -97,37 +99,39 @@ namespace Captura.Windows
 
         public IImageProvider GetWindowProvider(IWindow Window, bool IncludeCursor)
         {
+            if (WindowsModule.ShouldUseGdi)
+            {
+                return new WindowProvider(Window, _previewWindow, IncludeCursor);
+            }
+            
+            if (WindowsModule.ShouldUseWgc)
+            {
+                var size = Window.Rectangle.Even().Size;
+                return new WgcImageProvider(Window.Handle, size.Width, size.Height, _previewWindow);
+            }
+            
             return new WindowProvider(Window, _previewWindow, IncludeCursor);
         }
 
         public IImageProvider GetScreenProvider(IScreen Screen, bool IncludeCursor, bool StepsMode)
         {
-            if (!WindowsModule.ShouldUseGdi && !StepsMode)
+            if (WindowsModule.ShouldUseGdi || StepsMode)
             {
-                var output = FindOutput(Screen);
-
-                if (output != null)
-                {
-                    try
-                    {
-                        return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
-                    }
-                    catch (SharpDX.SharpDXException ex)
-                    {
-                        // Desktop Duplication failed (common with graphics driver issues, multi-DPI, etc.)
-                        // Fall back to GDI capture
-                        System.Diagnostics.Debug.WriteLine($"Desktop Duplication failed (HR: 0x{ex.HResult:X8}), falling back to GDI: {ex.Message}");
-                    }
-                    catch (Exception ex)
-                    {
-                        // Any other initialization error
-                        System.Diagnostics.Debug.WriteLine($"Desktop Duplication failed, falling back to GDI: {ex.Message}");
-                    }
-                }
+                return GetRegionProvider(Screen.Rectangle, IncludeCursor);
             }
-
-            // Fallback to GDI-based screen capture
-            return GetRegionProvider(Screen.Rectangle, IncludeCursor);
+            
+            if (WindowsModule.ShouldUseWgc)
+            {
+                return new WgcScreenImageProvider(Screen.Rectangle, _previewWindow);
+            }
+            
+            var output = FindOutput(Screen);
+            if (output != null)
+            {
+                return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
+            }
+            
+            throw new Exception("No screen output found for Desktop Duplication. Enable WGC or GDI mode in settings.");
         }
 
         static Output1 FindOutput(IScreen Screen)
@@ -152,25 +156,17 @@ namespace Captura.Windows
 
         public IImageProvider GetAllScreensProvider(bool IncludeCursor, bool StepsMode)
         {
-            if (!WindowsModule.ShouldUseGdi && !StepsMode)
+            if (WindowsModule.ShouldUseGdi || StepsMode)
             {
-                try
-                {
-                    return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
-                }
-                catch (SharpDX.SharpDXException ex)
-                {
-                    // Desktop Duplication failed, fall back to GDI
-                    System.Diagnostics.Debug.WriteLine($"Full screen Desktop Duplication failed (HR: 0x{ex.HResult:X8}), falling back to GDI: {ex.Message}");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Full screen Desktop Duplication failed, falling back to GDI: {ex.Message}");
-                }
+                return GetRegionProvider(DesktopRectangle, IncludeCursor);
             }
-
-            // Fallback to GDI-based screen capture
-            return GetRegionProvider(DesktopRectangle, IncludeCursor);
+            
+            if (WindowsModule.ShouldUseWgc)
+            {
+                return new WgcScreenImageProvider(DesktopRectangle, _previewWindow);
+            }
+            
+            return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
         }
     }
 }

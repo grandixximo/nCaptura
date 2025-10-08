@@ -72,9 +72,32 @@ namespace Captura.Windows
         {
             get
             {
+                if (!Windows8OrAbove)
+                    return true;
+                    
                 var settings = ServiceProvider.Get<WindowsSettings>();
-
-                return !Windows8OrAbove || settings.UseGdi;
+                return settings.ScreenCaptureMethod == CaptureMethod.Gdi;
+            }
+        }
+        
+        public static bool ShouldUseWgc
+        {
+            get
+            {
+                if (!Windows10_1903OrAbove)
+                    return false;
+                    
+                var settings = ServiceProvider.Get<WindowsSettings>();
+                return settings.ScreenCaptureMethod == CaptureMethod.WindowsGraphicsCapture;
+            }
+        }
+        
+        public static bool Windows10_1903OrAbove
+        {
+            get
+            {
+                var version = Environment.OSVersion.Version;
+                return version.Major >= 10 && version.Build >= 18362;
             }
         }
     }
