@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using SharpDX;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
@@ -71,6 +71,22 @@ namespace Captura.Windows.DesktopDuplication
                 {
                     throw new NotSupportedException(
                         "Desktop Duplication is not supported on this system.\nIf you have multiple graphic cards, try running Captura on integrated graphics.",
+                        e);
+                }
+                catch (SharpDXException e) when (e.HResult == unchecked((int)0x80070057)) // E_INVALIDARG
+                {
+                    throw new NotSupportedException(
+                        "Desktop Duplication failed with your graphics configuration.\n" +
+                        "This can happen with AMD/Intel graphics or hybrid GPU setups.\n" +
+                        "Will use GDI fallback for screen capture.",
+                        e);
+                }
+                catch (SharpDXException e)
+                {
+                    // Catch any other SharpDX errors and rethrow so fallback can handle them
+                    throw new NotSupportedException(
+                        $"Desktop Duplication not available (Error: 0x{e.HResult:X8}).\n" +
+                        "Will use GDI fallback for screen capture.",
                         e);
                 }
             }

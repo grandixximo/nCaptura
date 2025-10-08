@@ -137,10 +137,25 @@ namespace Captura.Windows
                 var output = FindOutput(Screen);
                 if (output != null)
                 {
-                    return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
+                    try
+                    {
+                        return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
+                    }
+                    catch (SharpDX.SharpDXException ex)
+                    {
+                        // Desktop Duplication failed (common with graphics driver issues, multi-DPI, etc.)
+                        // Fall back to GDI capture
+                        System.Diagnostics.Debug.WriteLine($"Desktop Duplication failed (HR: 0x{ex.HResult:X8}), falling back to GDI: {ex.Message}");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Any other initialization error
+                        System.Diagnostics.Debug.WriteLine($"Desktop Duplication failed, falling back to GDI: {ex.Message}");
+                    }
                 }
             }
 
+            // Fallback to GDI-based screen capture
             return GetRegionProvider(Screen.Rectangle, IncludeCursor);
         }
 
@@ -180,7 +195,18 @@ namespace Captura.Windows
                     }
                 }
                 
-                return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
+                try
+                {
+                    return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
+                }
+                catch (SharpDX.SharpDXException ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Full screen Desktop Duplication failed (HR: 0x{ex.HResult:X8}), falling back to GDI: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Full screen Desktop Duplication failed, falling back to GDI: {ex.Message}");
+                }
             }
 
             return GetRegionProvider(DesktopRectangle, IncludeCursor);
