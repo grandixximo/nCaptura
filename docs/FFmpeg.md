@@ -9,10 +9,11 @@ It adds support for more output formats like **H.264** for Video and **Mp3**, **
 
 Captura supports hardware-accelerated encoding through FFmpeg, which significantly improves performance and reduces CPU usage:
 
-- **AMD GPUs**: AMD Advanced Media Framework (AMF) - Supports H.264, HEVC (H.265), and AV1
+- **AMD GPUs**: AMD Advanced Media Framework (AMF) - Supports H.264 and HEVC (H.265)
   - Inspired by OBS Studio's AMD hardware encoding implementation
   - Requires AMD Radeon HD 7000 series or newer, or APU with GCN architecture
   - Ensure your AMD drivers are up to date for best performance
+  - **Note**: Requires FFmpeg built with AMF support - [Troubleshooting Guide](AMD-AMF-Encoding.md)
 
 - **NVIDIA GPUs**: NVENC - Supports H.264 and HEVC (H.265)
   - Check NVIDIA's website to verify your GPU supports NVENC
@@ -21,6 +22,20 @@ Captura supports hardware-accelerated encoding through FFmpeg, which significant
   - Requires Skylake generation or later processor with integrated graphics
 
 Hardware encoding offloads the video encoding work to your GPU, allowing for smoother captures and better performance, especially at higher resolutions and frame rates.
+
+### Checking Hardware Encoder Support
+
+To verify your FFmpeg supports a specific hardware encoder, run:
+```bash
+ffmpeg -encoders | findstr <encoder_name>
+```
+
+Replace `<encoder_name>` with:
+- `amf` for AMD
+- `nvenc` for NVIDIA
+- `qsv` for Intel QuickSync
+
+If you don't see output, your FFmpeg build doesn't include that encoder. Download a full build from the sources listed below.
 
 FFmpeg is configured on the **FFmpeg** section in the **Configure** tab.
 

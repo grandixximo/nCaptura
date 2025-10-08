@@ -24,10 +24,14 @@ namespace Captura.FFmpeg
             yield return new XvidVideoCodec();
 
             // Hardware encoders
-            // AMD AMF (inspired by OBS Studio)
-            yield return AmfVideoCodec.CreateH264();
+            // AMD AMF (inspired by OBS Studio) - Multiple options for compatibility
+            // Try these in order: Simple -> CQP -> VBR
+            yield return AmfVideoCodec_Simple.CreateH264();  // Most compatible - try this first
+            yield return AmfVideoCodec_Simple.CreateHevc();
+            yield return AmfVideoCodec.CreateH264();         // CQP mode - better quality control
             yield return AmfVideoCodec.CreateHevc();
-            yield return AmfVideoCodec.CreateAv1();
+            yield return AmfVideoCodec_VBR.CreateH264();     // VBR mode - fixed bitrate
+            yield return AmfVideoCodec_VBR.CreateHevc();
             
             // Intel QuickSync
             yield return new QsvHevcVideoCodec();

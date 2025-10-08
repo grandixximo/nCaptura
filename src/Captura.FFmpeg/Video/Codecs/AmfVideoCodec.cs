@@ -25,32 +25,16 @@ namespace Captura.FFmpeg
         public override void Apply(FFmpegSettings Settings, VideoWriterArgs WriterArgs, FFmpegOutputArgs OutputArgs)
         {
             // AMF encoder settings inspired by OBS Studio's implementation
-            // Using quality-balanced presets that work well for screen recording
+            // Using minimal, reliable settings similar to NVENC
+            
             OutputArgs.AddArg("c:v", _fFmpegCodecName)
-                .AddArg("quality", "balanced")           // Quality preset: speed, balanced, or quality
-                .AddArg("rc", "vbr_latency")             // Rate control: VBR with low latency (good for recording)
-                .AddArg("usage", "ultralowlatency")      // Usage mode optimized for ultra low latency
-                .AddArg("profile:v", "high")             // Use high profile for better quality
-                .AddArg("level", "auto");                // Auto-detect appropriate level
+                .AddArg("rc", "cqp")         // Rate control: Constant QP (most reliable)
+                .AddArg("qp", "22");         // Quality: 18-24 is good for screen recording
             
-            // Preset mapping (similar to OBS):
-            // - speed: fastest encoding, lower quality
-            // - balanced: good balance between speed and quality
-            // - quality: best quality, slower encoding
-            // For screen recording, balanced is a good default
-            OutputArgs.AddArg("preset", "balanced");
-            
-            // Optional: Enable pre-analysis for better quality (like OBS does)
-            // This can improve quality at minimal performance cost
-            OutputArgs.AddArg("preanalysis", "true");
-            
-            // Set GOP size for better seeking and compatibility
-            // 250 is a good default for 60fps content (about 4 seconds)
-            OutputArgs.AddArg("g", "250");
-            
-            // Optional: Set bitrate if specified in settings
-            // AMF works best with VBR, so we set target bitrate
-            // OutputArgs.AddArg("b:v", "5M");           // Can be customized based on user settings
+            // Alternative settings for better compatibility if CQP doesn't work:
+            // Use VBR with bitrate target instead:
+            // .AddArg("rc", "vbr_latency")
+            // .AddArg("b:v", "5M");
         }
 
         /// <summary>
