@@ -89,7 +89,6 @@ namespace Captura.Windows.WindowsGraphicsCapture
                 _session?.Dispose();
                 _framePool?.Dispose();
                 _lastFrame?.Dispose();
-                _captureItem?.Close();
                 _device?.Dispose();
             }
         }

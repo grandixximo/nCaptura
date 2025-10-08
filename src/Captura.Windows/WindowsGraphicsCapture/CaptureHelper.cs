@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Graphics.Capture;
 
 namespace Captura.Windows.WindowsGraphicsCapture

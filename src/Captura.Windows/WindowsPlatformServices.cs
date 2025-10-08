@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using Captura.Native;
 using Captura.Video;
 using Captura.Windows.DesktopDuplication;
+using Captura.Windows.Gdi;
 using Captura.Windows.WindowsGraphicsCapture;
 using SharpDX.DXGI;
 
