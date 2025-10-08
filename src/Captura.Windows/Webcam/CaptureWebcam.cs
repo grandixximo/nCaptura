@@ -31,7 +31,6 @@ namespace Captura.Webcam
         int _stride;
         byte[] _frameBuffer;
         VideoInfoHeader _videoInfoHeader;
-        Guid _negotiatedSubType;
         
         bool _isRunning;
         bool _isDisposed;
@@ -131,21 +130,14 @@ namespace Captura.Webcam
             var mediaType = new AMMediaType
             {
                 majorType = MediaType.Video,
-                subType = MediaSubType.RGB24
+                subType = MediaSubType.RGB32
             };
 
             var hr = _sampleGrabber.SetMediaType(mediaType);
             DsUtils.FreeAMMediaType(mediaType);
             
             if (hr < 0)
-            {
-                var fallback = new AMMediaType { majorType = MediaType.Video };
-                hr = _sampleGrabber.SetMediaType(fallback);
-                DsUtils.FreeAMMediaType(fallback);
-                
-                if (hr < 0)
-                    throw new InvalidOperationException($"Failed to configure sample grabber (HR: 0x{hr:X8})");
-            }
+                throw new InvalidOperationException($"Camera does not support RGB32 format (HR: 0x{hr:X8})");
 
             hr = _sampleGrabber.SetBufferSamples(true);
             if (hr < 0) throw new InvalidOperationException("Failed to set buffer samples");
@@ -250,32 +242,15 @@ namespace Captura.Webcam
 
             try
             {
-                _negotiatedSubType = mediaType.subType;
-                
-                var subTypeStr = $"{_negotiatedSubType:B}";
-                System.Diagnostics.Debug.WriteLine($"Negotiated format: {subTypeStr}");
-
                 if (mediaType.formatType == FormatType.VideoInfo && mediaType.formatPtr != IntPtr.Zero)
                 {
                     _videoInfoHeader = (VideoInfoHeader)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader));
                     _videoSize = new Size(_videoInfoHeader.BmiHeader.Width, Math.Abs(_videoInfoHeader.BmiHeader.Height));
-                    
-                    var bitsPerPixel = _videoInfoHeader.BmiHeader.BitCount;
-                    _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
-                    _stride = (_stride + 3) & ~3;
-                    
-                    _frameBuffer = new byte[_stride * _videoSize.Height];
                 }
                 else if (mediaType.formatType == FormatType.VideoInfo2 && mediaType.formatPtr != IntPtr.Zero)
                 {
                     var videoInfoHeader2 = (VideoInfoHeader2)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader2));
                     _videoSize = new Size(videoInfoHeader2.BmiHeader.Width, Math.Abs(videoInfoHeader2.BmiHeader.Height));
-                    
-                    var bitsPerPixel = videoInfoHeader2.BmiHeader.BitCount;
-                    _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
-                    _stride = (_stride + 3) & ~3;
-                    
-                    _frameBuffer = new byte[_stride * _videoSize.Height];
                     
                     _videoInfoHeader = new VideoInfoHeader
                     {
@@ -286,6 +261,9 @@ namespace Captura.Webcam
                 {
                     throw new InvalidOperationException($"Unsupported video format: {mediaType.formatType}");
                 }
+
+                _stride = _videoSize.Width * 4;
+                _frameBuffer = new byte[_stride * _videoSize.Height];
             }
             finally
             {
@@ -391,99 +369,6 @@ namespace Captura.Webcam
 
         #region Frame Capture
 
-        static readonly Guid MEDIASUBTYPE_YUY2 = new Guid(0x32595559, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
-        static readonly Guid MEDIASUBTYPE_UYVY = new Guid(0x59565955, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
-
-        static void ConvertYuy2ToBgr32(byte[] src, byte[] dst, int width, int height, int srcStride)
-        {
-            for (var y = 0; y < height; y++)
-            {
-                var srcIdx = y * srcStride;
-                var dstIdx = y * width * 4;
-                
-                for (var x = 0; x < width; x += 2)
-                {
-                    var y0 = src[srcIdx];
-                    var u = src[srcIdx + 1];
-                    var y1 = src[srcIdx + 2];
-                    var v = src[srcIdx + 3];
-                    
-                    var c = 298;
-                    var d = u - 128;
-                    var e = v - 128;
-                    
-                    var r0 = (c * (y0 - 16) + 409 * e + 128) >> 8;
-                    var g0 = (c * (y0 - 16) - 100 * d - 208 * e + 128) >> 8;
-                    var b0 = (c * (y0 - 16) + 516 * d + 128) >> 8;
-                    
-                    dst[dstIdx] = (byte)(b0 < 0 ? 0 : b0 > 255 ? 255 : b0);
-                    dst[dstIdx + 1] = (byte)(g0 < 0 ? 0 : g0 > 255 ? 255 : g0);
-                    dst[dstIdx + 2] = (byte)(r0 < 0 ? 0 : r0 > 255 ? 255 : r0);
-                    dst[dstIdx + 3] = 255;
-                    
-                    if (x + 1 < width)
-                    {
-                        var r1 = (c * (y1 - 16) + 409 * e + 128) >> 8;
-                        var g1 = (c * (y1 - 16) - 100 * d - 208 * e + 128) >> 8;
-                        var b1 = (c * (y1 - 16) + 516 * d + 128) >> 8;
-                        
-                        dst[dstIdx + 4] = (byte)(b1 < 0 ? 0 : b1 > 255 ? 255 : b1);
-                        dst[dstIdx + 5] = (byte)(g1 < 0 ? 0 : g1 > 255 ? 255 : g1);
-                        dst[dstIdx + 6] = (byte)(r1 < 0 ? 0 : r1 > 255 ? 255 : r1);
-                        dst[dstIdx + 7] = 255;
-                    }
-                    
-                    srcIdx += 4;
-                    dstIdx += 8;
-                }
-            }
-        }
-
-        static void ConvertUyvyToBgr32(byte[] src, byte[] dst, int width, int height, int srcStride)
-        {
-            for (var y = 0; y < height; y++)
-            {
-                var srcIdx = y * srcStride;
-                var dstIdx = y * width * 4;
-                
-                for (var x = 0; x < width; x += 2)
-                {
-                    var u = src[srcIdx];
-                    var y0 = src[srcIdx + 1];
-                    var v = src[srcIdx + 2];
-                    var y1 = src[srcIdx + 3];
-                    
-                    var c = 298;
-                    var d = u - 128;
-                    var e = v - 128;
-                    
-                    var r0 = (c * (y0 - 16) + 409 * e + 128) >> 8;
-                    var g0 = (c * (y0 - 16) - 100 * d - 208 * e + 128) >> 8;
-                    var b0 = (c * (y0 - 16) + 516 * d + 128) >> 8;
-                    
-                    dst[dstIdx] = (byte)(b0 < 0 ? 0 : b0 > 255 ? 255 : b0);
-                    dst[dstIdx + 1] = (byte)(g0 < 0 ? 0 : g0 > 255 ? 255 : g0);
-                    dst[dstIdx + 2] = (byte)(r0 < 0 ? 0 : r0 > 255 ? 255 : r0);
-                    dst[dstIdx + 3] = 255;
-                    
-                    if (x + 1 < width)
-                    {
-                        var r1 = (c * (y1 - 16) + 409 * e + 128) >> 8;
-                        var g1 = (c * (y1 - 16) - 100 * d - 208 * e + 128) >> 8;
-                        var b1 = (c * (y1 - 16) + 516 * d + 128) >> 8;
-                        
-                        dst[dstIdx + 4] = (byte)(b1 < 0 ? 0 : b1 > 255 ? 255 : b1);
-                        dst[dstIdx + 5] = (byte)(g1 < 0 ? 0 : g1 > 255 ? 255 : g1);
-                        dst[dstIdx + 6] = (byte)(r1 < 0 ? 0 : r1 > 255 ? 255 : r1);
-                        dst[dstIdx + 7] = 255;
-                    }
-                    
-                    srcIdx += 4;
-                    dstIdx += 8;
-                }
-            }
-        }
-
         public Captura.IBitmapImage GetFrame(Captura.IBitmapLoader BitmapLoader)
         {
             lock (_lock)
@@ -511,35 +396,8 @@ namespace Captura.Webcam
                         if (hr < 0)
                             return null;
 
-                        byte[] rgbData;
-                        var rgbStride = _videoSize.Width * 4;
-
-                        if (_negotiatedSubType == MEDIASUBTYPE_YUY2)
-                        {
-                            rgbData = new byte[_videoSize.Width * _videoSize.Height * 4];
-                            ConvertYuy2ToBgr32(_frameBuffer, rgbData, _videoSize.Width, _videoSize.Height, _stride);
-                        }
-                        else if (_negotiatedSubType == MEDIASUBTYPE_UYVY)
-                        {
-                            rgbData = new byte[_videoSize.Width * _videoSize.Height * 4];
-                            ConvertUyvyToBgr32(_frameBuffer, rgbData, _videoSize.Width, _videoSize.Height, _stride);
-                        }
-                        else
-                        {
-                            rgbData = _frameBuffer;
-                            rgbStride = _stride;
-                        }
-
-                        var rgbHandle = GCHandle.Alloc(rgbData, GCHandleType.Pinned);
-                        try
-                        {
-                            var dataPtr = rgbHandle.AddrOfPinnedObject() + (_videoSize.Height - 1) * rgbStride;
-                            return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -rgbStride);
-                        }
-                        finally
-                        {
-                            rgbHandle.Free();
-                        }
+                        var dataPtr = ptr + (_videoSize.Height - 1) * _stride;
+                        return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -_stride);
                     }
                     finally
                     {
