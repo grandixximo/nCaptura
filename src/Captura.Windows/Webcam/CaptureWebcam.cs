@@ -129,15 +129,18 @@ namespace Captura.Webcam
         {
             var mediaType = new AMMediaType
             {
-                majorType = MediaType.Video,
-                subType = MediaSubType.RGB32
+                majorType = MediaType.Video
             };
 
             var hr = _sampleGrabber.SetMediaType(mediaType);
             DsUtils.FreeAMMediaType(mediaType);
             
             if (hr < 0)
-                throw new InvalidOperationException($"Camera does not support RGB32 format (HR: 0x{hr:X8})");
+            {
+                hr = _sampleGrabber.SetMediaType(null);
+                if (hr < 0)
+                    throw new InvalidOperationException($"Failed to configure sample grabber (HR: 0x{hr:X8})");
+            }
 
             hr = _sampleGrabber.SetBufferSamples(true);
             if (hr < 0) throw new InvalidOperationException("Failed to set buffer samples");
@@ -242,15 +245,33 @@ namespace Captura.Webcam
 
             try
             {
+                System.Diagnostics.Debug.WriteLine($"Camera format: {mediaType.subType}");
+                
                 if (mediaType.formatType == FormatType.VideoInfo && mediaType.formatPtr != IntPtr.Zero)
                 {
                     _videoInfoHeader = (VideoInfoHeader)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader));
                     _videoSize = new Size(_videoInfoHeader.BmiHeader.Width, Math.Abs(_videoInfoHeader.BmiHeader.Height));
+                    
+                    var bitsPerPixel = _videoInfoHeader.BmiHeader.BitCount;
+                    _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
+                    _stride = (_stride + 3) & ~3;
+                    
+                    System.Diagnostics.Debug.WriteLine($"Size: {_videoSize.Width}x{_videoSize.Height}, BPP: {bitsPerPixel}, Stride: {_stride}");
+                    
+                    _frameBuffer = new byte[_stride * _videoSize.Height];
                 }
                 else if (mediaType.formatType == FormatType.VideoInfo2 && mediaType.formatPtr != IntPtr.Zero)
                 {
                     var videoInfoHeader2 = (VideoInfoHeader2)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader2));
                     _videoSize = new Size(videoInfoHeader2.BmiHeader.Width, Math.Abs(videoInfoHeader2.BmiHeader.Height));
+                    
+                    var bitsPerPixel = videoInfoHeader2.BmiHeader.BitCount;
+                    _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
+                    _stride = (_stride + 3) & ~3;
+                    
+                    System.Diagnostics.Debug.WriteLine($"Size: {_videoSize.Width}x{_videoSize.Height}, BPP: {bitsPerPixel}, Stride: {_stride}");
+                    
+                    _frameBuffer = new byte[_stride * _videoSize.Height];
                     
                     _videoInfoHeader = new VideoInfoHeader
                     {
@@ -261,9 +282,6 @@ namespace Captura.Webcam
                 {
                     throw new InvalidOperationException($"Unsupported video format: {mediaType.formatType}");
                 }
-
-                _stride = _videoSize.Width * 4;
-                _frameBuffer = new byte[_stride * _videoSize.Height];
             }
             finally
             {
