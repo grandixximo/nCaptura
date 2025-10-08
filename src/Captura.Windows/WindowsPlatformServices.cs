@@ -122,23 +122,13 @@ namespace Captura.Windows
             
             if (WindowsModule.ShouldUseWgc)
             {
-                // Use DXGI Output's Monitor handle for accurate monitor identification
-                var output = FindOutput(Screen);
-                if (output != null)
-                {
-                    var hmon = output.Description.Monitor;
-                    output.Dispose();
-                    return new WgcScreenImageProvider(Screen.Rectangle, _previewWindow, hmon);
-                }
-                
-                // Fallback to MonitorHelper if DXGI Output not found
                 return new WgcScreenImageProvider(Screen.Rectangle, _previewWindow);
             }
             
-            var output2 = FindOutput(Screen);
-            if (output2 != null)
+            var output = FindOutput(Screen);
+            if (output != null)
             {
-                return new DeskDuplImageProvider(output2, IncludeCursor, _previewWindow);
+                return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
             }
             
             throw new Exception("No screen output found for Desktop Duplication. Enable WGC or GDI mode in settings.");
@@ -173,21 +163,6 @@ namespace Captura.Windows
             
             if (WindowsModule.ShouldUseWgc)
             {
-                // For full screen, try to use the primary monitor's handle from DXGI
-                var screens = EnumerateScreens().ToList();
-                if (screens.Any())
-                {
-                    var primaryScreen = screens.FirstOrDefault(s => s.Rectangle.X == 0 && s.Rectangle.Y == 0) ?? screens.First();
-                    var output = FindOutput(primaryScreen);
-                    if (output != null)
-                    {
-                        var hmon = output.Description.Monitor;
-                        output.Dispose();
-                        return new WgcScreenImageProvider(DesktopRectangle, _previewWindow, hmon);
-                    }
-                }
-                
-                // Fallback to MonitorHelper
                 return new WgcScreenImageProvider(DesktopRectangle, _previewWindow);
             }
             
