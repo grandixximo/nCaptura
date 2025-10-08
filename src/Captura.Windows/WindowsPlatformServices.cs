@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -108,7 +108,29 @@ namespace Captura.Windows
 
                 if (output != null)
                 {
-                    return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
+                    try
+                    {
+                        return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
+                    }
+                    catch (SharpDX.SharpDXException ex)
+                    {
+                        // Desktop Duplication failed (E_INVALIDARG, access denied, etc.)
+                        // Fall back to GDI capture
+                        System.Diagnostics.Debug.WriteLine($"Desktop Duplication failed (0x{ex.ResultCode.Code:X8}), falling back to GDI: {ex.Message}");
+                        
+                        output?.Dispose();
+                        
+                        // Continue to GDI fallback below
+                    }
+                    catch (Exception ex)
+                    {
+                        // Any other error
+                        System.Diagnostics.Debug.WriteLine($"Desktop Duplication initialization failed, falling back to GDI: {ex.Message}");
+                        
+                        output?.Dispose();
+                        
+                        // Continue to GDI fallback below
+                    }
                 }
             }
 
@@ -139,7 +161,25 @@ namespace Captura.Windows
         {
             if (!WindowsModule.ShouldUseGdi && !StepsMode)
             {
-                return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
+                try
+                {
+                    return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
+                }
+                catch (SharpDX.SharpDXException ex)
+                {
+                    // Desktop Duplication failed (E_INVALIDARG, access denied, etc.)
+                    // Fall back to GDI capture
+                    System.Diagnostics.Debug.WriteLine($"Desktop Duplication (full screen) failed (0x{ex.ResultCode.Code:X8}), falling back to GDI: {ex.Message}");
+                    
+                    // Continue to GDI fallback below
+                }
+                catch (Exception ex)
+                {
+                    // Any other error
+                    System.Diagnostics.Debug.WriteLine($"Desktop Duplication (full screen) initialization failed, falling back to GDI: {ex.Message}");
+                    
+                    // Continue to GDI fallback below
+                }
             }
 
             return GetRegionProvider(DesktopRectangle, IncludeCursor);
