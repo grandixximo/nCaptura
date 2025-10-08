@@ -105,21 +105,23 @@ namespace Captura.FFmpeg
 
             _ffmpegIn = new NamedPipeServerStream(videoPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, _videoBuffer.Length);
 
+            // Put both pipes into listening state BEFORE launching FFmpeg
+            BeginListening(_ffmpegIn);
+            if (_audioPipe != null) BeginListening(_audioPipe);
+
             _ffmpegProcess = FFmpegService.StartFFmpeg(argsBuilder.GetArgs(), Args.FileName, out _);
+        }
 
-            // Eagerly accept pipe connections to avoid FFmpeg blocking on missing connections
-            Task.Run(() =>
+        static void BeginListening(NamedPipeServerStream pipe)
+        {
+            try
             {
-                try { _ffmpegIn.WaitForConnection(5000); } catch { }
-            });
-
-            if (_audioPipe != null)
-            {
-                Task.Run(() =>
+                pipe.BeginWaitForConnection(ar =>
                 {
-                    try { _audioPipe.WaitForConnection(5000); } catch { }
-                });
+                    try { pipe.EndWaitForConnection(ar); } catch { }
+                }, null);
             }
+            catch { }
         }
 
         public void Dispose()
@@ -249,9 +251,12 @@ namespace Captura.FFmpeg
             
             if (_firstFrame)
             {
-                if (!_ffmpegIn.WaitForConnection(5000))
+                if (!_ffmpegIn.IsConnected)
                 {
-                    throw new Exception("Cannot connect Video pipe to FFmpeg");
+                    if (!_ffmpegIn.WaitForConnection(5000))
+                    {
+                        throw new Exception("Cannot connect Video pipe to FFmpeg");
+                    }
                 }
 
                 _firstFrame = false;
