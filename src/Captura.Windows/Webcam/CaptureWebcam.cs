@@ -29,7 +29,9 @@ namespace Captura.Webcam
         // Video properties
         Size _videoSize = Size.Empty;
         int _stride;
+        int _bitsPerPixel;
         byte[] _frameBuffer;
+        byte[] _convertedBuffer;
         VideoInfoHeader _videoInfoHeader;
         
         bool _isRunning;
@@ -127,36 +129,27 @@ namespace Captura.Webcam
 
         void ConfigureSampleGrabber()
         {
-            int hr;
-            
-            // For maximum compatibility, don't specify format initially
-            // Let DirectShow negotiate the format during connection
             var mediaType = new AMMediaType
             {
                 majorType = MediaType.Video
             };
 
-            hr = _sampleGrabber.SetMediaType(mediaType);
+            var hr = _sampleGrabber.SetMediaType(mediaType);
             DsUtils.FreeAMMediaType(mediaType);
             
             if (hr < 0)
             {
-                // If even that fails, try with no restrictions
                 hr = _sampleGrabber.SetMediaType(null);
                 if (hr < 0)
-                {
                     throw new InvalidOperationException($"Failed to configure sample grabber (HR: 0x{hr:X8})");
-                }
             }
 
-            // Configure grabber to buffer samples
             hr = _sampleGrabber.SetBufferSamples(true);
             if (hr < 0) throw new InvalidOperationException("Failed to set buffer samples");
 
             hr = _sampleGrabber.SetOneShot(false);
             if (hr < 0) throw new InvalidOperationException("Failed to set one shot mode");
 
-            // Don't need the callback, we'll use GetCurrentBuffer
             hr = _sampleGrabber.SetCallback(null, 0);
             if (hr < 0) throw new InvalidOperationException("Failed to set callback");
         }
@@ -259,10 +252,9 @@ namespace Captura.Webcam
                     _videoInfoHeader = (VideoInfoHeader)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader));
                     _videoSize = new Size(_videoInfoHeader.BmiHeader.Width, Math.Abs(_videoInfoHeader.BmiHeader.Height));
                     
-                    // Calculate stride based on bit depth
-                    var bitsPerPixel = _videoInfoHeader.BmiHeader.BitCount;
-                    _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
-                    _stride = (_stride + 3) & ~3; // Align to 4-byte boundary
+                    _bitsPerPixel = _videoInfoHeader.BmiHeader.BitCount;
+                    _stride = (_videoSize.Width * _bitsPerPixel + 7) / 8;
+                    _stride = (_stride + 3) & ~3;
                     
                     _frameBuffer = new byte[_stride * _videoSize.Height];
                 }
@@ -271,14 +263,12 @@ namespace Captura.Webcam
                     var videoInfoHeader2 = (VideoInfoHeader2)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader2));
                     _videoSize = new Size(videoInfoHeader2.BmiHeader.Width, Math.Abs(videoInfoHeader2.BmiHeader.Height));
                     
-                    // Calculate stride based on bit depth
-                    var bitsPerPixel = videoInfoHeader2.BmiHeader.BitCount;
-                    _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
-                    _stride = (_stride + 3) & ~3; // Align to 4-byte boundary
+                    _bitsPerPixel = videoInfoHeader2.BmiHeader.BitCount;
+                    _stride = (_videoSize.Width * _bitsPerPixel + 7) / 8;
+                    _stride = (_stride + 3) & ~3;
                     
                     _frameBuffer = new byte[_stride * _videoSize.Height];
                     
-                    // Create a VideoInfoHeader for compatibility
                     _videoInfoHeader = new VideoInfoHeader
                     {
                         BmiHeader = videoInfoHeader2.BmiHeader
@@ -288,6 +278,10 @@ namespace Captura.Webcam
                 {
                     throw new InvalidOperationException($"Unsupported video format: {mediaType.formatType}");
                 }
+
+                // Allocate conversion buffer for RGB24 → RGB32 conversion
+                if (_bitsPerPixel == 24)
+                    _convertedBuffer = new byte[_videoSize.Width * _videoSize.Height * 4];
             }
             finally
             {
@@ -393,6 +387,30 @@ namespace Captura.Webcam
 
         #region Frame Capture
 
+        /// <summary>
+        /// Converts RGB24 (3 bytes per pixel) to RGB32 (4 bytes per pixel with alpha).
+        /// Preserves RGB channel order and adds full opacity alpha channel.
+        /// </summary>
+        static void ConvertRgb24ToRgb32(byte[] src, byte[] dst, int width, int height, int srcStride)
+        {
+            for (var y = 0; y < height; y++)
+            {
+                var srcIdx = y * srcStride;
+                var dstIdx = y * width * 4;
+                
+                for (var x = 0; x < width; x++)
+                {
+                    dst[dstIdx] = src[srcIdx];         // R
+                    dst[dstIdx + 1] = src[srcIdx + 1]; // G
+                    dst[dstIdx + 2] = src[srcIdx + 2]; // B
+                    dst[dstIdx + 3] = 255;             // A (fully opaque)
+                    
+                    srcIdx += 3;
+                    dstIdx += 4;
+                }
+            }
+        }
+
         public Captura.IBitmapImage GetFrame(Captura.IBitmapLoader BitmapLoader)
         {
             lock (_lock)
@@ -402,18 +420,15 @@ namespace Captura.Webcam
 
                 try
                 {
-                    // Get buffer size
-                    int bufferSize = 0;
+                    var bufferSize = 0;
                     var hr = _sampleGrabber.GetCurrentBuffer(ref bufferSize, IntPtr.Zero);
                     
                     if (hr < 0 || bufferSize <= 0)
                         return null;
 
-                    // Ensure our buffer is large enough
                     if (_frameBuffer.Length < bufferSize)
                         _frameBuffer = new byte[bufferSize];
 
-                    // Pin the buffer and get the data
                     var handle = GCHandle.Alloc(_frameBuffer, GCHandleType.Pinned);
                     try
                     {
@@ -423,10 +438,29 @@ namespace Captura.Webcam
                         if (hr < 0)
                             return null;
 
-                        // DirectShow gives us bottom-up bitmaps, so we need to flip
-                        var dataPtr = ptr + (_videoSize.Height - 1) * _stride;
-                        
-                        return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -_stride);
+                        if (_bitsPerPixel == 24)
+                        {
+                            // Convert RGB24 to RGB32 for CreateBitmapBgr32 compatibility
+                            ConvertRgb24ToRgb32(_frameBuffer, _convertedBuffer, _videoSize.Width, _videoSize.Height, _stride);
+                            
+                            var convertedHandle = GCHandle.Alloc(_convertedBuffer, GCHandleType.Pinned);
+                            try
+                            {
+                                var convertedStride = _videoSize.Width * 4;
+                                var dataPtr = convertedHandle.AddrOfPinnedObject() + (_videoSize.Height - 1) * convertedStride;
+                                return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -convertedStride);
+                            }
+                            finally
+                            {
+                                convertedHandle.Free();
+                            }
+                        }
+                        else
+                        {
+                            // Pass through other formats (16/32 BPP) as-is
+                            var dataPtr = ptr + (_videoSize.Height - 1) * _stride;
+                            return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -_stride);
+                        }
                     }
                     finally
                     {
