@@ -245,18 +245,16 @@ namespace Captura.Webcam
 
             try
             {
-                System.Diagnostics.Debug.WriteLine($"Camera format: {mediaType.subType}");
+                int bitsPerPixel = 0;
                 
                 if (mediaType.formatType == FormatType.VideoInfo && mediaType.formatPtr != IntPtr.Zero)
                 {
                     _videoInfoHeader = (VideoInfoHeader)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader));
                     _videoSize = new Size(_videoInfoHeader.BmiHeader.Width, Math.Abs(_videoInfoHeader.BmiHeader.Height));
                     
-                    var bitsPerPixel = _videoInfoHeader.BmiHeader.BitCount;
+                    bitsPerPixel = _videoInfoHeader.BmiHeader.BitCount;
                     _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
                     _stride = (_stride + 3) & ~3;
-                    
-                    System.Diagnostics.Debug.WriteLine($"Size: {_videoSize.Width}x{_videoSize.Height}, BPP: {bitsPerPixel}, Stride: {_stride}");
                     
                     _frameBuffer = new byte[_stride * _videoSize.Height];
                 }
@@ -265,11 +263,9 @@ namespace Captura.Webcam
                     var videoInfoHeader2 = (VideoInfoHeader2)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader2));
                     _videoSize = new Size(videoInfoHeader2.BmiHeader.Width, Math.Abs(videoInfoHeader2.BmiHeader.Height));
                     
-                    var bitsPerPixel = videoInfoHeader2.BmiHeader.BitCount;
+                    bitsPerPixel = videoInfoHeader2.BmiHeader.BitCount;
                     _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
                     _stride = (_stride + 3) & ~3;
-                    
-                    System.Diagnostics.Debug.WriteLine($"Size: {_videoSize.Width}x{_videoSize.Height}, BPP: {bitsPerPixel}, Stride: {_stride}");
                     
                     _frameBuffer = new byte[_stride * _videoSize.Height];
                     
@@ -282,6 +278,16 @@ namespace Captura.Webcam
                 {
                     throw new InvalidOperationException($"Unsupported video format: {mediaType.formatType}");
                 }
+
+                var formatInfo = $"Camera Format Info:\n\n" +
+                    $"Format GUID: {mediaType.subType}\n" +
+                    $"Size: {_videoSize.Width} x {_videoSize.Height}\n" +
+                    $"Bits Per Pixel: {bitsPerPixel}\n" +
+                    $"Stride: {_stride}\n" +
+                    $"Buffer Size: {_frameBuffer.Length} bytes";
+                
+                System.Windows.Forms.MessageBox.Show(formatInfo, "Camera Format Detected", 
+                    System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
             }
             finally
             {
