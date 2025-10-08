@@ -39,7 +39,14 @@ namespace Captura.FFmpeg
             try
             {
                 Flush();
-                _ffmpegIn.Close();
+                try
+                {
+                    _ffmpegIn.Close();
+                }
+                catch { }
+
+                // Ask FFmpeg to quit gracefully
+                FFmpegService.TryGracefulStop(_ffmpegProcess);
 
                 if (!_ffmpegProcess.WaitForExit(10000))
                 {

@@ -19,10 +19,10 @@ namespace Captura.FFmpeg
         byte[] _videoBuffer;
 
         // This semaphore helps prevent FFmpeg audio/video pipes getting deadlocked.
-        readonly SemaphoreSlim _spVideo = new SemaphoreSlim(5);
+        readonly SemaphoreSlim _spVideo = new SemaphoreSlim(2);
 
         // Timeout used with Semaphores, if elapsed would mean FFmpeg might be deadlocked.
-        readonly TimeSpan _spTimeout = TimeSpan.FromMilliseconds(50);
+        readonly TimeSpan _spTimeout = TimeSpan.FromMilliseconds(15);
 
         static string GetPipeName() => $"captura-{Guid.NewGuid()}";
 
@@ -121,6 +121,9 @@ namespace Captura.FFmpeg
                     _audioPipe?.Flush();
                 }
                 catch { }
+
+                // Signal FFmpeg to exit gracefully before disposing pipes.
+                FFmpegService.TryGracefulStop(_ffmpegProcess);
 
                 _ffmpegIn?.Dispose();
                 _audioPipe?.Dispose();

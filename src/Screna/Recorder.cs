@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -277,14 +277,14 @@ namespace Captura.Video
             try
             {
                 if (_frameWriteTask != null)
-                    await _frameWriteTask;
+                    await _frameWriteTask.ConfigureAwait(false);
             }
             catch { }
 
             try
             {
                 if (_audioWriteTask != null)
-                    await _audioWriteTask;
+                    await _audioWriteTask.ConfigureAwait(false);
             }
             catch { }
 

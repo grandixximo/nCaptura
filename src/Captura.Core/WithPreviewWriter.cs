@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace Captura.Video
 {
@@ -15,9 +15,16 @@ namespace Captura.Video
 
         public void Dispose()
         {
-            OriginalWriter.Dispose();
-            OriginalWriter = null;
-            _preview.Dispose();
+            // Ensure preview is disposed even if original writer throws
+            try
+            {
+                OriginalWriter?.Dispose();
+            }
+            finally
+            {
+                OriginalWriter = null;
+                _preview.Dispose();
+            }
         }
 
         public void WriteFrame(IBitmapFrame Image)
