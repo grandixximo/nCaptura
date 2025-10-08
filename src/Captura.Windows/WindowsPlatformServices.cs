@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Captura.Native;
 using Captura.Video;
-using Captura.Windows.DesktopDuplication;
-using SharpDX.DXGI;
+using Captura.Windows.Gdi;
+using Captura.Windows.WindowsGraphicsCapture;
 
 namespace Captura.Windows
 {
@@ -97,52 +97,39 @@ namespace Captura.Windows
 
         public IImageProvider GetWindowProvider(IWindow Window, bool IncludeCursor)
         {
-            return new WindowProvider(Window, _previewWindow, IncludeCursor);
+            try
+            {
+                var size = Window.Rectangle.Even().Size;
+                return new WgcImageProvider(Window.Handle, size.Width, size.Height, _previewWindow);
+            }
+            catch
+            {
+                return new WindowProvider(Window, _previewWindow, IncludeCursor);
+            }
         }
 
         public IImageProvider GetScreenProvider(IScreen Screen, bool IncludeCursor, bool StepsMode)
         {
-            if (!WindowsModule.ShouldUseGdi && !StepsMode)
+            try
             {
-                var output = FindOutput(Screen);
-
-                if (output != null)
-                {
-                    return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
-                }
+                return new WgcScreenImageProvider(Screen.Rectangle, _previewWindow);
             }
-
-            return GetRegionProvider(Screen.Rectangle, IncludeCursor);
-        }
-
-        static Output1 FindOutput(IScreen Screen)
-        {
-            var outputs = new Factory1()
-                .Adapters1
-                .SelectMany(M => M.Outputs);
-
-            var match = outputs.FirstOrDefault(M =>
+            catch
             {
-                var r1 = M.Description.DesktopBounds;
-                var r2 = Screen.Rectangle;
-
-                return r1.Left == r2.Left
-                       && r1.Right == r2.Right
-                       && r1.Top == r2.Top
-                       && r1.Bottom == r2.Bottom;
-            });
-
-            return match?.QueryInterface<Output1>();
+                return GetRegionProvider(Screen.Rectangle, IncludeCursor);
+            }
         }
 
         public IImageProvider GetAllScreensProvider(bool IncludeCursor, bool StepsMode)
         {
-            if (!WindowsModule.ShouldUseGdi && !StepsMode)
+            try
             {
-                return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
+                return new WgcScreenImageProvider(DesktopRectangle, _previewWindow);
             }
-
-            return GetRegionProvider(DesktopRectangle, IncludeCursor);
+            catch
+            {
+                return GetRegionProvider(DesktopRectangle, IncludeCursor);
+            }
         }
     }
 }

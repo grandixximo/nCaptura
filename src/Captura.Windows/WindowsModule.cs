@@ -56,25 +56,13 @@ namespace Captura.Windows
             }
         }
 
-        public static bool Windows8OrAbove
+        static bool Windows8OrAbove
         {
             get
             {
-                // All versions above Windows 8 give the same version number
                 var version = new Version(6, 2, 9200, 0);
-
                 return Environment.OSVersion.Platform == PlatformID.Win32NT &&
                        Environment.OSVersion.Version >= version;
-            }
-        }
-
-        public static bool ShouldUseGdi
-        {
-            get
-            {
-                var settings = ServiceProvider.Get<WindowsSettings>();
-
-                return !Windows8OrAbove || settings.UseGdi;
             }
         }
     }

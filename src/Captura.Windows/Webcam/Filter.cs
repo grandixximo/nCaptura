@@ -7,14 +7,14 @@ using DirectShowLib;
 namespace Captura.Webcam
 {
     /// <summary>
-    ///  Represents a DirectShow filter (e.g. video capture device, compression codec).
+    /// Represents a DirectShow video capture device filter
     /// </summary>
     public class Filter : IComparable
     {
         /// <summary> Human-readable name of the filter </summary>
         public string Name { get; }
 
-        /// <summary> Unique string referencing this filter. This string can be used to recreate this filter. </summary>
+        /// <summary> Unique string referencing this filter (moniker string) </summary>
         public string MonikerString { get; }
 
         /// <summary> Create a new filter from its moniker </summary>
@@ -24,7 +24,7 @@ namespace Captura.Webcam
             MonikerString = GetMonikerString(Moniker);
         }
 
-        /// <summary> Retrieve the a moniker's display name (i.e. it's unique string) </summary>
+        /// <summary> Retrieve the moniker's display name (unique identifier) </summary>
         static string GetMonikerString(IMoniker Moniker)
         {
             Moniker.GetDisplayName(null, null, out var s);
@@ -49,12 +49,13 @@ namespace Captura.Webcam
                 var ret = val as string;
 
                 if (string.IsNullOrEmpty(ret))
-                    throw new NotImplementedException("Device FriendlyName");
+                    return "Unknown Device";
+                
                 return ret;
             }
             catch (Exception)
             {
-                return "";
+                return "Unknown Device";
             }
             finally
             {
@@ -64,7 +65,7 @@ namespace Captura.Webcam
         }
 
         /// <summary>
-        ///  Compares the current instance with another object of the same type.
+        /// Compares the current instance with another object of the same type
         /// </summary>
         public int CompareTo(object Obj)
         {
@@ -72,10 +73,14 @@ namespace Captura.Webcam
                 return 1;
 
             var f = (Filter)Obj;
-
             return string.Compare(Name, f.Name, StringComparison.Ordinal);
         }
 
+        public override string ToString() => Name;
+
+        /// <summary>
+        /// Enumerate all video input devices using DirectShow
+        /// </summary>
         public static IEnumerable<Filter> VideoInputDevices
         {
             get
@@ -92,34 +97,61 @@ namespace Captura.Webcam
 
                     var category = FilterCategory.VideoInputDevice;
 
-                    // Create an enumerator to find filters in category
+                    // Create an enumerator to find filters in the video input category
                     var hr = enumDev.CreateClassEnumerator(category, out enumMon, 0);
-                    if (hr != 0)
+                    
+                    if (hr != 0 || enumMon == null)
                         yield break;
 
-                    // Loop through the enumerator
-                    do
+                    // Collect filters in a list first (can't use yield in try-catch)
+                    var filters = new List<Filter>();
+                    
+                    // Loop through all devices
+                    while (true)
                     {
-                        // Next filter
+                        // Get next device
                         hr = enumMon.Next(1, mon, IntPtr.Zero);
 
                         if (hr != 0 || mon[0] == null)
                             break;
 
-                        // Add the filter
-                        yield return new Filter(mon[0]);
-
-                        // Release resources
-                        Marshal.ReleaseComObject(mon[0]);
-                        mon[0] = null;
-                    } while (true);
+                        try
+                        {
+                            // Create filter object
+                            var filter = new Filter(mon[0]);
+                            
+                            // Only collect filters with valid names
+                            if (!string.IsNullOrEmpty(filter.Name) && filter.Name != "Unknown Device")
+                            {
+                                filters.Add(filter);
+                            }
+                        }
+                        catch
+                        {
+                            // Skip devices that cause errors
+                        }
+                        finally
+                        {
+                            // Release the moniker
+                            if (mon[0] != null)
+                            {
+                                Marshal.ReleaseComObject(mon[0]);
+                                mon[0] = null;
+                            }
+                        }
+                    }
+                    
+                    // Return collected filters
+                    foreach (var filter in filters)
+                    {
+                        yield return filter;
+                    }
                 }
                 finally
                 {
+                    // Cleanup
                     if (mon[0] != null)
                         Marshal.ReleaseComObject(mon[0]);
-
-                    mon[0] = null;
 
                     if (enumMon != null)
                         Marshal.ReleaseComObject(enumMon);

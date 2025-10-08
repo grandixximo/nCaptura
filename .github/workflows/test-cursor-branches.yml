@@ -1,0 +1,80 @@
+name: Test Cursor Branch Build
+
+# Builds whatever code exists in the cursor branch
+# Could be modern UI or classic UI depending on the base branch
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'cursor/**'
+
+jobs:
+  build:
+    name: Build Cursor Branch
+    runs-on: windows-2022
+    
+    env:
+      Solution_Name: src/Captura.sln
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Detect UI version
+      id: detect
+      shell: pwsh
+      run: |
+        # Check if this branch is based on classic-ui-modern-fixes
+        $baseBranch = git merge-base --fork-point origin/classic-ui-modern-fixes HEAD 2>$null
+        $isClassic = $LASTEXITCODE -eq 0
+        
+        if (-not $isClassic) {
+          $baseBranch = git merge-base --fork-point origin/main HEAD 2>$null
+          $isModern = $LASTEXITCODE -eq 0
+          
+          if ($isModern) {
+            echo "UI_TYPE=Modern" >> $env:GITHUB_OUTPUT
+            echo "ARTIFACT_NAME=Cursor-Modern-UI-Debug" >> $env:GITHUB_OUTPUT
+          } else {
+            # Default to modern if can't determine
+            echo "UI_TYPE=Modern (default)" >> $env:GITHUB_OUTPUT
+            echo "ARTIFACT_NAME=Cursor-UI-Debug" >> $env:GITHUB_OUTPUT
+          }
+        } else {
+          echo "UI_TYPE=Classic" >> $env:GITHUB_OUTPUT
+          echo "ARTIFACT_NAME=Cursor-Classic-UI-Debug" >> $env:GITHUB_OUTPUT
+        }
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore the application
+      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=Debug
+
+    - name: Build the application
+      run: msbuild $env:Solution_Name -t:rebuild -verbosity:minimal -property:Configuration=Debug
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.detect.outputs.ARTIFACT_NAME }}
+        path: src/Captura/bin/Debug/*
+        retention-days: 7
+
+    - name: Build Summary
+      shell: pwsh
+      run: |
+        echo "### Cursor Branch Build Complete! 🎉" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "**Branch:** ${{ github.ref_name }}" >> $env:GITHUB_STEP_SUMMARY
+        echo "**Detected UI Type:** ${{ steps.detect.outputs.UI_TYPE }}" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "Check the **Artifacts** section to download your build." >> $env:GITHUB_STEP_SUMMARY

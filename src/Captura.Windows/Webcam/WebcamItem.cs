@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Captura.Webcam
 {
@@ -16,7 +16,17 @@ namespace Captura.Webcam
 
         public IWebcamCapture BeginCapture(Action OnClick)
         {
-            return new WebcamCapture(Cam, OnClick);
+            try
+            {
+                return new WebcamCapture(Cam, OnClick);
+            }
+            catch (Exception ex)
+            {
+                // Log but don't show error dialog (to avoid dialog crashes)
+                // The error will be handled by the caller
+                System.Diagnostics.Debug.WriteLine($"Webcam capture failed: {ex.Message}");
+                return null;
+            }
         }
 
         public override string ToString() => Name;
