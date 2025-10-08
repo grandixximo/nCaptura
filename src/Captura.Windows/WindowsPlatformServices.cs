@@ -102,6 +102,13 @@ namespace Captura.Windows
 
         public IImageProvider GetScreenProvider(IScreen Screen, bool IncludeCursor, bool StepsMode)
         {
+            // Force GDI mode - Desktop Duplication has reliability issues
+            // See: https://github.com/grandixximo/nCaptura/issues
+            // Desktop Duplication can fail with E_INVALIDARG, leave resources in bad state,
+            // or fail inconsistently between recordings
+            return GetRegionProvider(Screen.Rectangle, IncludeCursor);
+            
+            /* Disabled Desktop Duplication due to reliability issues
             if (!WindowsModule.ShouldUseGdi && !StepsMode)
             {
                 var output = FindOutput(Screen);
@@ -110,50 +117,23 @@ namespace Captura.Windows
                 {
                     try
                     {
-                        var provider = new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
-                        
-                        // Test capture to ensure Desktop Duplication is actually working
-                        try
-                        {
-                            var testFrame = provider.Capture();
-                            testFrame?.Dispose();
-                        }
-                        catch (Exception testEx)
-                        {
-                            // Desktop Duplication created but can't capture
-                            System.Diagnostics.Debug.WriteLine($"Desktop Duplication test capture failed, falling back to GDI: {testEx.Message}");
-                            provider.Dispose();
-                            output?.Dispose();
-                            
-                            // Continue to GDI fallback below
-                            return GetRegionProvider(Screen.Rectangle, IncludeCursor);
-                        }
-                        
-                        return provider;
+                        return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
                     }
                     catch (SharpDX.SharpDXException ex)
                     {
-                        // Desktop Duplication failed (E_INVALIDARG, access denied, etc.)
-                        // Fall back to GDI capture
                         System.Diagnostics.Debug.WriteLine($"Desktop Duplication failed (0x{ex.ResultCode.Code:X8}), falling back to GDI: {ex.Message}");
-                        
                         output?.Dispose();
-                        
-                        // Continue to GDI fallback below
                     }
                     catch (Exception ex)
                     {
-                        // Any other error
                         System.Diagnostics.Debug.WriteLine($"Desktop Duplication initialization failed, falling back to GDI: {ex.Message}");
-                        
                         output?.Dispose();
-                        
-                        // Continue to GDI fallback below
                     }
                 }
             }
 
             return GetRegionProvider(Screen.Rectangle, IncludeCursor);
+            */
         }
 
         static Output1 FindOutput(IScreen Screen)
@@ -178,48 +158,29 @@ namespace Captura.Windows
 
         public IImageProvider GetAllScreensProvider(bool IncludeCursor, bool StepsMode)
         {
+            // Force GDI mode - Desktop Duplication has reliability issues
+            // See: https://github.com/grandixximo/nCaptura/issues
+            return GetRegionProvider(DesktopRectangle, IncludeCursor);
+            
+            /* Disabled Desktop Duplication due to reliability issues
             if (!WindowsModule.ShouldUseGdi && !StepsMode)
             {
                 try
                 {
-                    var provider = new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
-                    
-                    // Test capture to ensure Desktop Duplication is actually working
-                    try
-                    {
-                        var testFrame = provider.Capture();
-                        testFrame?.Dispose();
-                    }
-                    catch (Exception testEx)
-                    {
-                        // Desktop Duplication created but can't capture
-                        System.Diagnostics.Debug.WriteLine($"Desktop Duplication (full screen) test capture failed, falling back to GDI: {testEx.Message}");
-                        provider.Dispose();
-                        
-                        // Continue to GDI fallback below
-                        return GetRegionProvider(DesktopRectangle, IncludeCursor);
-                    }
-                    
-                    return provider;
+                    return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
                 }
                 catch (SharpDX.SharpDXException ex)
                 {
-                    // Desktop Duplication failed (E_INVALIDARG, access denied, etc.)
-                    // Fall back to GDI capture
                     System.Diagnostics.Debug.WriteLine($"Desktop Duplication (full screen) failed (0x{ex.ResultCode.Code:X8}), falling back to GDI: {ex.Message}");
-                    
-                    // Continue to GDI fallback below
                 }
                 catch (Exception ex)
                 {
-                    // Any other error
                     System.Diagnostics.Debug.WriteLine($"Desktop Duplication (full screen) initialization failed, falling back to GDI: {ex.Message}");
-                    
-                    // Continue to GDI fallback below
                 }
             }
 
             return GetRegionProvider(DesktopRectangle, IncludeCursor);
+            */
         }
     }
 }
