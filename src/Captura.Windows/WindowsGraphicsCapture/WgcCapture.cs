@@ -23,14 +23,12 @@ namespace Captura.Windows.WindowsGraphicsCapture
         readonly int _width;
         readonly int _height;
         
-        public WgcCapture(IntPtr handle, int width, int height, Adapter adapter = null, bool isMonitor = false)
+        public WgcCapture(IntPtr handle, int width, int height, bool isMonitor = false)
         {
             _width = width;
             _height = height;
             
-            _device = adapter != null
-                ? new Device(adapter, DeviceCreationFlags.BgraSupport)
-                : new Device(SharpDX.Direct3D.DriverType.Hardware, DeviceCreationFlags.BgraSupport);
+            _device = new Device(SharpDX.Direct3D.DriverType.Hardware, DeviceCreationFlags.BgraSupport);
             
             _captureItem = isMonitor 
                 ? CaptureHelper.CreateItemForMonitor(handle)

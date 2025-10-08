@@ -1,7 +1,6 @@
 using System;
 using Captura.Video;
 using Captura.Windows.DirectX;
-using SharpDX.DXGI;
 
 namespace Captura.Windows.WindowsGraphicsCapture
 {
@@ -10,10 +9,10 @@ namespace Captura.Windows.WindowsGraphicsCapture
         readonly Direct2DEditorSession _editorSession;
         readonly WgcCapture _wgcCapture;
         
-        public WgcCaptureSession(IntPtr handle, int width, int height, IPreviewWindow previewWindow, Adapter adapter = null, bool isMonitor = false)
+        public WgcCaptureSession(IntPtr handle, int width, int height, IPreviewWindow previewWindow, bool isMonitor = false)
         {
             _editorSession = new Direct2DEditorSession(width, height, previewWindow);
-            _wgcCapture = new WgcCapture(handle, width, height, adapter, isMonitor);
+            _wgcCapture = new WgcCapture(handle, width, height, isMonitor);
         }
         
         public IEditableFrame Capture()

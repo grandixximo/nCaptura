@@ -5,10 +5,8 @@ using System.Linq;
 using System.Windows.Forms;
 using Captura.Native;
 using Captura.Video;
-using Captura.Windows.DesktopDuplication;
 using Captura.Windows.Gdi;
 using Captura.Windows.WindowsGraphicsCapture;
-using SharpDX.DXGI;
 
 namespace Captura.Windows
 {
@@ -99,48 +97,39 @@ namespace Captura.Windows
 
         public IImageProvider GetWindowProvider(IWindow Window, bool IncludeCursor)
         {
-            if (WindowsModule.ShouldUseGdi)
-            {
-                return new WindowProvider(Window, _previewWindow, IncludeCursor);
-            }
-            
-            if (WindowsModule.ShouldUseWgc)
+            try
             {
                 var size = Window.Rectangle.Even().Size;
                 return new WgcImageProvider(Window.Handle, size.Width, size.Height, _previewWindow);
             }
-            
-            return new WindowProvider(Window, _previewWindow, IncludeCursor);
+            catch
+            {
+                return new WindowProvider(Window, _previewWindow, IncludeCursor);
+            }
         }
 
         public IImageProvider GetScreenProvider(IScreen Screen, bool IncludeCursor, bool StepsMode)
         {
-            return GetRegionProvider(Screen.Rectangle, IncludeCursor);
-        }
-
-        static Output1 FindOutput(IScreen Screen)
-        {
-            var outputs = new Factory1()
-                .Adapters1
-                .SelectMany(M => M.Outputs);
-
-            var match = outputs.FirstOrDefault(M =>
+            try
             {
-                var r1 = M.Description.DesktopBounds;
-                var r2 = Screen.Rectangle;
-
-                return r1.Left == r2.Left
-                       && r1.Right == r2.Right
-                       && r1.Top == r2.Top
-                       && r1.Bottom == r2.Bottom;
-            });
-
-            return match?.QueryInterface<Output1>();
+                return new WgcScreenImageProvider(Screen.Rectangle, _previewWindow);
+            }
+            catch
+            {
+                return GetRegionProvider(Screen.Rectangle, IncludeCursor);
+            }
         }
 
         public IImageProvider GetAllScreensProvider(bool IncludeCursor, bool StepsMode)
         {
-            return GetRegionProvider(DesktopRectangle, IncludeCursor);
+            try
+            {
+                return new WgcScreenImageProvider(DesktopRectangle, _previewWindow);
+            }
+            catch
+            {
+                return GetRegionProvider(DesktopRectangle, IncludeCursor);
+            }
         }
     }
 }

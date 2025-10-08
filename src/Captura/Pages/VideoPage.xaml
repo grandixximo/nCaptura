@@ -2,7 +2,6 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-      xmlns:windows="clr-namespace:Captura.Windows;assembly=Captura.Windows"
       Title="{Binding Video, Source={StaticResource Loc}, Mode=OneWay}"
       DataContext="{Binding MainViewModel, Source={StaticResource ServiceLocator}}">
     <Grid Margin="5">
@@ -151,33 +150,6 @@
                 <TextBlock TextWrapping="Wrap"
                            Text="{Binding CopyOutPathClipboard, Source={StaticResource Loc}, Mode=OneWay}"/>
             </CheckBox>
-
-            <GridSplitter IsEnabled="False"
-                          Height="1"
-                          Margin="0,10"/>
-            
-            <Label Content="Screen Capture Method (Requires App Restart)"
-                   FontWeight="Bold"
-                   Margin="0,5,0,2"/>
-            
-            <ComboBox ItemsSource="{x:Static windows:WindowsSettings.AvailablCaptureMethods}"
-                      SelectedValue="{Binding Settings.WindowsSettings.ScreenCaptureMethod, Mode=TwoWay}"
-                      SelectedValuePath="Value"
-                      DisplayMemberPath="DisplayName"
-                      Margin="0,2">
-                <ComboBox.ItemContainerStyle>
-                    <Style TargetType="ComboBoxItem">
-                        <Setter Property="ToolTip" Value="{Binding Description}"/>
-                    </Style>
-                </ComboBox.ItemContainerStyle>
-            </ComboBox>
-            
-            <TextBlock Text="⚠ Changes require application restart to take effect"
-                       FontSize="10"
-                       FontStyle="Italic"
-                       Foreground="DarkOrange"
-                       Margin="0,2,0,0"
-                       TextWrapping="Wrap"/>
         </StackPanel>
         <GridSplitter Grid.Column="1"
                       Width="1"

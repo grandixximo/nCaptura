@@ -56,48 +56,13 @@ namespace Captura.Windows
             }
         }
 
-        public static bool Windows8OrAbove
+        static bool Windows8OrAbove
         {
             get
             {
-                // All versions above Windows 8 give the same version number
                 var version = new Version(6, 2, 9200, 0);
-
                 return Environment.OSVersion.Platform == PlatformID.Win32NT &&
                        Environment.OSVersion.Version >= version;
-            }
-        }
-
-        public static bool ShouldUseGdi
-        {
-            get
-            {
-                if (!Windows8OrAbove)
-                    return true;
-                    
-                var settings = ServiceProvider.Get<WindowsSettings>();
-                return settings.ScreenCaptureMethod == CaptureMethod.Gdi;
-            }
-        }
-        
-        public static bool ShouldUseWgc
-        {
-            get
-            {
-                if (!Windows10_1903OrAbove)
-                    return false;
-                    
-                var settings = ServiceProvider.Get<WindowsSettings>();
-                return settings.ScreenCaptureMethod == CaptureMethod.WindowsGraphicsCapture;
-            }
-        }
-        
-        public static bool Windows10_1903OrAbove
-        {
-            get
-            {
-                var version = Environment.OSVersion.Version;
-                return version.Major >= 10 && version.Build >= 18362;
             }
         }
     }
