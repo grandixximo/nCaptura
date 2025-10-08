@@ -29,7 +29,9 @@ namespace Captura.Webcam
         // Video properties
         Size _videoSize = Size.Empty;
         int _stride;
+        int _bitsPerPixel;
         byte[] _frameBuffer;
+        byte[] _convertedBuffer;
         VideoInfoHeader _videoInfoHeader;
         
         bool _isRunning;
@@ -245,15 +247,13 @@ namespace Captura.Webcam
 
             try
             {
-                int bitsPerPixel = 0;
-                
                 if (mediaType.formatType == FormatType.VideoInfo && mediaType.formatPtr != IntPtr.Zero)
                 {
                     _videoInfoHeader = (VideoInfoHeader)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader));
                     _videoSize = new Size(_videoInfoHeader.BmiHeader.Width, Math.Abs(_videoInfoHeader.BmiHeader.Height));
                     
-                    bitsPerPixel = _videoInfoHeader.BmiHeader.BitCount;
-                    _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
+                    _bitsPerPixel = _videoInfoHeader.BmiHeader.BitCount;
+                    _stride = (_videoSize.Width * _bitsPerPixel + 7) / 8;
                     _stride = (_stride + 3) & ~3;
                     
                     _frameBuffer = new byte[_stride * _videoSize.Height];
@@ -263,8 +263,8 @@ namespace Captura.Webcam
                     var videoInfoHeader2 = (VideoInfoHeader2)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader2));
                     _videoSize = new Size(videoInfoHeader2.BmiHeader.Width, Math.Abs(videoInfoHeader2.BmiHeader.Height));
                     
-                    bitsPerPixel = videoInfoHeader2.BmiHeader.BitCount;
-                    _stride = (_videoSize.Width * bitsPerPixel + 7) / 8;
+                    _bitsPerPixel = videoInfoHeader2.BmiHeader.BitCount;
+                    _stride = (_videoSize.Width * _bitsPerPixel + 7) / 8;
                     _stride = (_stride + 3) & ~3;
                     
                     _frameBuffer = new byte[_stride * _videoSize.Height];
@@ -279,15 +279,8 @@ namespace Captura.Webcam
                     throw new InvalidOperationException($"Unsupported video format: {mediaType.formatType}");
                 }
 
-                var formatInfo = $"Camera Format Info:\n\n" +
-                    $"Format GUID: {mediaType.subType}\n" +
-                    $"Size: {_videoSize.Width} x {_videoSize.Height}\n" +
-                    $"Bits Per Pixel: {bitsPerPixel}\n" +
-                    $"Stride: {_stride}\n" +
-                    $"Buffer Size: {_frameBuffer.Length} bytes";
-                
-                System.Windows.Forms.MessageBox.Show(formatInfo, "Camera Format Detected", 
-                    System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
+                if (_bitsPerPixel == 24)
+                    _convertedBuffer = new byte[_videoSize.Width * _videoSize.Height * 4];
             }
             finally
             {
@@ -393,6 +386,26 @@ namespace Captura.Webcam
 
         #region Frame Capture
 
+        static void ConvertRgb24ToBgr32(byte[] src, byte[] dst, int width, int height, int srcStride)
+        {
+            for (var y = 0; y < height; y++)
+            {
+                var srcIdx = y * srcStride;
+                var dstIdx = y * width * 4;
+                
+                for (var x = 0; x < width; x++)
+                {
+                    dst[dstIdx] = src[srcIdx + 2];     // B
+                    dst[dstIdx + 1] = src[srcIdx + 1]; // G
+                    dst[dstIdx + 2] = src[srcIdx];     // R
+                    dst[dstIdx + 3] = 255;             // A
+                    
+                    srcIdx += 3;
+                    dstIdx += 4;
+                }
+            }
+        }
+
         public Captura.IBitmapImage GetFrame(Captura.IBitmapLoader BitmapLoader)
         {
             lock (_lock)
@@ -420,8 +433,27 @@ namespace Captura.Webcam
                         if (hr < 0)
                             return null;
 
-                        var dataPtr = ptr + (_videoSize.Height - 1) * _stride;
-                        return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -_stride);
+                        if (_bitsPerPixel == 24)
+                        {
+                            ConvertRgb24ToBgr32(_frameBuffer, _convertedBuffer, _videoSize.Width, _videoSize.Height, _stride);
+                            
+                            var convertedHandle = GCHandle.Alloc(_convertedBuffer, GCHandleType.Pinned);
+                            try
+                            {
+                                var convertedStride = _videoSize.Width * 4;
+                                var dataPtr = convertedHandle.AddrOfPinnedObject() + (_videoSize.Height - 1) * convertedStride;
+                                return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -convertedStride);
+                            }
+                            finally
+                            {
+                                convertedHandle.Free();
+                            }
+                        }
+                        else
+                        {
+                            var dataPtr = ptr + (_videoSize.Height - 1) * _stride;
+                            return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -_stride);
+                        }
                     }
                     finally
                     {
