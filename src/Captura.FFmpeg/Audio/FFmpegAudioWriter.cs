@@ -41,18 +41,14 @@ namespace Captura.FFmpeg
                 Flush();
                 _ffmpegIn.Close();
 
-                // Wait with timeout to prevent hanging
-                if (!_ffmpegProcess.WaitForExit(10000)) // 10 second timeout
+                if (!_ffmpegProcess.WaitForExit(10000))
                 {
                     try
                     {
                         _ffmpegProcess.Kill();
                         _ffmpegProcess.WaitForExit(2000);
                     }
-                    catch
-                    {
-                        // Process might have already exited
-                    }
+                    catch { }
                 }
             }
             finally

@@ -108,50 +108,35 @@ namespace Captura.FFmpeg
             _ffmpegProcess = FFmpegService.StartFFmpeg(argsBuilder.GetArgs(), Args.FileName, out _);
         }
 
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
         public void Dispose()
         {
             try
             {
-                // Wait for any pending writes to complete
                 _lastFrameTask?.Wait();
                 _lastAudio?.Wait();
 
-                // Flush the pipes to ensure all data is sent to FFmpeg
                 try
                 {
                     _ffmpegIn?.Flush();
                     _audioPipe?.Flush();
                 }
-                catch
-                {
-                    // Ignore flush errors - process might have already closed
-                }
+                catch { }
 
-                // Dispose pipes - this signals EOF to FFmpeg
                 _ffmpegIn?.Dispose();
                 _audioPipe?.Dispose();
 
-                // Wait for FFmpeg to finish processing with a timeout
-                if (!_ffmpegProcess.WaitForExit(10000)) // 10 second timeout
+                if (!_ffmpegProcess.WaitForExit(10000))
                 {
-                    // FFmpeg didn't exit gracefully, force kill it
                     try
                     {
                         _ffmpegProcess.Kill();
-                        _ffmpegProcess.WaitForExit(2000); // Give it 2 more seconds
+                        _ffmpegProcess.WaitForExit(2000);
                     }
-                    catch
-                    {
-                        // Process might have already exited
-                    }
+                    catch { }
                 }
             }
             finally
             {
-                // Ensure process is disposed
                 _ffmpegProcess?.Dispose();
                 _videoBuffer = null;
             }

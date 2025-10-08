@@ -79,18 +79,14 @@ namespace Captura.FFmpeg
 
                 var process = FFmpegService.StartFFmpeg(args, _videoWriterArgs.FileName, out _);
 
-                // Wait with timeout to prevent hanging
-                if (!process.WaitForExit(30000)) // 30 second timeout for concat operation
+                if (!process.WaitForExit(30000))
                 {
                     try
                     {
                         process.Kill();
                         process.WaitForExit(2000);
                     }
-                    catch
-                    {
-                        // Process might have already exited
-                    }
+                    catch { }
                 }
                 
                 process.Dispose();

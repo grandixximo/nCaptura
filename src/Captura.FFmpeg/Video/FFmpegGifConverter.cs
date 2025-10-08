@@ -31,23 +31,18 @@ namespace Captura.FFmpeg
             var process = FFmpegService.StartFFmpeg(argsBuilder.GetArgs(), Args.FileName, out var log);
             log.ProgressChanged += Progress.Report;
 
-            // Wait for process with timeout (5 minutes max for GIF conversion)
             var exited = await Task.Run(() => process.WaitForExit(300000));
 
             if (!exited)
             {
-                // Process didn't finish in time, kill it
                 try
                 {
                     process.Kill();
                     process.WaitForExit(2000);
                 }
-                catch
-                {
-                    // Process might have already exited
-                }
+                catch { }
                 
-                throw new FFmpegException(-1, new TimeoutException("GIF conversion timed out after 5 minutes"));
+                throw new FFmpegException(-1, new TimeoutException("GIF conversion timed out"));
             }
 
             if (process.ExitCode != 0)
