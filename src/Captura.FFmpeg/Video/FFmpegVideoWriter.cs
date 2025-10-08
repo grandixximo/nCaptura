@@ -13,16 +13,18 @@ namespace Captura.FFmpeg
     class FFmpegWriter : IVideoFileWriter
     {
         readonly NamedPipeServerStream _audioPipe;
+        Task _audioConnectTask;
 
         readonly Process _ffmpegProcess;
         readonly NamedPipeServerStream _ffmpegIn;
+        Task _videoConnectTask;
         byte[] _videoBuffer;
 
         // This semaphore helps prevent FFmpeg audio/video pipes getting deadlocked.
-        readonly SemaphoreSlim _spVideo = new SemaphoreSlim(2);
+        readonly SemaphoreSlim _spVideo = new SemaphoreSlim(5);
 
         // Timeout used with Semaphores, if elapsed would mean FFmpeg might be deadlocked.
-        readonly TimeSpan _spTimeout = TimeSpan.FromMilliseconds(15);
+        readonly TimeSpan _spTimeout = TimeSpan.FromMilliseconds(50);
 
         static string GetPipeName() => $"captura-{Guid.NewGuid()}";
 
@@ -97,8 +99,8 @@ namespace Captura.FFmpeg
                                             * wf.Channels
                                             * (wf.BitsPerSample / 8.0));
 
-                // Use ~1s buffer based on frequency/channels/16-bit samples to avoid stalls
-                var audioBufferSize = Args.Frequency * Args.Channels * 2;
+                // Modest buffer size to avoid stalls without huge allocation
+                var audioBufferSize = 16384;
 
                 _audioPipe = new NamedPipeServerStream(audioPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, audioBufferSize);
             }
@@ -106,22 +108,28 @@ namespace Captura.FFmpeg
             _ffmpegIn = new NamedPipeServerStream(videoPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, _videoBuffer.Length);
 
             // Put both pipes into listening state BEFORE launching FFmpeg
-            BeginListening(_ffmpegIn);
-            if (_audioPipe != null) BeginListening(_audioPipe);
+            _videoConnectTask = BeginListening(_ffmpegIn);
+            if (_audioPipe != null) _audioConnectTask = BeginListening(_audioPipe);
 
             _ffmpegProcess = FFmpegService.StartFFmpeg(argsBuilder.GetArgs(), Args.FileName, out _);
         }
 
-        static void BeginListening(NamedPipeServerStream pipe)
+        static Task BeginListening(NamedPipeServerStream pipe)
         {
             try
             {
+                var tcs = new TaskCompletionSource<object>();
                 pipe.BeginWaitForConnection(ar =>
                 {
-                    try { pipe.EndWaitForConnection(ar); } catch { }
+                    try { pipe.EndWaitForConnection(ar); tcs.TrySetResult(null); }
+                    catch (Exception e) { tcs.TrySetException(e); }
                 }, null);
+                return tcs.Task;
             }
-            catch { }
+            catch (Exception e)
+            {
+                return Task.FromException(e);
+            }
         }
 
         public void Dispose()
@@ -189,14 +197,11 @@ namespace Captura.FFmpeg
 
             if (_firstAudio)
             {
-                if (!_audioPipe.IsConnected)
+                if (_audioConnectTask != null)
                 {
-                    if (!_audioPipe.WaitForConnection(5000))
-                    {
+                    if (!_audioConnectTask.Wait(5000))
                         throw new Exception("Cannot connect Audio pipe to FFmpeg");
-                    }
                 }
-
                 _firstAudio = false;
             }
 
@@ -251,14 +256,11 @@ namespace Captura.FFmpeg
             
             if (_firstFrame)
             {
-                if (!_ffmpegIn.IsConnected)
+                if (_videoConnectTask != null)
                 {
-                    if (!_ffmpegIn.WaitForConnection(5000))
-                    {
+                    if (!_videoConnectTask.Wait(5000))
                         throw new Exception("Cannot connect Video pipe to FFmpeg");
-                    }
                 }
-
                 _firstFrame = false;
             }
 
