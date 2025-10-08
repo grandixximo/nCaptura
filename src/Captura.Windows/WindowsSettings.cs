@@ -9,6 +9,12 @@ namespace Captura.Windows
             get => Get(false);
             set => Set(value);
         }
+        
+        public bool UseWgc
+        {
+            get => Get(true);
+            set => Set(value);
+        }
 
         public MfSettings MediaFoundation { get; } = new MfSettings();
     }

@@ -28,6 +28,7 @@ I forked this repository from mrchipset's version because I actively use this so
 - ✅ Updated FFmpeg download mirrors to ensure reliability
 - ✅ Improved build and release workflows
 - ✅ Added AMD AMF hardware encoding support (inspired by OBS Studio)
+- ✅ Implemented Windows Graphics Capture (WGC) for reliable screen recording (Windows 10 1903+)
 
 **This is not an attempt to reboot the project**—it's simply maintained by someone who uses and appreciates it. I'll continue to apply fixes as needed (like updating download mirrors or addressing compatibility issues) to keep this wonderful tool working for everyone who relies on it.
 

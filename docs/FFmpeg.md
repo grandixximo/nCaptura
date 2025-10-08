@@ -5,23 +5,35 @@
 [FFmpeg](http://ffmpeg.org/) is an open-source cross-platform solution to record, convert and stream audio and video.
 It adds support for more output formats like **H.264** for Video and **Mp3**, **AAC** etc. when capturing **Only Audio**.
 
+## Screen Capture Methods
+
+Captura offers multiple screen capture methods (Settings → Video page):
+
+- **Windows Graphics Capture (WGC)** - Modern API (Windows 10 1903+)
+  - ✅ Recommended for all modern systems
+  - Hardware-accelerated, reliable, best for AMD hardware
+  - Default on supported systems
+
+- **Desktop Duplication** - Legacy API (Windows 8+)
+  - Hardware-accelerated but can have issues on some AMD systems
+  - Fallback if WGC unavailable
+
+- **GDI** - Legacy software capture
+  - ⚠️ Slow, causes frame drops on modern hardware
+  - Only use if both WGC and Desktop Duplication fail
+
 ## Hardware Encoding Support
 
-Captura supports hardware-accelerated encoding through FFmpeg, which significantly improves performance and reduces CPU usage:
+Captura supports hardware-accelerated encoding through FFmpeg:
 
-- **AMD GPUs**: AMD Advanced Media Framework (AMF) - Supports H.264 and HEVC (H.265)
-  - Inspired by OBS Studio's AMD hardware encoding implementation
-  - Requires AMD Radeon HD 7000 series or newer, or APU with GCN architecture
-  - Ensure your AMD drivers are up to date for best performance
-  - **Note**: Requires FFmpeg built with AMF support - [Troubleshooting Guide](AMD-AMF-Encoding.md)
+- **AMD GPUs**: AMF - H.264, HEVC (H.265), AV1
+  - Requires AMD Radeon HD 7000+ or APU with GCN architecture
+  - Requires FFmpeg built with AMF support
 
-- **NVIDIA GPUs**: NVENC - Supports H.264 and HEVC (H.265)
-  - Check NVIDIA's website to verify your GPU supports NVENC
+- **NVIDIA GPUs**: NVENC - H.264, HEVC (H.265)
 
-- **Intel CPUs**: Intel QuickSync (QSV) - Supports HEVC (H.265)
-  - Requires Skylake generation or later processor with integrated graphics
-
-Hardware encoding offloads the video encoding work to your GPU, allowing for smoother captures and better performance, especially at higher resolutions and frame rates.
+- **Intel CPUs**: QuickSync (QSV) - HEVC (H.265)
+  - Requires Skylake generation or later with integrated graphics
 
 ### Checking Hardware Encoder Support
 

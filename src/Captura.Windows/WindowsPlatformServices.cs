@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using Captura.Native;
 using Captura.Video;
 using Captura.Windows.DesktopDuplication;
+using Captura.Windows.WindowsGraphicsCapture;
 using SharpDX.DXGI;
 
 namespace Captura.Windows
@@ -97,6 +98,22 @@ namespace Captura.Windows
 
         public IImageProvider GetWindowProvider(IWindow Window, bool IncludeCursor)
         {
+            if (!WindowsModule.ShouldUseGdi)
+            {
+                if (WindowsModule.ShouldUseWgc)
+                {
+                    try
+                    {
+                        var size = Window.Rectangle.Even().Size;
+                        return new WgcImageProvider(Window.Handle, size.Width, size.Height, _previewWindow);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"WGC window capture failed: {ex.Message}");
+                    }
+                }
+            }
+            
             return new WindowProvider(Window, _previewWindow, IncludeCursor);
         }
 
@@ -104,8 +121,19 @@ namespace Captura.Windows
         {
             if (!WindowsModule.ShouldUseGdi && !StepsMode)
             {
+                if (WindowsModule.ShouldUseWgc)
+                {
+                    try
+                    {
+                        return new WgcScreenImageProvider(Screen.Rectangle, _previewWindow);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"WGC failed, trying Desktop Duplication: {ex.Message}");
+                    }
+                }
+                
                 var output = FindOutput(Screen);
-
                 if (output != null)
                 {
                     return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
@@ -139,6 +167,18 @@ namespace Captura.Windows
         {
             if (!WindowsModule.ShouldUseGdi && !StepsMode)
             {
+                if (WindowsModule.ShouldUseWgc)
+                {
+                    try
+                    {
+                        return new WgcScreenImageProvider(DesktopRectangle, _previewWindow);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"WGC full screen failed, trying Desktop Duplication: {ex.Message}");
+                    }
+                }
+                
                 return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
             }
 
