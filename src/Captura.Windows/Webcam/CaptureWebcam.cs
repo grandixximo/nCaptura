@@ -288,27 +288,38 @@ namespace Captura.Webcam
                 try
                 {
                     var hr = _videoWindow.put_Owner(_previewWindow);
-                    if (hr >= 0)
-                    {
-                        hr = _videoWindow.put_MessageDrain(_form.Handle);
-                        if (hr >= 0)
-                        {
-                            // Set window style for child window
-                            hr = _videoWindow.put_WindowStyle(WindowStyle.Child | WindowStyle.ClipChildren | WindowStyle.ClipSiblings);
-                        }
-                    }
-                    
-                    // If any setup failed, video window won't work but frame capture still can
-                    // Virtual cameras (like OBS) often don't support video windows
                     if (hr < 0)
                     {
-                        _videoWindow = null; // Mark as unavailable
+                        _videoWindow = null;
+                        return;
+                    }
+
+                    hr = _videoWindow.put_MessageDrain(_form.Handle);
+                    if (hr < 0)
+                    {
+                        _videoWindow = null;
+                        return;
+                    }
+
+                    // Set window style for child window
+                    hr = _videoWindow.put_WindowStyle(WindowStyle.Child | WindowStyle.ClipChildren | WindowStyle.ClipSiblings);
+                    if (hr < 0)
+                    {
+                        _videoWindow = null;
+                        return;
+                    }
+
+                    // IMPORTANT: Make the video window visible!
+                    hr = _videoWindow.put_Visible(OABool.True);
+                    if (hr < 0)
+                    {
+                        _videoWindow = null;
+                        return;
                     }
                 }
                 catch
                 {
                     // Video window setup failed - this is OK for virtual cameras
-                    // Frame capture can still work without the preview window
                     _videoWindow = null;
                 }
             }
@@ -347,6 +358,9 @@ namespace Captura.Webcam
                 try
                 {
                     _videoWindow.SetWindowPosition(X, Y, Width, Height);
+                    
+                    // Ensure window is visible
+                    _videoWindow.put_Visible(OABool.True);
                 }
                 catch
                 {
