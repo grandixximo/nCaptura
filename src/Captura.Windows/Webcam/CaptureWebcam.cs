@@ -279,6 +279,7 @@ namespace Captura.Webcam
                     throw new InvalidOperationException($"Unsupported video format: {mediaType.formatType}");
                 }
 
+                // Allocate conversion buffer for RGB24 → BGR32 conversion
                 if (_bitsPerPixel == 24)
                     _convertedBuffer = new byte[_videoSize.Width * _videoSize.Height * 4];
             }
@@ -386,6 +387,10 @@ namespace Captura.Webcam
 
         #region Frame Capture
 
+        /// <summary>
+        /// Converts RGB24 (3 bytes per pixel) to BGR32 (4 bytes per pixel with alpha).
+        /// Swaps R and B channels and adds full opacity alpha channel.
+        /// </summary>
         static void ConvertRgb24ToBgr32(byte[] src, byte[] dst, int width, int height, int srcStride)
         {
             for (var y = 0; y < height; y++)
@@ -398,7 +403,7 @@ namespace Captura.Webcam
                     dst[dstIdx] = src[srcIdx + 2];     // B
                     dst[dstIdx + 1] = src[srcIdx + 1]; // G
                     dst[dstIdx + 2] = src[srcIdx];     // R
-                    dst[dstIdx + 3] = 255;             // A
+                    dst[dstIdx + 3] = 255;             // A (fully opaque)
                     
                     srcIdx += 3;
                     dstIdx += 4;
@@ -435,6 +440,7 @@ namespace Captura.Webcam
 
                         if (_bitsPerPixel == 24)
                         {
+                            // Convert RGB24 to BGR32 for CreateBitmapBgr32 compatibility
                             ConvertRgb24ToBgr32(_frameBuffer, _convertedBuffer, _videoSize.Width, _videoSize.Height, _stride);
                             
                             var convertedHandle = GCHandle.Alloc(_convertedBuffer, GCHandleType.Pinned);
@@ -451,6 +457,7 @@ namespace Captura.Webcam
                         }
                         else
                         {
+                            // Pass through other formats (16/32 BPP) as-is
                             var dataPtr = ptr + (_videoSize.Height - 1) * _stride;
                             return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -_stride);
                         }
