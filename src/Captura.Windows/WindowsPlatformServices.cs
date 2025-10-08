@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -108,24 +108,7 @@ namespace Captura.Windows
 
                 if (output != null)
                 {
-                    try
-                    {
-                        return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
-                    }
-                    catch (SharpDX.SharpDXException ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Desktop Duplication failed (0x{ex.ResultCode.Code:X8}), falling back to GDI: {ex.Message}");
-                        output?.Dispose();
-                        
-                        // Fall through to GDI
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Desktop Duplication initialization failed, falling back to GDI: {ex.Message}");
-                        output?.Dispose();
-                        
-                        // Fall through to GDI
-                    }
+                    return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
                 }
             }
 
@@ -156,22 +139,7 @@ namespace Captura.Windows
         {
             if (!WindowsModule.ShouldUseGdi && !StepsMode)
             {
-                try
-                {
-                    return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
-                }
-                catch (SharpDX.SharpDXException ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Desktop Duplication (full screen) failed (0x{ex.ResultCode.Code:X8}), falling back to GDI: {ex.Message}");
-                    
-                    // Fall through to GDI
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Desktop Duplication (full screen) initialization failed, falling back to GDI: {ex.Message}");
-                    
-                    // Fall through to GDI
-                }
+                return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
             }
 
             return GetRegionProvider(DesktopRectangle, IncludeCursor);
