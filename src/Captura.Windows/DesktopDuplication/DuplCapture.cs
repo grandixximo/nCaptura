@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using SharpDX;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
@@ -43,8 +43,12 @@ namespace Captura.Windows.DesktopDuplication
 
                 _bkpTexture?.Dispose();
 
-                _device.Dispose();
+                _device?.Dispose();
                 _device = null;
+                
+                // Dispose Output1 - this was missing and causing resource leaks
+                // preventing subsequent recordings from working
+                _output?.Dispose();
             }
         }
 
