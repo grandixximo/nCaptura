@@ -24,14 +24,13 @@ namespace Captura.Webcam
                 _captureWebcam = new CaptureWebcam(Filter, OnClick, IntPtr.Zero);
                 _captureWebcam.StartPreview();
             }
-            catch (COMException ex)
-            {
-                HandleCameraException(ex, "Failed to start webcam");
-                throw;
-            }
             catch (Exception ex)
             {
-                HandleCameraException(ex, "Failed to initialize webcam");
+                // Don't show error dialogs during initialization to avoid dialog crashes
+                // Just log and rethrow
+                System.Diagnostics.Debug.WriteLine($"Webcam initialization failed: {ex.Message}");
+                _captureWebcam?.Dispose();
+                _captureWebcam = null;
                 throw;
             }
         }

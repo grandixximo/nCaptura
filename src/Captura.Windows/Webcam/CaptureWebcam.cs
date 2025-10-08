@@ -129,40 +129,36 @@ namespace Captura.Webcam
         {
             int hr;
             
-            // Set the media type for RGB32 (preferred format)
+            // For maximum compatibility, don't specify format at all initially
+            // Let DirectShow negotiate the format during connection
             var mediaType = new AMMediaType
             {
-                majorType = MediaType.Video,
-                subType = MediaSubType.RGB32,
-                formatType = FormatType.VideoInfo
+                majorType = MediaType.Video
             };
 
             hr = _sampleGrabber.SetMediaType(mediaType);
             DsUtils.FreeAMMediaType(mediaType);
             
-            // If RGB32 fails, try without specifying format (let DirectShow choose)
             if (hr < 0)
             {
-                mediaType = new AMMediaType
+                // If even that fails, try with no restrictions
+                hr = _sampleGrabber.SetMediaType(null);
+                if (hr < 0)
                 {
-                    majorType = MediaType.Video
-                };
-                
-                hr = _sampleGrabber.SetMediaType(mediaType);
-                DsUtils.FreeAMMediaType(mediaType);
-                DsError.ThrowExceptionForHR(hr);
+                    throw new InvalidOperationException($"Failed to configure sample grabber (HR: 0x{hr:X8})");
+                }
             }
 
             // Configure grabber to buffer samples
             hr = _sampleGrabber.SetBufferSamples(true);
-            DsError.ThrowExceptionForHR(hr);
+            if (hr < 0) throw new InvalidOperationException("Failed to set buffer samples");
 
             hr = _sampleGrabber.SetOneShot(false);
-            DsError.ThrowExceptionForHR(hr);
+            if (hr < 0) throw new InvalidOperationException("Failed to set one shot mode");
 
             // Don't need the callback, we'll use GetCurrentBuffer
             hr = _sampleGrabber.SetCallback(null, 0);
-            DsError.ThrowExceptionForHR(hr);
+            if (hr < 0) throw new InvalidOperationException("Failed to set callback");
         }
 
         #endregion
@@ -205,28 +201,51 @@ namespace Captura.Webcam
         {
             int hr;
 
-            // Try to render preview pin first, fall back to capture pin
+            // Try multiple approaches to connect the camera to the sample grabber
+            
+            // Approach 1: Try preview pin with explicit media type
             var previewPin = DsFindPin.ByCategory(_videoDeviceFilter, PinCategory.Preview, 0);
             
             if (previewPin != null)
             {
                 hr = _captureGraphBuilder.RenderStream(PinCategory.Preview, MediaType.Video, 
                     _videoDeviceFilter, _sampleGrabberFilter, null);
-                
                 Marshal.ReleaseComObject(previewPin);
-            }
-            else
-            {
-                // No preview pin, use capture pin (common for virtual cameras)
-                hr = _captureGraphBuilder.RenderStream(PinCategory.Capture, MediaType.Video,
-                    _videoDeviceFilter, _sampleGrabberFilter, null);
+                
+                if (hr >= 0)
+                    goto success; // Preview pin worked
             }
 
-            if (hr < 0)
-            {
-                var error = DsError.GetErrorText(hr);
-                throw new InvalidOperationException($"Failed to render video stream (HR: 0x{hr:X8}): {error}. The camera may not support RGB32 format or may be in use.");
-            }
+            // Approach 2: Try capture pin with explicit media type
+            hr = _captureGraphBuilder.RenderStream(PinCategory.Capture, MediaType.Video,
+                _videoDeviceFilter, _sampleGrabberFilter, null);
+            
+            if (hr >= 0)
+                goto success;
+
+            // Approach 3: Try without specifying category (let DirectShow figure it out)
+            hr = _captureGraphBuilder.RenderStream(null, MediaType.Video,
+                _videoDeviceFilter, _sampleGrabberFilter, null);
+            
+            if (hr >= 0)
+                goto success;
+
+            // Approach 4: Try without any media type specification
+            hr = _captureGraphBuilder.RenderStream(null, null,
+                _videoDeviceFilter, _sampleGrabberFilter, null);
+            
+            if (hr >= 0)
+                goto success;
+
+            // All approaches failed
+            var error = DsError.GetErrorText(hr);
+            throw new InvalidOperationException(
+                $"Failed to connect camera (HR: 0x{hr:X8}): {error}.\n\n" +
+                $"This camera may not be compatible with DirectShow capture.\n" +
+                $"Camera: {_videoDevice.Name}");
+
+            success:
+            ; // Continue with getting media type
 
             // Get the actual media type that was connected
             var mediaType = new AMMediaType();

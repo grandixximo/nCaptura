@@ -22,24 +22,9 @@ namespace Captura.Webcam
             }
             catch (Exception ex)
             {
-                // Show user-friendly error message
-                var message = "Failed to start webcam.\n\n" +
-                             "Possible solutions:\n" +
-                             "• Check Windows camera privacy settings\n" +
-                             "• Close other apps using the camera\n" +
-                             "• Restart the camera or computer\n" +
-                             "• Update camera drivers\n\n" +
-                             $"Technical details: {ex.Message}";
-
-                try
-                {
-                    ServiceProvider.MessageProvider?.ShowError(message, "Webcam Error");
-                }
-                catch
-                {
-                    // MessageProvider not available
-                }
-
+                // Log but don't show error dialog (to avoid dialog crashes)
+                // The error will be handled by the caller
+                System.Diagnostics.Debug.WriteLine($"Webcam capture failed: {ex.Message}");
                 return null;
             }
         }
