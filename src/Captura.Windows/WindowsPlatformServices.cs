@@ -122,7 +122,14 @@ namespace Captura.Windows
             
             if (WindowsModule.ShouldUseWgc)
             {
-                return new WgcScreenImageProvider(Screen.Rectangle, _previewWindow);
+                try
+                {
+                    return new WgcScreenImageProvider(Screen.Rectangle, _previewWindow);
+                }
+                catch
+                {
+                    // WGC failed, fallback to Desktop Duplication
+                }
             }
             
             var output = FindOutput(Screen);
@@ -131,7 +138,7 @@ namespace Captura.Windows
                 return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
             }
             
-            throw new Exception("No screen output found for Desktop Duplication. Enable WGC or GDI mode in settings.");
+            throw new Exception("No screen output found. Enable GDI mode in settings.");
         }
 
         static Output1 FindOutput(IScreen Screen)
@@ -163,7 +170,14 @@ namespace Captura.Windows
             
             if (WindowsModule.ShouldUseWgc)
             {
-                return new WgcScreenImageProvider(DesktopRectangle, _previewWindow);
+                try
+                {
+                    return new WgcScreenImageProvider(DesktopRectangle, _previewWindow);
+                }
+                catch
+                {
+                    // WGC failed, fallback to Desktop Duplication
+                }
             }
             
             return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);

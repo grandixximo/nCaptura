@@ -23,20 +23,21 @@ namespace Captura.Windows.WindowsGraphicsCapture
         readonly int _width;
         readonly int _height;
         
-        public WgcCapture(IntPtr handle, int width, int height, bool isMonitor = false)
+        public WgcCapture(IntPtr handle, int width, int height, Adapter adapter = null, bool isMonitor = false)
         {
             _width = width;
             _height = height;
             
-            _device = new Device(SharpDX.Direct3D.DriverType.Hardware, 
-                DeviceCreationFlags.BgraSupport);
+            _device = adapter != null
+                ? new Device(adapter, DeviceCreationFlags.BgraSupport)
+                : new Device(SharpDX.Direct3D.DriverType.Hardware, DeviceCreationFlags.BgraSupport);
             
             _captureItem = isMonitor 
                 ? CaptureHelper.CreateItemForMonitor(handle)
                 : CaptureHelper.CreateItemForWindow(handle);
             
             if (_captureItem == null)
-                throw new Exception("Failed to create GraphicsCaptureItem");
+                throw new Exception($"Failed to create GraphicsCaptureItem for {(isMonitor ? "monitor" : "window")} handle: 0x{handle.ToInt64():X}");
             
             var d3dDevice = CreateDirect3DDevice(_device);
             
@@ -48,6 +49,12 @@ namespace Captura.Windows.WindowsGraphicsCapture
             
             _session = _framePool.CreateCaptureSession(_captureItem);
             _session.IsCursorCaptureEnabled = false;
+            
+            var borderProp = _session.GetType().GetProperty("IsBorderRequired");
+            if (borderProp != null && borderProp.CanWrite)
+            {
+                borderProp.SetValue(_session, false);
+            }
             
             _framePool.FrameArrived += OnFrameArrived;
             _session.StartCapture();

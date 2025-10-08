@@ -50,19 +50,26 @@ namespace Captura.Windows.WindowsGraphicsCapture
         {
             try
             {
+                if (hmon == IntPtr.Zero)
+                    return null;
+                    
                 var factory = WindowsRuntimeMarshal.GetActivationFactory(typeof(GraphicsCaptureItem));
                 var interop = (IGraphicsCaptureItemInterop)factory;
                 
                 var itemGuid = typeof(GraphicsCaptureItem).GUID;
                 var itemPointer = interop.CreateForMonitor(hmon, ref itemGuid);
                 
+                if (itemPointer == IntPtr.Zero)
+                    return null;
+                
                 var captureItem = Marshal.GetObjectForIUnknown(itemPointer) as GraphicsCaptureItem;
                 Marshal.Release(itemPointer);
                 
                 return captureItem;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"CreateItemForMonitor failed: {ex.Message}");
                 return null;
             }
         }
