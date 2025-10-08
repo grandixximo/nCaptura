@@ -279,7 +279,7 @@ namespace Captura.Webcam
                     throw new InvalidOperationException($"Unsupported video format: {mediaType.formatType}");
                 }
 
-                // Allocate conversion buffer for RGB24 → BGR32 conversion
+                // Allocate conversion buffer for RGB24 → RGB32 conversion
                 if (_bitsPerPixel == 24)
                     _convertedBuffer = new byte[_videoSize.Width * _videoSize.Height * 4];
             }
@@ -388,10 +388,10 @@ namespace Captura.Webcam
         #region Frame Capture
 
         /// <summary>
-        /// Converts RGB24 (3 bytes per pixel) to BGR32 (4 bytes per pixel with alpha).
-        /// Swaps R and B channels and adds full opacity alpha channel.
+        /// Converts RGB24 (3 bytes per pixel) to RGB32 (4 bytes per pixel with alpha).
+        /// Preserves RGB channel order and adds full opacity alpha channel.
         /// </summary>
-        static void ConvertRgb24ToBgr32(byte[] src, byte[] dst, int width, int height, int srcStride)
+        static void ConvertRgb24ToRgb32(byte[] src, byte[] dst, int width, int height, int srcStride)
         {
             for (var y = 0; y < height; y++)
             {
@@ -400,9 +400,9 @@ namespace Captura.Webcam
                 
                 for (var x = 0; x < width; x++)
                 {
-                    dst[dstIdx] = src[srcIdx + 2];     // B
+                    dst[dstIdx] = src[srcIdx];         // R
                     dst[dstIdx + 1] = src[srcIdx + 1]; // G
-                    dst[dstIdx + 2] = src[srcIdx];     // R
+                    dst[dstIdx + 2] = src[srcIdx + 2]; // B
                     dst[dstIdx + 3] = 255;             // A (fully opaque)
                     
                     srcIdx += 3;
@@ -440,8 +440,8 @@ namespace Captura.Webcam
 
                         if (_bitsPerPixel == 24)
                         {
-                            // Convert RGB24 to BGR32 for CreateBitmapBgr32 compatibility
-                            ConvertRgb24ToBgr32(_frameBuffer, _convertedBuffer, _videoSize.Width, _videoSize.Height, _stride);
+                            // Convert RGB24 to RGB32 for CreateBitmapBgr32 compatibility
+                            ConvertRgb24ToRgb32(_frameBuffer, _convertedBuffer, _videoSize.Width, _videoSize.Height, _stride);
                             
                             var convertedHandle = GCHandle.Alloc(_convertedBuffer, GCHandleType.Pinned);
                             try
