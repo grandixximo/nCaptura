@@ -185,6 +185,10 @@ namespace Captura.Webcam
                     }
 
                     _isRunning = true;
+                    
+                    // Give DirectShow a moment to start filling the buffer
+                    // This prevents grey frames at the start of recording
+                    System.Threading.Thread.Sleep(100);
                 }
                 catch (InvalidOperationException)
                 {
@@ -383,49 +387,62 @@ namespace Captura.Webcam
 
         public Captura.IBitmapImage GetFrame(Captura.IBitmapLoader BitmapLoader)
         {
-            lock (_lock)
+            // Use trylock to avoid blocking if another thread is accessing
+            // This prevents slowdowns when overlay + preview both want frames
+            bool lockTaken = false;
+            try
             {
+                System.Threading.Monitor.TryEnter(_lock, 10, ref lockTaken);
+                if (!lockTaken)
+                    return null; // Can't get lock quickly, skip this frame
+
                 if (!_isRunning || _sampleGrabber == null || _frameBuffer == null)
                     return null;
 
-                try
+                // Get buffer size (first call)
+                int bufferSize = 0;
+                var hr = _sampleGrabber.GetCurrentBuffer(ref bufferSize, IntPtr.Zero);
+                
+                if (hr < 0 || bufferSize <= 0)
                 {
-                    // Get buffer size
-                    int bufferSize = 0;
-                    var hr = _sampleGrabber.GetCurrentBuffer(ref bufferSize, IntPtr.Zero);
-                    
-                    if (hr < 0 || bufferSize <= 0)
-                        return null;
-
-                    // Ensure our buffer is large enough
-                    if (_frameBuffer.Length < bufferSize)
-                        _frameBuffer = new byte[bufferSize];
-
-                    // Pin the buffer and get the data
-                    var handle = GCHandle.Alloc(_frameBuffer, GCHandleType.Pinned);
-                    try
-                    {
-                        var ptr = handle.AddrOfPinnedObject();
-                        hr = _sampleGrabber.GetCurrentBuffer(ref bufferSize, ptr);
-                        
-                        if (hr < 0)
-                            return null;
-
-                        // DirectShow gives us bottom-up bitmaps, so we need to flip
-                        // Move to the last line and use negative stride
-                        var dataPtr = ptr + (_videoSize.Height - 1) * _stride;
-                        
-                        return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -_stride);
-                    }
-                    finally
-                    {
-                        handle.Free();
-                    }
-                }
-                catch
-                {
+                    // No frame available yet - this is normal at start
                     return null;
                 }
+
+                // Ensure our buffer is large enough
+                if (_frameBuffer.Length < bufferSize)
+                    _frameBuffer = new byte[bufferSize];
+
+                // Pin the buffer and get the data (second call)
+                var handle = GCHandle.Alloc(_frameBuffer, GCHandleType.Pinned);
+                try
+                {
+                    var ptr = handle.AddrOfPinnedObject();
+                    hr = _sampleGrabber.GetCurrentBuffer(ref bufferSize, ptr);
+                    
+                    if (hr < 0)
+                        return null;
+
+                    // DirectShow gives us bottom-up bitmaps, so we need to flip
+                    // Move to the last line and use negative stride
+                    var dataPtr = ptr + (_videoSize.Height - 1) * _stride;
+                    
+                    return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, -_stride);
+                }
+                finally
+                {
+                    handle.Free();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetFrame failed: {ex.Message}");
+                return null;
+            }
+            finally
+            {
+                if (lockTaken)
+                    System.Threading.Monitor.Exit(_lock);
             }
         }
 
