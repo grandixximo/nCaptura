@@ -2,17 +2,18 @@ using Captura.Windows.MediaFoundation;
 
 namespace Captura.Windows
 {
+    public enum CaptureMethod
+    {
+        WindowsGraphicsCapture,
+        DesktopDuplication,
+        Gdi
+    }
+    
     public class WindowsSettings : PropertyStore
     {
-        public bool UseGdi
+        public CaptureMethod ScreenCaptureMethod
         {
-            get => Get(false);
-            set => Set(value);
-        }
-        
-        public bool UseWgc
-        {
-            get => Get(true);
+            get => Get(CaptureMethod.WindowsGraphicsCapture);
             set => Set(value);
         }
 

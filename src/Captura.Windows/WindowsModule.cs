@@ -72,9 +72,11 @@ namespace Captura.Windows
         {
             get
             {
+                if (!Windows8OrAbove)
+                    return true;
+                    
                 var settings = ServiceProvider.Get<WindowsSettings>();
-
-                return !Windows8OrAbove || settings.UseGdi;
+                return settings.ScreenCaptureMethod == CaptureMethod.Gdi;
             }
         }
         
@@ -86,7 +88,7 @@ namespace Captura.Windows
                     return false;
                     
                 var settings = ServiceProvider.Get<WindowsSettings>();
-                return settings.UseWgc && !settings.UseGdi;
+                return settings.ScreenCaptureMethod == CaptureMethod.WindowsGraphicsCapture;
             }
         }
         

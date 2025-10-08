@@ -155,41 +155,36 @@
                           Height="1"
                           Margin="0,10"/>
             
-            <Label Content="Screen Capture Method"
-                   FontWeight="Bold"/>
+            <DockPanel Margin="0,5">
+                <Label Content="Screen Capture Method:"
+                       FontWeight="Bold"
+                       DockPanel.Dock="Left"/>
+                <TextBlock Text="(Requires App Restart)"
+                           FontSize="10"
+                           FontWeight="Light"
+                           VerticalAlignment="Center"
+                           Margin="5,0,0,0"
+                           DockPanel.Dock="Right"/>
+            </DockPanel>
             
-            <CheckBox IsChecked="{Binding Settings.WindowsSettings.UseWgc}"
-                      Margin="0,2">
-                <CheckBox.ToolTip>
-                    <TextBlock MaxWidth="300" TextWrapping="Wrap">
-                        Windows Graphics Capture (WGC) - Modern capture API (Windows 10 1903+).
-                        Best performance and reliability, especially for AMD hardware.
-                        Recommended for all modern systems.
-                    </TextBlock>
-                </CheckBox.ToolTip>
-                <TextBlock TextWrapping="Wrap">
-                    Use Windows Graphics Capture (WGC) <LineBreak/>
-                    <Run Text="(Recommended, Requires App Restart)"
-                         FontSize="10"
-                         FontWeight="Light"/>
-                </TextBlock>
-            </CheckBox>
-
-            <CheckBox IsChecked="{Binding Settings.WindowsSettings.UseGdi}"
-                      Margin="0,2">
-                <CheckBox.ToolTip>
-                    <TextBlock MaxWidth="300" TextWrapping="Wrap">
-                        WARNING: GDI is sluggish and causes frame drops on modern hardware.
-                        Only use this if WGC and Desktop Duplication both fail.
-                    </TextBlock>
-                </CheckBox.ToolTip>
-                <TextBlock TextWrapping="Wrap">
-                    Use GDI (Legacy, Slow) <LineBreak/>
-                    <Run Text="(Requires App Restart)"
-                         FontSize="10"
-                         FontWeight="Light"/>
-                </TextBlock>
-            </CheckBox>
+            <ListView SelectedIndex="{Binding Settings.WindowsSettings.ScreenCaptureMethod, Mode=TwoWay}"
+                      Margin="0,2"
+                      BorderThickness="0.4"
+                      SelectionMode="Single">
+                <ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel/>
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+                <ListView.Items>
+                    <ListViewItem Content="Windows Graphics Capture (WGC) - Recommended"
+                                  ToolTip="Modern API (Windows 10 1903+). Best performance, especially for AMD hardware."/>
+                    <ListViewItem Content="Desktop Duplication - Legacy"
+                                  ToolTip="Older API (Windows 8+). May have issues on AMD hardware."/>
+                    <ListViewItem Content="GDI - Slowest"
+                                  ToolTip="WARNING: Software capture. Very slow, causes frame drops."/>
+                </ListView.Items>
+            </ListView>
         </StackPanel>
         <GridSplitter Grid.Column="1"
                       Width="1"
