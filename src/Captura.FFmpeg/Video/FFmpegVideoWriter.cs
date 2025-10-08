@@ -22,8 +22,6 @@ namespace Captura.FFmpeg
         byte[] _videoBuffer;
 
         readonly ConcurrentQueue<byte[]> _bufferPool = new ConcurrentQueue<byte[]>();
-        readonly SemaphoreSlim _spVideo = new SemaphoreSlim(5);
-        readonly TimeSpan _spTimeout = TimeSpan.FromMilliseconds(500);
 
         static string GetPipeName() => $"captura-{Guid.NewGuid()}";
 
@@ -207,39 +205,12 @@ namespace Captura.FFmpeg
                 try { _lastAudio.Wait(1000); } catch { }
             }
 
-            // Drop audio bytes to sync with video once we've reached stability from frame side.
-            if (_initialStability)
-            {
-                var audioBytesToDrop = _skippedFrames * _audioBytesPerFrame - _audioBytesDropped;
-
-                // Drop whole buffer
-                if (audioBytesToDrop >= Length)
-                {
-                    _audioBytesDropped += Length;
-                    return;
-                }
-
-                // Drop part of buffer
-                if (audioBytesToDrop > 0)
-                {
-                    Offset += audioBytesToDrop;
-                    Length -= audioBytesToDrop;
-                    _audioBytesDropped += audioBytesToDrop;
-                }
-            }
 
             _lastAudio = _audioPipe.WriteAsync(Buffer, Offset, Length);
         }
 
         bool _firstFrame = true;
-
-        bool _initialStability;
-        int _frameStreak;
-        const int FrameStreakThreshold = 50;
-        int _skippedFrames;
         readonly int _audioBytesPerFrame;
-        int _audioBytesDropped;
-
         Task _lastFrameTask;
 
         /// <summary>
@@ -280,54 +251,25 @@ namespace Captura.FFmpeg
                 }
             }
 
-            // Drop frames if semaphore cannot be acquired soon enough.
-            // Frames are dropped mostly in the beginning of recording till atleast one audio frame is received.
-            if (!_spVideo.Wait(_spTimeout))
-            {
-                ++_skippedFrames;
-                _frameStreak = 0;
-                return;
-            }
-            
-            // Most of the drops happen in beginning of video, once that stops, sync can be done.
-            if (!_initialStability)
-            {
-                ++_frameStreak;
-                if (_frameStreak > FrameStreakThreshold)
-                {
-                    _initialStability = true;
-                }
-            }
-
             var bufferCopy = _bufferPool.TryDequeue(out var pooledBuffer) ? pooledBuffer : new byte[_videoBuffer.Length];
             Buffer.BlockCopy(_videoBuffer, 0, bufferCopy, 0, _videoBuffer.Length);
 
-            try
+            _lastFrameTask = (_lastFrameTask ?? Task.CompletedTask).ContinueWith(async previousTask =>
             {
-                if (_lastFrameTask != null && _lastFrameTask.IsFaulted)
+                try
                 {
-                    _lastFrameTask.Wait();
+                    await previousTask;
+                    await _ffmpegIn.WriteAsync(bufferCopy, 0, bufferCopy.Length);
                 }
-
-                var previousTask = _lastFrameTask;
-                _lastFrameTask = Task.Run(async () =>
+                catch (Exception ex) when (!(_ffmpegProcess?.HasExited == false))
                 {
-                    try
-                    {
-                        await previousTask;
-                        await _ffmpegIn.WriteAsync(bufferCopy, 0, bufferCopy.Length);
-                    }
-                    finally
-                    {
-                        _bufferPool.Enqueue(bufferCopy);
-                        _spVideo.Release();
-                    }
-                });
-            }
-            catch (Exception e) when (_ffmpegProcess.HasExited)
-            {
-                throw new FFmpegException(_ffmpegProcess.ExitCode, e);
-            }
+                    throw new FFmpegException(_ffmpegProcess?.ExitCode ?? -1, ex);
+                }
+                finally
+                {
+                    _bufferPool.Enqueue(bufferCopy);
+                }
+            }, TaskContinuationOptions.RunContinuationsAsynchronously).Unwrap();
         }
     }
 }
