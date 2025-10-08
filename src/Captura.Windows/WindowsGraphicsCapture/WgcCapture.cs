@@ -81,6 +81,11 @@ namespace Captura.Windows.WindowsGraphicsCapture
         {
             lock (_syncLock)
             {
+                if (_framePool != null)
+                {
+                    _framePool.FrameArrived -= OnFrameArrived;
+                }
+                
                 _session?.Dispose();
                 _framePool?.Dispose();
                 _lastFrame?.Dispose();
@@ -91,7 +96,7 @@ namespace Captura.Windows.WindowsGraphicsCapture
         
         static IDirect3DDevice CreateDirect3DDevice(Device d3dDevice)
         {
-            var dxgiDevice = d3dDevice.QueryInterface<SharpDX.DXGI.Device>();
+            using var dxgiDevice = d3dDevice.QueryInterface<SharpDX.DXGI.Device>();
             var inspectable = DXGIGetDirect3D11Device(dxgiDevice.NativePointer);
             var d3dDeviceInterface = Marshal.GetObjectForIUnknown(inspectable) as IDirect3DDevice;
             Marshal.Release(inspectable);
