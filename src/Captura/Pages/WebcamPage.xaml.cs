@@ -72,8 +72,25 @@ namespace Captura
         {
             _webcamModel.PreviewClicked += SettingsWindow.ShowWebcamPage;
 
-            IsVisibleChanged += OnVisibilityChanged;
-            Unloaded += OnPageUnloaded;
+            IsVisibleChanged += (S, E) =>
+            {
+                if (IsVisible && _webcamCapture == null)
+                {
+                    _webcamCapture = _webcamModel.InitCapture();
+
+                    if (_webcamCapture.Value is { } capture)
+                    {
+                        _reactor.WebcamSize.OnNext(new WSize(capture.Width, capture.Height));
+
+                        UpdateWebcamPreview();
+                    }
+                }
+                else if (!IsVisible && _webcamCapture != null)
+                {
+                    _webcamModel.ReleaseCapture();
+                    _webcamCapture = null;
+                }
+            };
 
             void OnRegionChange()
             {
@@ -98,51 +115,6 @@ namespace Captura
                 .Subscribe();
 
             UpdateWebcamPreview();
-        }
-
-        void OnVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            if (IsVisible && _webcamCapture == null)
-            {
-                _webcamCapture = _webcamModel.InitCapture();
-
-                if (_webcamCapture.Value is { } capture)
-                {
-                    _reactor.WebcamSize.OnNext(new WSize(capture.Width, capture.Height));
-
-                    UpdateWebcamPreview();
-                }
-            }
-            else if (!IsVisible && _webcamCapture != null)
-            {
-                CleanupWebcamPreview();
-            }
-        }
-
-        void OnPageUnloaded(object sender, RoutedEventArgs e)
-        {
-            // Ensure cleanup when page is unloaded
-            CleanupWebcamPreview();
-            
-            IsVisibleChanged -= OnVisibilityChanged;
-            Unloaded -= OnPageUnloaded;
-        }
-
-        void CleanupWebcamPreview()
-        {
-            if (_webcamCapture != null)
-            {
-                try
-                {
-                    // Stop the preview and release the capture
-                    _webcamModel.ReleaseCapture();
-                    _webcamCapture = null;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error cleaning up webcam preview: {ex.Message}");
-                }
-            }
         }
 
         async void CaptureImage_OnClick(object Sender, RoutedEventArgs E)
