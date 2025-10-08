@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Threading;
@@ -113,16 +113,48 @@ namespace Captura.FFmpeg
         /// </summary>
         public void Dispose()
         {
-            _lastFrameTask?.Wait();
-            _lastAudio?.Wait();
+            try
+            {
+                // Wait for any pending writes to complete
+                _lastFrameTask?.Wait();
+                _lastAudio?.Wait();
 
-            _ffmpegIn.Dispose();
+                // Flush the pipes to ensure all data is sent to FFmpeg
+                try
+                {
+                    _ffmpegIn?.Flush();
+                    _audioPipe?.Flush();
+                }
+                catch
+                {
+                    // Ignore flush errors - process might have already closed
+                }
 
-            _audioPipe?.Dispose();
+                // Dispose pipes - this signals EOF to FFmpeg
+                _ffmpegIn?.Dispose();
+                _audioPipe?.Dispose();
 
-            _ffmpegProcess.WaitForExit();
-
-            _videoBuffer = null;
+                // Wait for FFmpeg to finish processing with a timeout
+                if (!_ffmpegProcess.WaitForExit(10000)) // 10 second timeout
+                {
+                    // FFmpeg didn't exit gracefully, force kill it
+                    try
+                    {
+                        _ffmpegProcess.Kill();
+                        _ffmpegProcess.WaitForExit(2000); // Give it 2 more seconds
+                    }
+                    catch
+                    {
+                        // Process might have already exited
+                    }
+                }
+            }
+            finally
+            {
+                // Ensure process is disposed
+                _ffmpegProcess?.Dispose();
+                _videoBuffer = null;
+            }
         }
 
         /// <summary>

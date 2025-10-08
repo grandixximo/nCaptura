@@ -1,4 +1,4 @@
-﻿using Captura.Audio;
+using Captura.Audio;
 using System.Diagnostics;
 using System.IO;
 
@@ -36,10 +36,29 @@ namespace Captura.FFmpeg
 
         public void Dispose()
         {
-            Flush();
+            try
+            {
+                Flush();
+                _ffmpegIn.Close();
 
-            _ffmpegIn.Close();
-            _ffmpegProcess.WaitForExit();
+                // Wait with timeout to prevent hanging
+                if (!_ffmpegProcess.WaitForExit(10000)) // 10 second timeout
+                {
+                    try
+                    {
+                        _ffmpegProcess.Kill();
+                        _ffmpegProcess.WaitForExit(2000);
+                    }
+                    catch
+                    {
+                        // Process might have already exited
+                    }
+                }
+            }
+            finally
+            {
+                _ffmpegProcess?.Dispose();
+            }
         }
 
         public void Flush()

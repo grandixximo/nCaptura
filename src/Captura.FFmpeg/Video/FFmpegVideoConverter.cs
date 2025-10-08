@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Captura.Video;
 
@@ -43,11 +43,29 @@ namespace Captura.FFmpeg
 
             log.ProgressChanged += Progress.Report;
 
-            await Task.Run(() => process.WaitForExit());
+            // Wait for process with timeout (5 minutes max for conversion)
+            var exited = await Task.Run(() => process.WaitForExit(300000));
+
+            if (!exited)
+            {
+                // Process didn't finish in time, kill it
+                try
+                {
+                    process.Kill();
+                    process.WaitForExit(2000);
+                }
+                catch
+                {
+                    // Process might have already exited
+                }
+                
+                throw new FFmpegException(-1, new TimeoutException("Video conversion timed out after 5 minutes"));
+            }
 
             if (process.ExitCode != 0)
                 throw new FFmpegException(process.ExitCode);
 
+            process.Dispose();
             Progress.Report(100);
         }
     }
