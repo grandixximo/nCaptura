@@ -110,7 +110,26 @@ namespace Captura.Windows
                 {
                     try
                     {
-                        return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
+                        var provider = new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
+                        
+                        // Test capture to ensure Desktop Duplication is actually working
+                        try
+                        {
+                            var testFrame = provider.Capture();
+                            testFrame?.Dispose();
+                        }
+                        catch (Exception testEx)
+                        {
+                            // Desktop Duplication created but can't capture
+                            System.Diagnostics.Debug.WriteLine($"Desktop Duplication test capture failed, falling back to GDI: {testEx.Message}");
+                            provider.Dispose();
+                            output?.Dispose();
+                            
+                            // Continue to GDI fallback below
+                            return GetRegionProvider(Screen.Rectangle, IncludeCursor);
+                        }
+                        
+                        return provider;
                     }
                     catch (SharpDX.SharpDXException ex)
                     {
@@ -163,7 +182,25 @@ namespace Captura.Windows
             {
                 try
                 {
-                    return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
+                    var provider = new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
+                    
+                    // Test capture to ensure Desktop Duplication is actually working
+                    try
+                    {
+                        var testFrame = provider.Capture();
+                        testFrame?.Dispose();
+                    }
+                    catch (Exception testEx)
+                    {
+                        // Desktop Duplication created but can't capture
+                        System.Diagnostics.Debug.WriteLine($"Desktop Duplication (full screen) test capture failed, falling back to GDI: {testEx.Message}");
+                        provider.Dispose();
+                        
+                        // Continue to GDI fallback below
+                        return GetRegionProvider(DesktopRectangle, IncludeCursor);
+                    }
+                    
+                    return provider;
                 }
                 catch (SharpDX.SharpDXException ex)
                 {
