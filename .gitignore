@@ -22,3 +22,6 @@ TestResults/
 *.pfx
 core
 core
+
+# Local .NET SDK installations
+.dotnet/
