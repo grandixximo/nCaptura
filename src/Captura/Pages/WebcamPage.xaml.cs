@@ -147,39 +147,44 @@ namespace Captura
 
         void UpdateWebcamPreview()
         {
-            // Try to get the HwndSource from this element
-            if (PresentationSource.FromVisual(this) is HwndSource source)
-            {
-                var win = _platformServices.GetWindow(source.Handle);
+            if (_webcamCapture?.Value == null)
+                return;
 
-                var rect = GetPreviewWindowRect();
-
-                _webcamCapture?.Value?.UpdatePreview(win, rect);
-            }
-            else
+            try
             {
-                // Fallback: If PresentationSource is null, try getting the parent window directly
+                // Get the window handle
                 var parentWindow = VisualTreeHelperEx.FindAncestorByType<Window>(this);
-                
-                if (parentWindow != null && PresentationSource.FromVisual(parentWindow) is HwndSource windowSource)
+                if (parentWindow == null)
                 {
-                    var win = _platformServices.GetWindow(windowSource.Handle);
-
-                    var rect = GetPreviewWindowRect();
-
-                    _webcamCapture?.Value?.UpdatePreview(win, rect);
-                }
-                else
-                {
-                    // Still no window? Schedule retry when layout updates
+                    // Window not ready yet, retry after a short delay
                     Dispatcher.BeginInvoke(new Action(() =>
                     {
                         if (_webcamCapture != null && IsVisible)
-                        {
                             UpdateWebcamPreview();
-                        }
                     }), System.Windows.Threading.DispatcherPriority.Loaded);
+                    return;
                 }
+
+                var windowSource = PresentationSource.FromVisual(parentWindow) as HwndSource;
+                if (windowSource == null)
+                {
+                    // Retry
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        if (_webcamCapture != null && IsVisible)
+                            UpdateWebcamPreview();
+                    }), System.Windows.Threading.DispatcherPriority.Loaded);
+                    return;
+                }
+
+                var win = _platformServices.GetWindow(windowSource.Handle);
+                var rect = GetPreviewWindowRect();
+
+                _webcamCapture.Value.UpdatePreview(win, rect);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"UpdateWebcamPreview failed: {ex.Message}");
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -108,10 +108,25 @@ namespace Captura.Windows
 
                 if (output != null)
                 {
-                    return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
+                    try
+                    {
+                        return new DeskDuplImageProvider(output, IncludeCursor, _previewWindow);
+                    }
+                    catch (SharpDX.SharpDXException ex)
+                    {
+                        // Desktop Duplication failed (common with graphics driver issues, multi-DPI, etc.)
+                        // Fall back to GDI capture
+                        System.Diagnostics.Debug.WriteLine($"Desktop Duplication failed (HR: 0x{ex.HResult:X8}), falling back to GDI: {ex.Message}");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Any other initialization error
+                        System.Diagnostics.Debug.WriteLine($"Desktop Duplication failed, falling back to GDI: {ex.Message}");
+                    }
                 }
             }
 
+            // Fallback to GDI-based screen capture
             return GetRegionProvider(Screen.Rectangle, IncludeCursor);
         }
 
@@ -139,9 +154,22 @@ namespace Captura.Windows
         {
             if (!WindowsModule.ShouldUseGdi && !StepsMode)
             {
-                return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
+                try
+                {
+                    return new DeskDuplFullScreenImageProvider(IncludeCursor, _previewWindow, this);
+                }
+                catch (SharpDX.SharpDXException ex)
+                {
+                    // Desktop Duplication failed, fall back to GDI
+                    System.Diagnostics.Debug.WriteLine($"Full screen Desktop Duplication failed (HR: 0x{ex.HResult:X8}), falling back to GDI: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Full screen Desktop Duplication failed, falling back to GDI: {ex.Message}");
+                }
             }
 
+            // Fallback to GDI-based screen capture
             return GetRegionProvider(DesktopRectangle, IncludeCursor);
         }
     }
