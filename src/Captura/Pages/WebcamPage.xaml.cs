@@ -20,15 +20,18 @@ namespace Captura
         readonly ScreenShotModel _screenShotModel;
         readonly IPlatformServices _platformServices;
         readonly WebcamOverlayReactor _reactor;
+        readonly VideoSourcesViewModel _videoSourcesViewModel;
 
         public WebcamPage(WebcamModel WebcamModel,
             ScreenShotModel ScreenShotModel,
             IPlatformServices PlatformServices,
-            WebcamOverlaySettings WebcamSettings)
+            WebcamOverlaySettings WebcamSettings,
+            VideoSourcesViewModel VideoSourcesViewModel)
         {
             _webcamModel = WebcamModel;
             _screenShotModel = ScreenShotModel;
             _platformServices = PlatformServices;
+            _videoSourcesViewModel = VideoSourcesViewModel;
 
             _reactor = new WebcamOverlayReactor(WebcamSettings);
 
@@ -36,6 +39,8 @@ namespace Captura
 
             InitializeComponent();
         }
+        
+        bool IsWebcamMode => _videoSourcesViewModel.SelectedVideoSourceKind is WebcamSourceProvider;
 
         bool _loaded;
 
@@ -50,15 +55,27 @@ namespace Captura
 
             var control = PreviewTarget;
 
-            control.BindOne(MarginProperty,
-                _reactor.Location.Select(M => new Thickness(M.X, M.Y, 0, 0)).ToReadOnlyReactivePropertySlim());
+            // Only bind overlay controls when NOT in webcam mode
+            if (!IsWebcamMode)
+            {
+                control.BindOne(MarginProperty,
+                    _reactor.Location.Select(M => new Thickness(M.X, M.Y, 0, 0)).ToReadOnlyReactivePropertySlim());
 
-            control.BindOne(WidthProperty,
-                _reactor.Size.Select(M => M.Width).ToReadOnlyReactivePropertySlim());
-            control.BindOne(HeightProperty,
-                _reactor.Size.Select(M => M.Height).ToReadOnlyReactivePropertySlim());
+                control.BindOne(WidthProperty,
+                    _reactor.Size.Select(M => M.Width).ToReadOnlyReactivePropertySlim());
+                control.BindOne(HeightProperty,
+                    _reactor.Size.Select(M => M.Height).ToReadOnlyReactivePropertySlim());
 
-            control.BindOne(OpacityProperty, _reactor.Opacity);
+                control.BindOne(OpacityProperty, _reactor.Opacity);
+            }
+            else
+            {
+                // In webcam mode, show full camera preview without overlay
+                control.Margin = new Thickness(0);
+                control.Width = double.NaN; // Auto-size to fill
+                control.Height = double.NaN;
+                control.Opacity = 1.0;
+            }
         }
 
         async Task UpdateBackground()
@@ -72,25 +89,8 @@ namespace Captura
         {
             _webcamModel.PreviewClicked += SettingsWindow.ShowWebcamPage;
 
-            IsVisibleChanged += (S, E) =>
-            {
-                if (IsVisible && _webcamCapture == null)
-                {
-                    _webcamCapture = _webcamModel.InitCapture();
-
-                    if (_webcamCapture.Value is { } capture)
-                    {
-                        _reactor.WebcamSize.OnNext(new WSize(capture.Width, capture.Height));
-
-                        UpdateWebcamPreview();
-                    }
-                }
-                else if (!IsVisible && _webcamCapture != null)
-                {
-                    _webcamModel.ReleaseCapture();
-                    _webcamCapture = null;
-                }
-            };
+            IsVisibleChanged += OnVisibilityChanged;
+            Unloaded += OnPageUnloaded;
 
             void OnRegionChange()
             {
@@ -115,6 +115,51 @@ namespace Captura
                 .Subscribe();
 
             UpdateWebcamPreview();
+        }
+
+        void OnVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (IsVisible && _webcamCapture == null)
+            {
+                _webcamCapture = _webcamModel.InitCapture();
+
+                if (_webcamCapture.Value is { } capture)
+                {
+                    _reactor.WebcamSize.OnNext(new WSize(capture.Width, capture.Height));
+
+                    UpdateWebcamPreview();
+                }
+            }
+            else if (!IsVisible && _webcamCapture != null)
+            {
+                CleanupWebcamPreview();
+            }
+        }
+
+        void OnPageUnloaded(object sender, RoutedEventArgs e)
+        {
+            // Ensure cleanup when page is unloaded
+            CleanupWebcamPreview();
+            
+            IsVisibleChanged -= OnVisibilityChanged;
+            Unloaded -= OnPageUnloaded;
+        }
+
+        void CleanupWebcamPreview()
+        {
+            if (_webcamCapture != null)
+            {
+                try
+                {
+                    // Stop the preview and release the capture
+                    _webcamModel.ReleaseCapture();
+                    _webcamCapture = null;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error cleaning up webcam preview: {ex.Message}");
+                }
+            }
         }
 
         async void CaptureImage_OnClick(object Sender, RoutedEventArgs E)
