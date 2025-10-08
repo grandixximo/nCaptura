@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Threading;
@@ -20,11 +21,7 @@ namespace Captura.FFmpeg
         Task _videoConnectTask;
         byte[] _videoBuffer;
 
-        // This semaphore helps prevent FFmpeg audio/video pipes getting deadlocked.
-        readonly SemaphoreSlim _spVideo = new SemaphoreSlim(5);
-
-        // Timeout used with Semaphores, if elapsed would mean FFmpeg might be deadlocked.
-        readonly TimeSpan _spTimeout = TimeSpan.FromMilliseconds(50);
+        readonly ConcurrentQueue<byte[]> _bufferPool = new ConcurrentQueue<byte[]>();
 
         static string GetPipeName() => $"captura-{Guid.NewGuid()}";
 
@@ -102,10 +99,10 @@ namespace Captura.FFmpeg
                 // Modest buffer size to avoid stalls without huge allocation
                 var audioBufferSize = 16384;
 
-                _audioPipe = new NamedPipeServerStream(audioPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, audioBufferSize);
+                _audioPipe = new NamedPipeServerStream(audioPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, audioBufferSize, audioBufferSize);
             }
 
-            _ffmpegIn = new NamedPipeServerStream(videoPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, _videoBuffer.Length);
+            _ffmpegIn = new NamedPipeServerStream(videoPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, _videoBuffer.Length, _videoBuffer.Length);
 
             // Put both pipes into listening state BEFORE launching FFmpeg
             _videoConnectTask = BeginListening(_ffmpegIn);
@@ -136,8 +133,8 @@ namespace Captura.FFmpeg
         {
             try
             {
-                _lastFrameTask?.Wait();
-                _lastAudio?.Wait();
+                try { _lastFrameTask?.Wait(5000); } catch { }
+                try { _lastAudio?.Wait(5000); } catch { }
 
                 try
                 {
@@ -146,11 +143,9 @@ namespace Captura.FFmpeg
                 }
                 catch { }
 
-                // Close input pipes first so FFmpeg sees EOF
                 try { _ffmpegIn?.Dispose(); } catch { }
                 try { _audioPipe?.Dispose(); } catch { }
 
-                // Then ask FFmpeg to quit if still running
                 FFmpegService.TryGracefulStop(_ffmpegProcess);
 
                 if (!_ffmpegProcess.WaitForExit(10000))
@@ -205,42 +200,17 @@ namespace Captura.FFmpeg
                 _firstAudio = false;
             }
 
-            // We don't need semaphores for audio since audio frames arrive less often.
-            _lastAudio?.Wait();
-
-            // Drop audio bytes to sync with video once we've reached stability from frame side.
-            if (_initialStability)
+            if (_lastAudio != null)
             {
-                var audioBytesToDrop = _skippedFrames * _audioBytesPerFrame - _audioBytesDropped;
-
-                // Drop whole buffer
-                if (audioBytesToDrop >= Length)
-                {
-                    _audioBytesDropped += Length;
-                    return;
-                }
-
-                // Drop part of buffer
-                if (audioBytesToDrop > 0)
-                {
-                    Offset += audioBytesToDrop;
-                    Length -= audioBytesToDrop;
-                    _audioBytesDropped += audioBytesToDrop;
-                }
+                try { _lastAudio.Wait(1000); } catch { }
             }
+
 
             _lastAudio = _audioPipe.WriteAsync(Buffer, Offset, Length);
         }
 
         bool _firstFrame = true;
-
-        bool _initialStability;
-        int _frameStreak;
-        const int FrameStreakThreshold = 50;
-        int _skippedFrames;
         readonly int _audioBytesPerFrame;
-        int _audioBytesDropped;
-
         Task _lastFrameTask;
 
         /// <summary>
@@ -281,43 +251,25 @@ namespace Captura.FFmpeg
                 }
             }
 
-            // Drop frames if semaphore cannot be acquired soon enough.
-            // Frames are dropped mostly in the beginning of recording till atleast one audio frame is received.
-            if (!_spVideo.Wait(_spTimeout))
-            {
-                ++_skippedFrames;
-                _frameStreak = 0;
-                return;
-            }
-            
-            // Most of the drops happen in beginning of video, once that stops, sync can be done.
-            if (!_initialStability)
-            {
-                ++_frameStreak;
-                if (_frameStreak > FrameStreakThreshold)
-                {
-                    _initialStability = true;
-                }
-            }
+            var bufferCopy = _bufferPool.TryDequeue(out var pooledBuffer) ? pooledBuffer : new byte[_videoBuffer.Length];
+            Buffer.BlockCopy(_videoBuffer, 0, bufferCopy, 0, _videoBuffer.Length);
 
-            try
+            _lastFrameTask = (_lastFrameTask ?? Task.CompletedTask).ContinueWith(async previousTask =>
             {
-                // Check if last write failed.
-                if (_lastFrameTask != null && _lastFrameTask.IsFaulted)
+                try
                 {
-                    _lastFrameTask.Wait();
+                    await previousTask;
+                    await _ffmpegIn.WriteAsync(bufferCopy, 0, bufferCopy.Length);
                 }
-
-                // Chain writes sequentially and ensure the task represents the async write completion
-                _lastFrameTask = _lastFrameTask
-                    .ContinueWith(_ => _ffmpegIn.WriteAsync(_videoBuffer, 0, _videoBuffer.Length))
-                    .Unwrap()
-                    .ContinueWith(_ => _spVideo.Release());
-            }
-            catch (Exception e) when (_ffmpegProcess.HasExited)
-            {
-                throw new FFmpegException(_ffmpegProcess.ExitCode, e);
-            }
+                catch (Exception ex) when (!(_ffmpegProcess?.HasExited == false))
+                {
+                    throw new FFmpegException(_ffmpegProcess?.ExitCode ?? -1, ex);
+                }
+                finally
+                {
+                    _bufferPool.Enqueue(bufferCopy);
+                }
+            }, TaskContinuationOptions.RunContinuationsAsynchronously).Unwrap();
         }
     }
 }
