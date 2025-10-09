@@ -1,5 +1,6 @@
 using System.Windows;
 using Captura.ViewModels;
+using Captura.Webcam;
 
 namespace Captura
 {
@@ -22,10 +23,11 @@ namespace Captura
 
         void ShowCameraProperties_Click(object sender, RoutedEventArgs e)
         {
-            var webcamModel = ServiceProvider.Get<WebcamModel>();
-            var webcam = webcamModel?.Capture;
+            // Access the webcam through the WebCamWindow in classic UI
+            var webcamControl = WebCamWindow.Instance.GetWebCamControl();
+            var capture = webcamControl?.Capture;
             
-            if (webcam == null)
+            if (capture == null)
             {
                 ServiceProvider.MessageProvider?.ShowError("No camera is currently active.\n\nPlease select a camera and start preview first.", "Camera Not Active");
                 return;
@@ -33,7 +35,7 @@ namespace Captura
             
             try
             {
-                var properties = webcam.GetCameraProperties();
+                var properties = capture.GetCameraProperties();
                 var window = new CameraPropertiesWindow(properties)
                 {
                     Owner = Window.GetWindow(this)
