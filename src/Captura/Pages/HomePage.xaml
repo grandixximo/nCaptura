@@ -48,21 +48,6 @@
 
             <captura:VideoSourceKindList x:Name="VideoSourcesList"/>
 
-            <CheckBox Margin="0,5"
-                      Content="Drawing Tools"
-                      IsChecked="{Binding Settings.UI.RegionSelectorDrawingTools, Mode=TwoWay}">
-                <CheckBox.Style>
-                    <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding VideoSourcesViewModel.SelectedVideoSourceKind, Source={StaticResource ServiceLocator}, Converter={StaticResource GetTypeConverter}}" Value="{x:Type screna:RegionSourceProvider}">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </CheckBox.Style>
-            </CheckBox>
-
             <DockPanel Margin="0,5">
                 <Label Content="{Binding AudioFormat, Source={StaticResource Loc}, Mode=OneWay}"
                        Margin="0,0,5,0"/>
