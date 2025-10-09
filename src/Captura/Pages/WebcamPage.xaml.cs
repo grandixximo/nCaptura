@@ -128,6 +128,31 @@ namespace Captura
             catch { }
         }
 
+        void ShowCameraProperties_OnClick(object Sender, RoutedEventArgs E)
+        {
+            try
+            {
+                if (_webcamCapture?.Value == null)
+                {
+                    MessageBox.Show("No camera is currently active. Please select a camera first.", 
+                        "Camera Not Active", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                var properties = _webcamCapture.Value.GetCameraProperties();
+                var window = new CameraPropertiesWindow(properties)
+                {
+                    Owner = Window.GetWindow(this)
+                };
+                window.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to get camera properties: {ex.Message}", 
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         Rectangle GetPreviewWindowRect()
         {
             var parentWindow = VisualTreeHelperEx.FindAncestorByType<Window>(this);
