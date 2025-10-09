@@ -52,7 +52,7 @@ namespace Captura
 
         public bool RegionSelectorDrawingTools
         {
-            get => Get(false);  // Default to false (hidden)
+            get => Get(true);  // Default to true (visible)
             set => Set(value);
         }
     }
