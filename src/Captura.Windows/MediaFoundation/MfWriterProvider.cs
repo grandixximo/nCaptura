@@ -27,7 +27,6 @@ namespace Captura.Windows.MediaFoundation
         All = 0x0000003F
     }
 
-    // P/Invoke for MFTEnumEx (not available in SharpDX)
     static class MfNative
     {
         [DllImport("mfplat.dll", ExactSpelling = true)]
@@ -40,7 +39,6 @@ namespace Captura.Windows.MediaFoundation
             out int pnumMFTActivate);
     }
 
-    // ReSharper disable once ClassNeverInstantiated.Global
     public class MfWriterProvider : IVideoWriterProvider
     {
         readonly Device _device;
@@ -52,24 +50,12 @@ namespace Captura.Windows.MediaFoundation
         {
             try
             {
-                // Always try to create device first
-                _device = new Device(DriverType.Hardware, DeviceCreationFlags.BgraSupport);
-                
-                // Check if hardware H.264 encoder is available
                 var encoderInfo = DetectHardwareEncoder();
                 _hasHardwareEncoder = encoderInfo.IsAvailable;
-                _isCompatible = encoderInfo.IsAvailable;
                 _warningMessage = encoderInfo.Message;
-                
-                // Even if no hardware encoder, allow MF (will use software encoding)
-                if (!_isCompatible && _device != null)
-                {
-                    _isCompatible = true; // Allow MF to appear
-                    if (string.IsNullOrEmpty(_warningMessage))
-                    {
-                        _warningMessage = "No hardware encoder detected. MF will use software encoding (slower).";
-                    }
-                }
+
+                _device = new Device(DriverType.Hardware, DeviceCreationFlags.BgraSupport);
+                _isCompatible = true;
             }
             catch (Exception ex)
             {
@@ -84,19 +70,15 @@ namespace Captura.Windows.MediaFoundation
         {
             try
             {
-                // Get GPU info for better error messages
                 var gpuName = GetGPUName();
-
-                // Query Media Foundation for hardware H.264 encoder
                 var hasHardwareEncoder = CheckForH264HardwareEncoder();
 
                 if (hasHardwareEncoder)
                 {
-                    return (true, null); // Hardware encoder available, no warning
+                    return (true, null);
                 }
                 else
                 {
-                    // No hardware encoder found
                     var message = string.IsNullOrEmpty(gpuName) 
                         ? "No hardware H.264 encoder found. Use FFmpeg for better compatibility."
                         : $"No hardware H.264 encoder found for {gpuName}. Use FFmpeg instead.";
@@ -106,7 +88,6 @@ namespace Captura.Windows.MediaFoundation
             }
             catch (Exception ex)
             {
-                // If detection fails, disable MF to be safe
                 return (false, $"Failed to detect hardware encoder: {ex.Message}");
             }
         }
@@ -127,7 +108,6 @@ namespace Captura.Windows.MediaFoundation
 
         static bool CheckForH264HardwareEncoder()
         {
-            // Simplified - just use the main CheckForHardwareEncoder method
             return CheckForHardwareEncoder(VideoFormatGuids.H264);
         }
 
@@ -135,26 +115,9 @@ namespace Captura.Windows.MediaFoundation
 
         public IEnumerator<IVideoWriterItem> GetEnumerator()
         {
-            // Only provide MF options if compatible
             if (_isCompatible && _device != null)
             {
-                List<(string CodecName, Guid FormatGuid, string Extension)> availableEncoders;
-                
-                if (_hasHardwareEncoder)
-                {
-                    // Hardware mode: Only show codecs with hardware support
-                    availableEncoders = DetectAllHardwareEncoders();
-                }
-                else
-                {
-                    // Software mode: Offer all codecs (software encoding)
-                    availableEncoders = new List<(string, Guid, string)>
-                    {
-                        ("H.264", VideoFormatGuids.H264, ".mp4"),
-                        ("H.265 (HEVC)", VideoFormatGuids.Hevc, ".mp4"),
-                        ("VP9", new Guid("A3DF5476-2858-4B1D-B9DC-0FC9E7F4F3F5"), ".webm")
-                    };
-                }
+                var availableEncoders = DetectAllHardwareEncoders();
 
                 foreach (var encoder in availableEncoders)
                 {
@@ -167,74 +130,156 @@ namespace Captura.Windows.MediaFoundation
         {
             var encoders = new List<(string, Guid, string)>();
 
-            // Check for H.264 hardware encoder
-            if (CheckForHardwareEncoder(VideoFormatGuids.H264))
+            if (CheckForHardwareEncoderDetailed(VideoFormatGuids.H264, out var h264Error))
+            {
                 encoders.Add(("H.264", VideoFormatGuids.H264, ".mp4"));
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"H.264 hardware encoder check failed: {h264Error}");
+            }
 
-            // Check for H.265 (HEVC) hardware encoder
-            if (CheckForHardwareEncoder(VideoFormatGuids.Hevc))
+            if (CheckForHardwareEncoderDetailed(VideoFormatGuids.Hevc, out var hevcError))
+            {
                 encoders.Add(("H.265 (HEVC)", VideoFormatGuids.Hevc, ".mp4"));
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"H.265 hardware encoder check failed: {hevcError}");
+            }
 
-            // VP9 GUID (not in SharpDX VideoFormatGuids)
             var vp9Guid = new Guid("A3DF5476-2858-4B1D-B9DC-0FC9E7F4F3F5");
-            if (CheckForHardwareEncoder(vp9Guid))
+            if (CheckForHardwareEncoderDetailed(vp9Guid, out var vp9Error))
+            {
                 encoders.Add(("VP9", vp9Guid, ".webm"));
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"VP9 hardware encoder check failed: {vp9Error}");
+            }
 
-            // Fallback: If no encoders found but we got here, at least offer H.264
             if (encoders.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("No hardware encoders detected, falling back to software H.264");
                 encoders.Add(("H.264", VideoFormatGuids.H264, ".mp4"));
+            }
 
             return encoders;
         }
 
-        static bool CheckForHardwareEncoder(Guid codecGuid)
+        static bool CheckForHardwareEncoder(Guid codecGuid) => CheckForHardwareEncoderDetailed(codecGuid, out _);
+
+        static bool CheckForHardwareEncoderDetailed(Guid codecGuid, out string errorMessage)
         {
+            errorMessage = null;
             IntPtr pActivate = IntPtr.Zero;
+            Activate activate = null;
+            SharpDX.MediaFoundation.Transform transform = null;
+            MediaType inputType = null;
+            MediaType outputType = null;
             
             try
             {
                 var flags = (int)(MftEnumFlag.Hardware | MftEnumFlag.SortAndFilter);
                 
-                // Create output type for the codec we're looking for
-                var outputType = new MediaType();
+                outputType = new MediaType();
                 outputType.Set(MediaTypeAttributeKeys.MajorType, MediaTypeGuids.Video);
                 outputType.Set(MediaTypeAttributeKeys.Subtype, codecGuid);
                 
-                // Get native pointer for MFT_REGISTER_TYPE_INFO
                 var pOutputType = outputType.NativePointer;
 
-                // Call native MFTEnumEx
                 var result = MfNative.MFTEnumEx(
                     TransformCategoryGuids.VideoEncoder,
                     flags,
-                    IntPtr.Zero,  // No input type restriction
-                    pOutputType,  // Output must be our codec
+                    IntPtr.Zero,
+                    pOutputType,
                     out pActivate,
                     out var count);
 
-                outputType.Dispose();
-
-                // Release the MFT activate array
-                if (pActivate != IntPtr.Zero)
+                if (result != 0)
                 {
-                    for (int i = 0; i < count; i++)
-                    {
-                        var activatePtr = Marshal.ReadIntPtr(pActivate, i * IntPtr.Size);
-                        if (activatePtr != IntPtr.Zero)
-                            Marshal.Release(activatePtr);
-                    }
-                    Marshal.FreeCoTaskMem(pActivate);
+                    errorMessage = $"MFTEnumEx failed with HRESULT 0x{result:X8}";
+                    return false;
                 }
 
-                return result == 0 && count > 0;
+                if (count == 0)
+                {
+                    errorMessage = "No hardware encoders enumerated for this codec";
+                    return false;
+                }
+
+                var firstActivatePtr = Marshal.ReadIntPtr(pActivate, 0);
+                if (firstActivatePtr == IntPtr.Zero)
+                {
+                    errorMessage = "Encoder activate pointer is null";
+                    return false;
+                }
+
+                activate = new Activate(firstActivatePtr);
+                
+                try
+                {
+                    transform = activate.ActivateObject<SharpDX.MediaFoundation.Transform>();
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = $"Failed to activate encoder: {ex.Message}";
+                    return false;
+                }
+                
+                if (transform == null)
+                {
+                    errorMessage = "Encoder transform is null after activation";
+                    return false;
+                }
+
+                inputType = new MediaType();
+                inputType.Set(MediaTypeAttributeKeys.MajorType, MediaTypeGuids.Video);
+                inputType.Set(MediaTypeAttributeKeys.Subtype, VideoFormatGuids.NV12);
+                inputType.Set(MediaTypeAttributeKeys.FrameSize, ((long)1920 << 32) | 1080);
+                inputType.Set(MediaTypeAttributeKeys.FrameRate, ((long)30 << 32) | 1);
+                inputType.Set(MediaTypeAttributeKeys.InterlaceMode, (int)VideoInterlaceMode.Progressive);
+
+                try
+                {
+                    transform.SetInputType(0, inputType, 0);
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = $"Encoder failed to accept input format: {ex.Message}";
+                    return false;
+                }
+
+                errorMessage = null;
+                return true;
             }
-            catch
+            catch (Exception ex)
             {
+                errorMessage = $"Unexpected error: {ex.Message}";
+                return false;
+            }
+            finally
+            {
+                inputType?.Dispose();
+                outputType?.Dispose();
+                transform?.Dispose();
+                activate?.Dispose();
+                
                 if (pActivate != IntPtr.Zero)
                 {
-                    try { Marshal.FreeCoTaskMem(pActivate); } catch { }
+                    try
+                    {
+                        for (int i = 0; i < 10; i++)
+                        {
+                            var activatePtr = Marshal.ReadIntPtr(pActivate, i * IntPtr.Size);
+                            if (activatePtr == IntPtr.Zero)
+                                break;
+                            Marshal.Release(activatePtr);
+                        }
+                        Marshal.FreeCoTaskMem(pActivate);
+                    }
+                    catch { }
                 }
-                return false;
             }
         }
 
@@ -253,11 +298,13 @@ namespace Captura.Windows.MediaFoundation
             {
                 if (!_isCompatible)
                     return $"Media Foundation (Disabled: {_warningMessage})";
-                
-                if (!string.IsNullOrEmpty(_warningMessage))
-                    return $"Hardware encoders - {_warningMessage}";
-                
-                return "Hardware-accelerated video encoding using Media Foundation";
+
+                if (_hasHardwareEncoder)
+                    return "Hardware-accelerated video encoding using Media Foundation";
+
+                return string.IsNullOrEmpty(_warningMessage)
+                    ? "Media Foundation software encoding (hardware encoder not detected)"
+                    : $"Media Foundation - {_warningMessage}";
             }
         }
     }

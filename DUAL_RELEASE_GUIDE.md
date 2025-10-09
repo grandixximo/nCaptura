@@ -111,8 +111,8 @@ jobs:
 ```
 About Page:
 - Modern button layout (WrapPanel)
-- Multiple contributor credits
-- No PayPal button
+- All contributor credits (Mathew Sachin, Mr. Chip, grandixximo)
+- PayPal donation button
 - Links to grandixximo/nCaptura
 ```
 
@@ -120,10 +120,11 @@ About Page:
 ```
 About Page:
 - Original vertical button layout
-- Only MathewSachin attribution
+- All contributor credits (Mathew Sachin, Mr. Chip, grandixximo)
 - PayPal donation button
-- Links to MathewSachin/Captura
+- Links to grandixximo/nCaptura
 - Classic window styling
+- Includes Crop tool button
 ```
 
 ## 🛠️ Maintenance

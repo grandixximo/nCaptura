@@ -1,4 +1,4 @@
-﻿using Captura.Models;
+using Captura.Models;
 using Captura.MouseKeyHook;
 using Captura.ViewModels;
 using Captura.Webcam;
@@ -36,6 +36,8 @@ namespace Captura
         public IFpsManager FpsManager => ServiceProvider.Get<IFpsManager>();
 
         public FFmpegCodecsViewModel FFmpegCodecsViewModel => ServiceProvider.Get<FFmpegCodecsViewModel>();
+
+        public MfCodecsViewModel MfCodecsViewModel => ServiceProvider.Get<MfCodecsViewModel>();
 
         public ProxySettingsViewModel ProxySettingsViewModel => ServiceProvider.Get<ProxySettingsViewModel>();
 

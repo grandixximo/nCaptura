@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Captura.Video;
@@ -79,7 +79,17 @@ namespace Captura.FFmpeg
 
                 var process = FFmpegService.StartFFmpeg(args, _videoWriterArgs.FileName, out _);
 
-                process.WaitForExit();
+                if (!process.WaitForExit(30000))
+                {
+                    try
+                    {
+                        process.Kill();
+                        process.WaitForExit(2000);
+                    }
+                    catch { }
+                }
+                
+                process.Dispose();
             }
 
             for (var i = 0; i < NoOfFiles; i++)

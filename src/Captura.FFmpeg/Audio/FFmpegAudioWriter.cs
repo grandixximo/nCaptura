@@ -1,4 +1,4 @@
-﻿using Captura.Audio;
+using Captura.Audio;
 using System.Diagnostics;
 using System.IO;
 
@@ -32,14 +32,39 @@ namespace Captura.FFmpeg
             _ffmpegProcess = FFmpegService.StartFFmpeg(argsBuilder.GetArgs(), FileName, out _);
             
             _ffmpegIn = _ffmpegProcess.StandardInput.BaseStream;
+
+            // Ensure stdin is not buffered indefinitely
+            try { _ffmpegProcess.StandardInput.AutoFlush = true; } catch { }
         }
 
         public void Dispose()
         {
-            Flush();
+            try
+            {
+                Flush();
+                try
+                {
+                    _ffmpegIn.Close();
+                }
+                catch { }
 
-            _ffmpegIn.Close();
-            _ffmpegProcess.WaitForExit();
+                // Ask FFmpeg to quit gracefully
+                FFmpegService.TryGracefulStop(_ffmpegProcess);
+
+                if (!_ffmpegProcess.WaitForExit(10000))
+                {
+                    try
+                    {
+                        _ffmpegProcess.Kill();
+                        _ffmpegProcess.WaitForExit(2000);
+                    }
+                    catch { }
+                }
+            }
+            finally
+            {
+                _ffmpegProcess?.Dispose();
+            }
         }
 
         public void Flush()

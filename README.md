@@ -30,6 +30,8 @@ I forked this repository from mrchipset's version because I actively use this so
 - ✅ Restored and fixed the classic 8.0.0 UI (dual-release with modern UI)
 - ✅ Fixed numerous data binding issues, UI bugs, and preview windows
 - ✅ Added shake animations, live region updates, and improved UX
+- ✅ Added AMD AMF hardware encoding support (inspired by OBS Studio)
+- ✅ Implemented Windows Graphics Capture (WGC) for reliable screen recording (Windows 10 1903+)
 
 **This is not an attempt to reboot the project**—it's simply maintained by someone who uses and appreciates it. I'll continue to apply fixes as needed (like updating download mirrors, fixing UI issues, or addressing compatibility issues) to keep this wonderful tool working for everyone who relies on it.
 

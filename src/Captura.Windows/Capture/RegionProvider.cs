@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using Captura.Native;
 using Captura.Windows;
@@ -37,12 +37,7 @@ namespace Captura.Video
             PointTransform = P => new Point(P.X - _region.X, P.Y - _region.Y);
 
             _hdcSrc = User32.GetDC(IntPtr.Zero);
-
-            if (WindowsModule.ShouldUseGdi)
-            {
-                _dcTarget = new GdiTargetDeviceContext(_hdcSrc, Width, Height);
-            }
-            else _dcTarget = new DxgiTargetDeviceContext(PreviewWindow, Width, Height);
+            _dcTarget = new GdiTargetDeviceContext(_hdcSrc, Width, Height);
         }
 
         public void Dispose()

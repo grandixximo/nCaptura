@@ -23,12 +23,11 @@ namespace Captura.ViewModels
             _settings = Settings;
             VideoSources = SourceProviders;
 
-            // DEBUG LOGGING
             var sourcesList = SourceProviders.ToList();
-            System.Diagnostics.Debug.WriteLine($"[VideoSources] Total sources: {sourcesList.Count}");
+            System.Diagnostics.Debug.WriteLine($"[VideoSourcesViewModel] Total sources: {sourcesList.Count}");
             foreach (var source in sourcesList)
             {
-                System.Diagnostics.Debug.WriteLine($"[VideoSources]   - {source.GetType().Name}: {source.Name}");
+                System.Diagnostics.Debug.WriteLine($"[VideoSourcesViewModel]   - {source.GetType().Name}: {source.Name} (Icon: {(string.IsNullOrEmpty(source.Icon) ? "EMPTY" : "SET")})");
             }
 
             SetDefaultSource();
