@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
@@ -18,8 +19,12 @@ namespace Captura.Audio
                 var bufferedProvider = new BufferedWaveProvider(provider.NAudioWaveFormat)
                 {
                     DiscardOnBufferOverflow = true,
-                    ReadFully = false
+                    // Ensure we always get exactly the requested bytes; fills with silence on underflow
+                    ReadFully = true
                 };
+
+                // Provide headroom against jitter and scheduling delays
+                bufferedProvider.BufferDuration = TimeSpan.FromMilliseconds(500);
 
                 provider.WaveIn.DataAvailable += (S, E) =>
                 {

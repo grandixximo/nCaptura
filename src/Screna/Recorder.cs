@@ -37,7 +37,8 @@ namespace Captura.Video
         int _frameCount;
         long _audioBytesWritten;
         readonly int _audioBytesPerFrame, _audioChunkBytes;
-        const int AudioChunkLengthMs = 200;
+        // Smaller chunk lowers latency and reduces audible jitter
+        const int AudioChunkLengthMs = 50;
         byte[] _audioBuffer, _silenceBuffer;
 
         readonly IFpsManager _fpsManager;
@@ -240,9 +241,8 @@ namespace Captura.Video
             // Fill with silence to maintain synchronization
             var silenceToWrite = toWrite - read;
 
-            // Write silence only when more than a threshold
-            // Threshold should ideally be a bit greater than chunk size
-            if (silenceToWrite <= _audioChunkBytes * 1.5)
+            // Write silence when gap exceeds one chunk
+            if (silenceToWrite <= _audioChunkBytes)
             {
                 return;
             }

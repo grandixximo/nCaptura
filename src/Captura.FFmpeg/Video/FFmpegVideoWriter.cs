@@ -96,8 +96,8 @@ namespace Captura.FFmpeg
                                             * wf.Channels
                                             * (wf.BitsPerSample / 8.0));
 
-                // Modest buffer size to avoid stalls without huge allocation
-                var audioBufferSize = 16384;
+                // Larger buffer to reduce risk of pipe back-pressure causing glitches
+                var audioBufferSize = 65536;
 
                 _audioPipe = new NamedPipeServerStream(audioPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, audioBufferSize, audioBufferSize);
             }
