@@ -447,5 +447,27 @@ namespace Captura
             _updatePending = false;
             Dispatcher.BeginInvoke(new Action(() => UpdateRegion()), System.Windows.Threading.DispatcherPriority.Loaded);
         }
+
+        // Ensure toolbar buttons trigger the same commands as main window
+        void RecordButton_Click(object Sender, RoutedEventArgs E)
+        {
+            var recordingVm = ServiceProvider.Get<RecordingViewModel>();
+            if (recordingVm?.RecordCommand?.CanExecute(null) == true)
+                recordingVm.RecordCommand.Execute(null);
+        }
+
+        void PauseButton_Click(object Sender, RoutedEventArgs E)
+        {
+            var recordingVm = ServiceProvider.Get<RecordingViewModel>();
+            if (recordingVm?.PauseCommand?.CanExecute(null) == true)
+                recordingVm.PauseCommand.Execute(null);
+        }
+
+        void ScreenShotButton_Click(object Sender, RoutedEventArgs E)
+        {
+            var ssVm = ServiceProvider.Get<ScreenShotViewModel>();
+            if (ssVm?.ScreenShotCommand?.CanExecute(null) == true)
+                ssVm.ScreenShotCommand.Execute(null);
+        }
     }
 }
