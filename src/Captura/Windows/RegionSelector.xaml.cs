@@ -230,6 +230,11 @@ namespace Captura
         public IntPtr Handle => new WindowInteropHelper(this).Handle;
         #endregion
 
+        void UIElement_OnPreviewMouseLeftButtonDown(object Sender, MouseButtonEventArgs E)
+        {
+            DragMove();
+        }
+
         void Snapper_OnClick(object Sender, RoutedEventArgs E)
         {
             // PickWindow now needs a Predicate, not IntPtr[]
