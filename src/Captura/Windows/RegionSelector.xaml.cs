@@ -26,6 +26,9 @@ namespace Captura
             _videoSourcePicker = VideoSourcePicker;
 
             InitializeComponent();
+            
+            // Set DataContext immediately after InitializeComponent so bindings can resolve
+            DataContext = ServiceProvider.Get<MainViewModel>();
 
             var platformServices = ServiceProvider.Get<IPlatformServices>();
             _regionItem = new RegionItem(this, platformServices);
@@ -34,9 +37,6 @@ namespace Captura
             Closing += (S, E) => E.Cancel = true;
 
             InitDimensionBoxes();
-
-            // Setting MainViewModel as DataContext from XAML causes crash.
-            Loaded += (S, E) => MainControls.DataContext = ServiceProvider.Get<MainViewModel>();
 
             ModesBox.ItemsSource = new[]
             {
