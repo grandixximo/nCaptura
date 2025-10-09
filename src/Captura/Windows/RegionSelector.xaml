@@ -78,7 +78,7 @@
             <Border.Style>
                 <Style TargetType="Border">
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}}" Value="{x:Static models:RecorderState.Recording}">
+                        <DataTrigger Binding="{Binding RecordingViewModel.RecorderState.Value}" Value="{x:Static models:RecorderState.Recording}">
                             <DataTrigger.EnterActions>
                                 <BeginStoryboard Name="RedStoryboard">
                                     <Storyboard>
@@ -101,7 +101,7 @@
             </Border.Style>
 
             <InkCanvas Background="Transparent"
-                       Visibility="{Binding MainViewModel.Settings.UI.RegionSelectorDrawingTools, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}"
+                       Visibility="{Binding Settings.UI.RegionSelectorDrawingTools, Converter={StaticResource BoolToVisibilityConverter}}"
                        Name="InkCanvas"/>
         </Border>
 
@@ -112,7 +112,7 @@
 
         <Grid Grid.Row="0"
               Grid.Column="0"
-              IsEnabled="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource NotRecordingConverter}}">
+              IsEnabled="{Binding RecordingViewModel.RecorderState.Value, Converter={StaticResource NotRecordingConverter}}">
             <Thumb VerticalAlignment="Bottom"
                    Height="2"
                    Cursor="SizeNS"
@@ -187,7 +187,7 @@
                             <MultiDataTrigger>
                                 <MultiDataTrigger.Conditions>
                                     <Condition Binding="{Binding IsMouseOver, ElementName=SizeBorder}" Value="False"/>
-                                    <Condition Binding="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource NotRecordingConverter}}" Value="False"/>
+                                    <Condition Binding="{Binding RecordingViewModel.RecorderState.Value, Converter={StaticResource NotRecordingConverter}}" Value="False"/>
                                 </MultiDataTrigger.Conditions>
                                 <MultiDataTrigger.EnterActions>
                                     <BeginStoryboard>
@@ -324,7 +324,7 @@
                 BorderBrush="{DynamicResource Accent}"
                 BorderThickness="1"
                 VerticalAlignment="Top"
-                Visibility="{Binding MainViewModel.Settings.UI.RegionSelectorDrawingTools, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}">
+                Visibility="{Binding Settings.UI.RegionSelectorDrawingTools, Converter={StaticResource BoolToVisibilityConverter}}">
             <DockPanel Background="{DynamicResource WindowBackground}"
                        LastChildFill="False">
                 <ListBox Name="ModesBox"
