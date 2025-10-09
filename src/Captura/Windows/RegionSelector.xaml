@@ -218,7 +218,8 @@
                     Name="ControlsBorder"
                     BorderBrush="{DynamicResource Accent}"
                     HorizontalAlignment="Left"
-                    VerticalAlignment="Top">
+                    VerticalAlignment="Top"
+                    DataContext="{Binding MainViewModel, Source={StaticResource ServiceLocator}}">
                 <DockPanel Background="{DynamicResource WindowBackground}">
                     <DockPanel.Resources>
                         <Style TargetType="local:ModernButton" BasedOn="{StaticResource {x:Type local:ModernButton}}">
@@ -230,33 +231,33 @@
                         </Style>
                     </DockPanel.Resources>
 
-                    <local:ModernButton IconData="{Binding Icons.SnapToWindow, Source={StaticResource ServiceLocator}}"
+                    <local:ModernButton IconData="{Binding Icons.SnapToWindow}"
                                         x:Name="Snapper"
                                         Click="Snapper_OnClick"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        ToolTip="{Binding SnapToWindow, Source={StaticResource Loc}, Mode=OneWay}"/>
+                                        ToolTip="Snap to Window"/>
 
                     <local:ModernButton x:Name="CloseButton"
                                         Click="CloseButton_Click"
                                         Background="{DynamicResource WindowBackground}"
                                         Foreground="#77ef5350"
-                                        IconData="{Binding Icons.Close, Source={StaticResource ServiceLocator}}"
+                                        IconData="{Binding Icons.Close}"
                                         DockPanel.Dock="Right"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        ToolTip="{Binding Close, Source={StaticResource Loc}, Mode=OneWay}"/>
+                                        ToolTip="Close"/>
 
-                    <local:ModernButton ToolTip="{Binding ScreenShot, Source={StaticResource Loc}, Mode=OneWay}"
-                                        Command="{Binding ScreenShotViewModel.ScreenShotCommand, Source={StaticResource ServiceLocator}}"
-                                        IconData="{Binding Icons.Camera, Source={StaticResource ServiceLocator}}"
+                    <local:ModernButton ToolTip="Screenshot"
+                                        Command="{Binding ScreenShotViewModel.ScreenShotCommand}"
+                                        IconData="{Binding Icons.Camera}"
                                         DockPanel.Dock="Right"
                                         Opacity="0.9"/>
-                    <local:ModernButton ToolTip="{Binding RecordStop, Source={StaticResource Loc}, Mode=OneWay}"
-                                        Command="{Binding RecordingViewModel.RecordCommand, Source={StaticResource ServiceLocator}}"
+                    <local:ModernButton ToolTip="Record/Stop"
+                                        Command="{Binding RecordingViewModel.RecordCommand}"
                                         Foreground="#b71c1c"
-                                        IconData="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource StateToRecordButtonGeometryConverter}}"/>
-                    <local:ModernButton ToolTip="{Binding PauseResume, Source={StaticResource Loc}, Mode=OneWay}" 
-                                        Command="{Binding RecordingViewModel.PauseCommand, Source={StaticResource ServiceLocator}}"
-                                        IconData="{Binding Icons.Pause, Source={StaticResource ServiceLocator}}"
+                                        IconData="{Binding RecordingViewModel.RecorderState.Value, Converter={StaticResource StateToRecordButtonGeometryConverter}}"/>
+                    <local:ModernButton ToolTip="Pause/Resume" 
+                                        Command="{Binding RecordingViewModel.PauseCommand}"
+                                        IconData="{Binding Icons.Pause}"
                                         Opacity="0.9"
                                         RenderTransformOrigin="0.5,0.5">
                         <local:ModernButton.RenderTransform>
@@ -265,7 +266,7 @@
                         <local:ModernButton.Style>
                             <Style TargetType="local:ModernButton" BasedOn="{StaticResource {x:Type local:ModernButton}}">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}}" Value="Paused">
+                                    <DataTrigger Binding="{Binding RecordingViewModel.RecorderState.Value}" Value="Paused">
                                         <DataTrigger.EnterActions>
                                             <BeginStoryboard>
                                                 <Storyboard>
@@ -293,9 +294,9 @@
                     <StackPanel Orientation="Horizontal"
                                 Margin="10,-1"
                                 PreviewMouseLeftButtonDown="UIElement_OnPreviewMouseLeftButtonDown"
-                                Visibility="{Binding TimerModel.Countdown, Source={StaticResource ServiceLocator}, Converter={StaticResource IsLessThanConverter}, ConverterParameter=1}"
+                                Visibility="{Binding TimerModel.Countdown, Converter={StaticResource IsLessThanConverter}, ConverterParameter=1}"
                                 Name="DurationLabel">
-                        <Label Content="{Binding TimerModel.TimeSpan, Source={StaticResource ServiceLocator}}"/>
+                        <Label Content="{Binding TimerModel.TimeSpan}"/>
 
                         <Label Content="{Binding Settings.Duration, Converter={StaticResource SecondsToTimeSpanConverter}}"
                                ContentStringFormat="{} / {0}"
@@ -303,7 +304,7 @@
                     </StackPanel>
 
                     <Label Visibility="{Binding Visibility, ElementName=DurationLabel, Converter={StaticResource NegatingConverter}}"
-                           Content="{Binding TimerModel.Countdown, Source={StaticResource ServiceLocator}}"
+                           Content="{Binding TimerModel.Countdown}"
                            Margin="10,-1"
                            PreviewMouseLeftButtonDown="UIElement_OnPreviewMouseLeftButtonDown"
                            Style="{StaticResource CountdownLabel}"/>
