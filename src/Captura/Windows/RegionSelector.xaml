@@ -215,7 +215,7 @@
             </Border>
 
             <Border BorderThickness="1"
-                    Name="SizeBorder"
+                    Name="ControlsBorder"
                     BorderBrush="{DynamicResource Accent}"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top">
