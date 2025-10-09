@@ -206,6 +206,8 @@ namespace Captura
             Dispatcher.Invoke(() =>
             {
                 ResizeMode = ResizeMode.NoResize;
+                Snapper.IsEnabled = CloseButton.IsEnabled = false;
+
                 WidthBox.IsEnabled = HeightBox.IsEnabled = false;
             });
         }
@@ -215,6 +217,8 @@ namespace Captura
             Dispatcher.Invoke(() =>
             {
                 ResizeMode = ResizeMode.CanResize;
+                Snapper.IsEnabled = CloseButton.IsEnabled = true;
+
                 WidthBox.IsEnabled = HeightBox.IsEnabled = true;
 
                 Show();
