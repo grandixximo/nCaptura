@@ -78,6 +78,11 @@ namespace Captura.Webcam
         public int Width => _captureWebcam?.Size.Width ?? 0;
         public int Height => _captureWebcam?.Size.Height ?? 0;
 
+        public string GetCameraProperties()
+        {
+            return _syncContext.Run(() => _captureWebcam?.GetCameraProperties() ?? "Camera not initialized");
+        }
+
         IntPtr _lastWin;
 
         public void UpdatePreview(IWindow Window, Rectangle Location)

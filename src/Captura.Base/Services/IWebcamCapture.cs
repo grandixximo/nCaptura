@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using Captura.Video;
 
@@ -13,5 +13,7 @@ namespace Captura.Webcam
         int Height { get; }
 
         void UpdatePreview(IWindow Window, Rectangle Location);
+
+        string GetCameraProperties();
     }
 }
