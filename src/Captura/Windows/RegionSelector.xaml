@@ -256,13 +256,51 @@
                     <local:ModernButton
                                         Foreground="#b71c1c"
                                         x:Name="RecordBtn"
-                                        IconData="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource StateToRecordButtonGeometryConverter}}"
                                         Click="RecordButton_Click"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        ToolTip="{Binding RecordStop, Source={StaticResource Loc}, Mode=OneWay}"/>
+                                        ToolTip="{Binding RecordStop, Source={StaticResource Loc}, Mode=OneWay}">
+                        <local:ModernButton.Template>
+                            <ControlTemplate TargetType="local:ModernButton">
+                                <Grid x:Name="grid"
+                                      Background="{TemplateBinding Background}"
+                                      MinHeight="36"
+                                      MinWidth="36">
+                                    <Path x:Name="icon"
+                                          Width="15"
+                                          Height="15"
+                                          Fill="{TemplateBinding Foreground}"
+                                          Stretch="Uniform"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Opacity="0.9">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Data" Value="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource StateToRecordButtonGeometryConverter}}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}}" Value="Recording">
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <ColorAnimation Storyboard.TargetProperty="(Path.Fill).(SolidColorBrush.Color)"
+                                                                                    To="#b71c1c"
+                                                                                    Duration="0:0:0.15"/>
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.EnterActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                        <Path.LayoutTransform>
+                                            <ScaleTransform x:Name="IconScale"/>
+                                        </Path.LayoutTransform>
+                                    </Path>
+                                </Grid>
+                            </ControlTemplate>
+                        </local:ModernButton.Template>
+                    </local:ModernButton>
 
                     <local:ModernButton
-                                        IconData="{Binding Icons.Pause, Source={StaticResource ServiceLocator}}"
                                         Opacity="0.9"
                                         Click="PauseButton_Click"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
@@ -297,6 +335,28 @@
                                 </Style.Triggers>
                             </Style>
                         </local:ModernButton.Style>
+                        <local:ModernButton.Template>
+                            <ControlTemplate TargetType="local:ModernButton">
+                                <Grid x:Name="grid"
+                                      Background="{TemplateBinding Background}"
+                                      MinHeight="36"
+                                      MinWidth="36">
+                                    <Path x:Name="icon"
+                                          Data="{Binding Icons.Pause, Source={StaticResource ServiceLocator}}"
+                                          Width="15"
+                                          Height="15"
+                                          Fill="{TemplateBinding Foreground}"
+                                          Stretch="Uniform"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Opacity="0.9">
+                                        <Path.LayoutTransform>
+                                            <ScaleTransform x:Name="IconScale"/>
+                                        </Path.LayoutTransform>
+                                    </Path>
+                                </Grid>
+                            </ControlTemplate>
+                        </local:ModernButton.Template>
                     </local:ModernButton>
 
                     <StackPanel Orientation="Horizontal"
