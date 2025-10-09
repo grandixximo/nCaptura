@@ -1,7 +1,9 @@
 using Captura.Models;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -10,16 +12,55 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using Captura.Video;
 using Captura.ViewModels;
+using RecordingViewModel = Captura.ViewModels.RecordingViewModel;
+using ScreenShotViewModel = Captura.ViewModels.ScreenShotViewModel;
 using Color = System.Windows.Media.Color;
 
 namespace Captura
 {
-    public partial class RegionSelector : IRegionProvider
+    public partial class RegionSelector : IRegionProvider, INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
         readonly IVideoSourcePicker _videoSourcePicker;
         readonly RegionItem _regionItem;
 
         bool _widthBoxChanging, _heightBoxChanging, _resizing;
+
+        private string _recordButtonIcon;
+        public string RecordButtonIcon
+        {
+            get => _recordButtonIcon;
+            set
+            {
+                if (_recordButtonIcon != value)
+                {
+                    _recordButtonIcon = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private void AnimatePauseButton(double toAngle)
+        {
+            if (PauseBtn != null)
+            {
+                var rotateTransform = PauseBtn.RenderTransform as System.Windows.Media.RotateTransform;
+                if (rotateTransform != null)
+                {
+                    var animation = new System.Windows.Media.Animation.DoubleAnimation
+                    {
+                        To = toAngle,
+                        Duration = TimeSpan.FromMilliseconds(150)
+                    };
+                    rotateTransform.BeginAnimation(System.Windows.Media.RotateTransform.AngleProperty, animation);
+                }
+            }
+        }
 
         public RegionSelector(IVideoSourcePicker VideoSourcePicker)
         {
@@ -30,13 +71,30 @@ namespace Captura
             var platformServices = ServiceProvider.Get<IPlatformServices>();
             _regionItem = new RegionItem(this, platformServices);
 
-            // Prevent Closing by User
             Closing += (S, E) => E.Cancel = true;
 
             InitDimensionBoxes();
 
-            // Setting MainViewModel as DataContext from XAML causes crash.
-            Loaded += (S, E) => MainControls.DataContext = ServiceProvider.Get<MainViewModel>();
+            Loaded += (S, E) => {
+                MainControls.DataContext = ServiceProvider.Get<MainViewModel>();
+                
+                var recordingViewModel = ServiceProvider.Get<RecordingViewModel>();
+                
+                recordingViewModel.RecorderState.Subscribe(state =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        var icons = ServiceProvider.Get<IIconSet>();
+                        RecordButtonIcon = state == RecorderState.NotRecording ? icons.Record : icons.Stop;
+                        AnimatePauseButton(state == RecorderState.Paused ? 90 : 0);
+                        
+                        if (PauseBtn != null)
+                        {
+                            PauseBtn.IsEnabled = state != RecorderState.NotRecording;
+                        }
+                    });
+                });
+            };
 
             ModesBox.ItemsSource = new[]
             {
@@ -151,6 +209,33 @@ namespace Captura
             Hide();
 
             SelectorHidden?.Invoke();
+        }
+
+        void ScreenShotButton_Click(object Sender, RoutedEventArgs E)
+        {
+            var screenShotViewModel = ServiceProvider.Get<ScreenShotViewModel>();
+            if (screenShotViewModel.ScreenShotCommand.CanExecute(null))
+            {
+                screenShotViewModel.ScreenShotCommand.Execute(null);
+            }
+        }
+
+        void RecordButton_Click(object Sender, RoutedEventArgs E)
+        {
+            var recordingViewModel = ServiceProvider.Get<RecordingViewModel>();
+            if (recordingViewModel.RecordCommand.CanExecute(null))
+            {
+                recordingViewModel.RecordCommand.Execute(null);
+            }
+        }
+
+        void PauseButton_Click(object Sender, RoutedEventArgs E)
+        {
+            var recordingViewModel = ServiceProvider.Get<RecordingViewModel>();
+            if (recordingViewModel.PauseCommand.CanExecute(null))
+            {
+                recordingViewModel.PauseCommand.Execute(null);
+            }
         }
         
         protected override void OnLocationChanged(EventArgs E)
