@@ -8,7 +8,7 @@ namespace Captura.Webcam
     /// <summary>
     /// Clean DirectShow-based webcam capture implementation
     /// </summary>
-    public class CaptureWebcam : ISampleGrabberCB, IDisposable
+    class CaptureWebcam : ISampleGrabberCB, IDisposable
     {
         #region Fields
         readonly Filter _videoDevice;
@@ -30,6 +30,7 @@ namespace Captura.Webcam
         Size _videoSize = Size.Empty;
         int _stride;
         int _bitsPerPixel;
+        int _compression;
         byte[] _frameBuffer;
         byte[] _convertedBuffer;
         VideoInfoHeader _videoInfoHeader;
@@ -50,23 +51,7 @@ namespace Captura.Webcam
 
             _previewWindow = PreviewWindow != IntPtr.Zero ? PreviewWindow : _form.Handle;
 
-            try
-            {
-                BuildGraph();
-            }
-            catch (Exception ex)
-            {
-                var errorMsg = $"Failed to initialize webcam '{VideoDevice.Name}':\n\n{ex.Message}\n\n" +
-                              "Possible causes:\n" +
-                              "• Webcam is in use by another application\n" +
-                              "• Windows camera permissions are denied\n" +
-                              "• Webcam driver issue\n\n" +
-                              "Try:\n" +
-                              "• Close other apps using the webcam\n" +
-                              "• Check Windows Settings > Privacy > Camera";
-                
-                throw new Exception(errorMsg, ex);
-            }
+            BuildGraph();
         }
 
         public Size Size
@@ -77,6 +62,167 @@ namespace Captura.Webcam
                 {
                     return _videoSize;
                 }
+            }
+        }
+
+        public string GetCameraProperties()
+        {
+            lock (_lock)
+            {
+                var sb = new System.Text.StringBuilder();
+                
+                sb.AppendLine("=== CAMERA DEVICE INFORMATION ===");
+                sb.AppendLine($"Device Name: {_videoDevice.Name}");
+                sb.AppendLine($"Moniker: {_videoDevice.MonikerString}");
+                sb.AppendLine();
+                
+                sb.AppendLine("=== CURRENT VIDEO FORMAT ===");
+                sb.AppendLine($"Resolution: {_videoSize.Width} x {_videoSize.Height}");
+                sb.AppendLine($"Running: {_isRunning}");
+                sb.AppendLine();
+                
+                if (_videoInfoHeader.BmiHeader.Size > 0)
+                {
+                    sb.AppendLine("=== BITMAP INFO HEADER ===");
+                    sb.AppendLine($"Width: {_videoInfoHeader.BmiHeader.Width}");
+                    sb.AppendLine($"Height: {_videoInfoHeader.BmiHeader.Height}");
+                    sb.AppendLine($"BitCount: {_videoInfoHeader.BmiHeader.BitCount} bits per pixel");
+                    
+                    var compression = _videoInfoHeader.BmiHeader.Compression;
+                    sb.AppendLine($"Compression: 0x{compression:X8}");
+                    
+                    // Decode compression format
+                    if (compression == 0)
+                    {
+                        sb.AppendLine($"Compression Type: BI_RGB (Uncompressed)");
+                    }
+                    else
+                    {
+                        var compressionBytes = System.BitConverter.GetBytes(compression);
+                        var compressionStr = System.Text.Encoding.ASCII.GetString(compressionBytes).TrimEnd('\0');
+                        sb.AppendLine($"Compression Type: {compressionStr}");
+                        
+                        if (compressionStr.Contains("MJPG") || compressionStr.Contains("JPEG"))
+                        {
+                            sb.AppendLine("*** INFO: Camera is using MJPEG compression.");
+                            sb.AppendLine("*** MJPEG format is supported and will be automatically decompressed.");
+                        }
+                    }
+                    
+                    sb.AppendLine($"ImageSize: {_videoInfoHeader.BmiHeader.ImageSize} bytes");
+                    sb.AppendLine($"XPelsPerMeter: {_videoInfoHeader.BmiHeader.XPelsPerMeter}");
+                    sb.AppendLine($"YPelsPerMeter: {_videoInfoHeader.BmiHeader.YPelsPerMeter}");
+                    sb.AppendLine($"ClrUsed: {_videoInfoHeader.BmiHeader.ClrUsed}");
+                    sb.AppendLine($"ClrImportant: {_videoInfoHeader.BmiHeader.ClrImportant}");
+                    sb.AppendLine();
+                    
+                    sb.AppendLine("=== CALCULATED VALUES ===");
+                    sb.AppendLine($"Stride: {_stride} bytes");
+                    sb.AppendLine($"Frame Buffer Size: {_frameBuffer?.Length ?? 0} bytes");
+                    sb.AppendLine($"Expected Frame Size: {_stride * _videoSize.Height} bytes");
+                    sb.AppendLine();
+                }
+                
+                try
+                {
+                    if (_sampleGrabber != null && _isRunning)
+                    {
+                        sb.AppendLine("=== SAMPLE GRABBER INFO ===");
+                        
+                        var mediaType = new AMMediaType();
+                        var hr = _sampleGrabber.GetConnectedMediaType(mediaType);
+                        
+                        if (hr >= 0)
+                        {
+                            try
+                            {
+                                sb.AppendLine($"Major Type: {mediaType.majorType}");
+                                sb.AppendLine($"Sub Type: {mediaType.subType}");
+                                sb.AppendLine($"Format Type: {mediaType.formatType}");
+                                sb.AppendLine($"Fixed Size Samples: {mediaType.fixedSizeSamples}");
+                                sb.AppendLine($"Temporal Compression: {mediaType.temporalCompression}");
+                                sb.AppendLine($"Sample Size: {mediaType.sampleSize} bytes");
+                                sb.AppendLine();
+                                
+                                if (mediaType.formatPtr != IntPtr.Zero)
+                                {
+                                    if (mediaType.formatType == FormatType.VideoInfo)
+                                    {
+                                        var vih = (VideoInfoHeader)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader));
+                                        sb.AppendLine("=== VIDEO INFO HEADER ===");
+                                        sb.AppendLine($"Source Rect: ({vih.SrcRect.left}, {vih.SrcRect.top}, {vih.SrcRect.right}, {vih.SrcRect.bottom})");
+                                        sb.AppendLine($"Target Rect: ({vih.TargetRect.left}, {vih.TargetRect.top}, {vih.TargetRect.right}, {vih.TargetRect.bottom})");
+                                        sb.AppendLine($"Bit Rate: {vih.BitRate}");
+                                        sb.AppendLine($"Bit Error Rate: {vih.BitErrorRate}");
+                                        sb.AppendLine($"Avg Time Per Frame: {vih.AvgTimePerFrame} (100-nanosecond units)");
+                                        if (vih.AvgTimePerFrame > 0)
+                                        {
+                                            var fps = 10000000.0 / vih.AvgTimePerFrame;
+                                            sb.AppendLine($"Calculated FPS: {fps:F2}");
+                                        }
+                                    }
+                                    else if (mediaType.formatType == FormatType.VideoInfo2)
+                                    {
+                                        var vih2 = (VideoInfoHeader2)Marshal.PtrToStructure(mediaType.formatPtr, typeof(VideoInfoHeader2));
+                                        sb.AppendLine("=== VIDEO INFO HEADER 2 ===");
+                                        sb.AppendLine($"Source Rect: ({vih2.SrcRect.left}, {vih2.SrcRect.top}, {vih2.SrcRect.right}, {vih2.SrcRect.bottom})");
+                                        sb.AppendLine($"Target Rect: ({vih2.TargetRect.left}, {vih2.TargetRect.top}, {vih2.TargetRect.right}, {vih2.TargetRect.bottom})");
+                                        sb.AppendLine($"Bit Rate: {vih2.BitRate}");
+                                        sb.AppendLine($"Bit Error Rate: {vih2.BitErrorRate}");
+                                        sb.AppendLine($"Avg Time Per Frame: {vih2.AvgTimePerFrame} (100-nanosecond units)");
+                                        if (vih2.AvgTimePerFrame > 0)
+                                        {
+                                            var fps = 10000000.0 / vih2.AvgTimePerFrame;
+                                            sb.AppendLine($"Calculated FPS: {fps:F2}");
+                                        }
+                                        sb.AppendLine($"Interlace Flags: 0x{vih2.InterlaceFlags:X8}");
+                                        sb.AppendLine($"Copy Protected: {vih2.CopyProtectFlags}");
+                                        sb.AppendLine($"Picture Aspect Ratio X: {vih2.PictAspectRatioX}");
+                                        sb.AppendLine($"Picture Aspect Ratio Y: {vih2.PictAspectRatioY}");
+                                        sb.AppendLine($"Control Flags: 0x{vih2.ControlFlags:X8}");
+                                    }
+                                }
+                            }
+                            finally
+                            {
+                                DsUtils.FreeAMMediaType(mediaType);
+                            }
+                        }
+                        else
+                        {
+                            sb.AppendLine($"Failed to get media type (HR: 0x{hr:X8})");
+                        }
+                        
+                        sb.AppendLine();
+                        sb.AppendLine("=== BUFFER TEST ===");
+                        var bufferSize = 0;
+                        hr = _sampleGrabber.GetCurrentBuffer(ref bufferSize, IntPtr.Zero);
+                        if (hr >= 0)
+                        {
+                            sb.AppendLine($"Current Buffer Size: {bufferSize} bytes");
+                            sb.AppendLine($"Allocated Buffer Size: {_frameBuffer?.Length ?? 0} bytes");
+                            sb.AppendLine($"Buffer Match: {bufferSize <= (_frameBuffer?.Length ?? 0)}");
+                        }
+                        else
+                        {
+                            sb.AppendLine($"Failed to get buffer size (HR: 0x{hr:X8})");
+                        }
+                    }
+                    else
+                    {
+                        sb.AppendLine("=== SAMPLE GRABBER INFO ===");
+                        sb.AppendLine("Sample grabber not available (camera not running)");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine("=== ERROR READING PROPERTIES ===");
+                    sb.AppendLine($"Exception: {ex.Message}");
+                    sb.AppendLine($"Stack Trace: {ex.StackTrace}");
+                }
+                
+                return sb.ToString();
             }
         }
 
@@ -269,10 +415,15 @@ namespace Captura.Webcam
                     _videoSize = new Size(_videoInfoHeader.BmiHeader.Width, Math.Abs(_videoInfoHeader.BmiHeader.Height));
                     
                     _bitsPerPixel = _videoInfoHeader.BmiHeader.BitCount;
+                    _compression = _videoInfoHeader.BmiHeader.Compression;
                     _stride = (_videoSize.Width * _bitsPerPixel + 7) / 8;
                     _stride = (_stride + 3) & ~3;
                     
-                    _frameBuffer = new byte[_stride * _videoSize.Height];
+                    // For compressed formats, allocate larger buffer for compressed data
+                    if (_compression != 0)
+                        _frameBuffer = new byte[_videoInfoHeader.BmiHeader.ImageSize > 0 ? _videoInfoHeader.BmiHeader.ImageSize : _stride * _videoSize.Height * 2];
+                    else
+                        _frameBuffer = new byte[_stride * _videoSize.Height];
                 }
                 else if (mediaType.formatType == FormatType.VideoInfo2 && mediaType.formatPtr != IntPtr.Zero)
                 {
@@ -280,10 +431,15 @@ namespace Captura.Webcam
                     _videoSize = new Size(videoInfoHeader2.BmiHeader.Width, Math.Abs(videoInfoHeader2.BmiHeader.Height));
                     
                     _bitsPerPixel = videoInfoHeader2.BmiHeader.BitCount;
+                    _compression = videoInfoHeader2.BmiHeader.Compression;
                     _stride = (_videoSize.Width * _bitsPerPixel + 7) / 8;
                     _stride = (_stride + 3) & ~3;
                     
-                    _frameBuffer = new byte[_stride * _videoSize.Height];
+                    // For compressed formats, allocate larger buffer for compressed data
+                    if (_compression != 0)
+                        _frameBuffer = new byte[videoInfoHeader2.BmiHeader.ImageSize > 0 ? videoInfoHeader2.BmiHeader.ImageSize : _stride * _videoSize.Height * 2];
+                    else
+                        _frameBuffer = new byte[_stride * _videoSize.Height];
                     
                     _videoInfoHeader = new VideoInfoHeader
                     {
@@ -295,8 +451,8 @@ namespace Captura.Webcam
                     throw new InvalidOperationException($"Unsupported video format: {mediaType.formatType}");
                 }
 
-                // Allocate conversion buffer for RGB24 → RGB32 conversion
-                if (_bitsPerPixel == 24)
+                // Allocate conversion buffer for RGB24 → RGB32 conversion or MJPEG decompression
+                if (_bitsPerPixel == 24 || _compression != 0)
                     _convertedBuffer = new byte[_videoSize.Width * _videoSize.Height * 4];
             }
             finally
@@ -454,7 +610,62 @@ namespace Captura.Webcam
                         if (hr < 0)
                             return null;
 
-                        if (_bitsPerPixel == 24)
+                        // Check if MJPEG compression is used
+                        if (_compression != 0)
+                        {
+                            // MJPEG or other compressed format - decode using System.Drawing
+                            try
+                            {
+                                using (var ms = new System.IO.MemoryStream(_frameBuffer, 0, bufferSize))
+                                using (var bitmap = new System.Drawing.Bitmap(ms))
+                                {
+                                    // Convert bitmap to BGR32 format
+                                    var bmpData = bitmap.LockBits(
+                                        new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                                        System.Drawing.Imaging.ImageLockMode.ReadOnly,
+                                        System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                                    
+                                    try
+                                    {
+                                        var sourceStride = bmpData.Stride;
+                                        var sourcePtr = bmpData.Scan0;
+                                        var targetStride = _videoSize.Width * 4;
+                                        
+                                        // Copy bitmap data as-is (top-down)
+                                        for (int y = 0; y < _videoSize.Height; y++)
+                                        {
+                                            Marshal.Copy(
+                                                sourcePtr + y * sourceStride,
+                                                _convertedBuffer,
+                                                y * targetStride,
+                                                targetStride);
+                                        }
+                                        
+                                        var convertedHandle = GCHandle.Alloc(_convertedBuffer, GCHandleType.Pinned);
+                                        try
+                                        {
+                                            // Use data as-is without flipping
+                                            var dataPtr = convertedHandle.AddrOfPinnedObject();
+                                            return BitmapLoader.CreateBitmapBgr32(_videoSize, dataPtr, targetStride);
+                                        }
+                                        finally
+                                        {
+                                            convertedHandle.Free();
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        bitmap.UnlockBits(bmpData);
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                                // MJPEG decoding failed, return null
+                                return null;
+                            }
+                        }
+                        else if (_bitsPerPixel == 24)
                         {
                             // Convert RGB24 to RGB32 for CreateBitmapBgr32 compatibility
                             ConvertRgb24ToRgb32(_frameBuffer, _convertedBuffer, _videoSize.Width, _videoSize.Height, _stride);
