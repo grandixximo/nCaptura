@@ -41,7 +41,10 @@
                     <Path.Style>
                         <Style TargetType="Path" BasedOn="{StaticResource VideoSourceIcon}">
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding Settings.Audio.Enabled}" Value="True">
+                                <DataTrigger Binding="{Binding Settings.Audio.RecordMicrophone}" Value="True">
+                                    <Setter Property="Fill" Value="{DynamicResource Accent}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Settings.Audio.RecordSpeaker}" Value="True">
                                     <Setter Property="Fill" Value="{DynamicResource Accent}"/>
                                 </DataTrigger>
                             </Style.Triggers>

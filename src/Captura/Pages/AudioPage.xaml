@@ -5,15 +5,7 @@
     <Grid>
         <StackPanel DataContext="{Binding MainViewModel, Source={StaticResource ServiceLocator}}"
                     Margin="5,0,0,0">
-            <CheckBox Content="{Binding Audio, Source={StaticResource Loc}, Mode=OneWay}"
-                      IsChecked="{Binding Settings.Audio.Enabled, Mode=TwoWay}"
-                      IsEnabled="{Binding RecordingViewModel.RecorderState, Source={StaticResource ServiceLocator}, Converter={StaticResource NotRecordingConverter}}"
-                      FontWeight="Bold"
-                      Margin="0,0,0,5"
-                      FontSize="15"/>
-
-            <ScrollViewer IsEnabled="{Binding Settings.Audio.Enabled}"
-                          MaxHeight="200">
+            <ScrollViewer MaxHeight="200">
                 <StackPanel IsEnabled="{Binding RecordingViewModel.RecorderState, Source={StaticResource ServiceLocator}, Converter={StaticResource NotRecordingConverter}}"
                             Name="AudioSourcesPanel">
                     
