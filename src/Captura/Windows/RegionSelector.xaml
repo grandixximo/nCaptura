@@ -9,7 +9,6 @@
         xmlns:models="clr-namespace:Captura.Models;assembly=Captura.Core"
         mc:Ignorable="d"
         Title="{Binding RegionSelector, Source={StaticResource Loc}, Mode=OneWay}"
-        DataContext="{Binding MainViewModel, Source={StaticResource ServiceLocator}}"
         Background="Transparent"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -102,7 +101,7 @@
             </Border.Style>
 
             <InkCanvas Background="Transparent"
-                       Visibility="{Binding Settings.UI.RegionSelectorDrawingTools, Converter={StaticResource BoolToVisibilityConverter}}"
+                       Visibility="{Binding MainViewModel.Settings.UI.RegionSelectorDrawingTools, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}"
                        Name="InkCanvas"/>
         </Border>
 
@@ -215,12 +214,12 @@
             </Border>
 
             <Border BorderThickness="1"
-                    Name="ControlsBorder"
                     BorderBrush="{DynamicResource Accent}"
                     HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    DataContext="{Binding MainViewModel, Source={StaticResource ServiceLocator}}">
-                <DockPanel Background="{DynamicResource WindowBackground}">
+                    VerticalAlignment="Top">
+                <DockPanel Name="MainControls"
+                           Background="{DynamicResource WindowBackground}"
+                           d:DataContext="{d:DesignInstance viewModels:MainViewModel}">
                     <DockPanel.Resources>
                         <Style TargetType="local:ModernButton" BasedOn="{StaticResource {x:Type local:ModernButton}}">
                             <Setter Property="LayoutTransform">
@@ -231,34 +230,40 @@
                         </Style>
                     </DockPanel.Resources>
 
-                    <local:ModernButton IconData="{Binding Icons.SnapToWindow}"
+                    <local:ModernButton IconData="{Binding Icons.SnapToWindow, Source={StaticResource ServiceLocator}}"
                                         x:Name="Snapper"
                                         Click="Snapper_OnClick"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        ToolTip="Snap to Window"/>
+                                        ToolTip="{Binding SnapToWindow, Source={StaticResource Loc}, Mode=OneWay}"/>
 
                     <local:ModernButton x:Name="CloseButton"
                                         Click="CloseButton_Click"
                                         Background="{DynamicResource WindowBackground}"
                                         Foreground="#77ef5350"
-                                        IconData="{Binding Icons.Close}"
+                                        IconData="{Binding Icons.Close, Source={StaticResource ServiceLocator}}"
                                         DockPanel.Dock="Right"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
-                                        ToolTip="Close"/>
+                                        ToolTip="{Binding Close, Source={StaticResource Loc}, Mode=OneWay}"/>
 
-                    <local:ModernButton ToolTip="Screenshot"
-                                        Command="{Binding ScreenShotViewModel.ScreenShotCommand}"
-                                        IconData="{Binding Icons.Camera}"
+                    <local:ModernButton Command="{Binding ScreenShotViewModel.ScreenShotCommand, Source={StaticResource ServiceLocator}}"
+                                        IconData="{Binding Icons.Camera, Source={StaticResource ServiceLocator}}"
                                         DockPanel.Dock="Right"
-                                        Opacity="0.9"/>
-                    <local:ModernButton ToolTip="Record/Stop"
-                                        Command="{Binding RecordingViewModel.RecordCommand}"
-                                        Foreground="#b71c1c"
-                                        IconData="{Binding RecordingViewModel.RecorderState.Value, Converter={StaticResource StateToRecordButtonGeometryConverter}}"/>
-                    <local:ModernButton ToolTip="Pause/Resume" 
-                                        Command="{Binding RecordingViewModel.PauseCommand}"
-                                        IconData="{Binding Icons.Pause}"
                                         Opacity="0.9"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        ToolTip="{Binding ScreenShot, Source={StaticResource Loc}, Mode=OneWay}"/>
+
+                    <local:ModernButton Command="{Binding RecordingViewModel.RecordCommand, Source={StaticResource ServiceLocator}}"
+                                        Foreground="#b71c1c"
+                                        x:Name="RecordBtn"
+                                        IconData="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource StateToRecordButtonGeometryConverter}}"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        ToolTip="{Binding RecordStop, Source={StaticResource Loc}, Mode=OneWay}"/>
+
+                    <local:ModernButton Command="{Binding RecordingViewModel.PauseCommand, Source={StaticResource ServiceLocator}}"
+                                        IconData="{Binding Icons.Pause, Source={StaticResource ServiceLocator}}"
+                                        Opacity="0.9"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
+                                        ToolTip="{Binding PauseResume, Source={StaticResource Loc}, Mode=OneWay}"
                                         RenderTransformOrigin="0.5,0.5">
                         <local:ModernButton.RenderTransform>
                             <RotateTransform/>
@@ -266,7 +271,7 @@
                         <local:ModernButton.Style>
                             <Style TargetType="local:ModernButton" BasedOn="{StaticResource {x:Type local:ModernButton}}">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding RecordingViewModel.RecorderState.Value}" Value="Paused">
+                                    <DataTrigger Binding="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}}" Value="Paused">
                                         <DataTrigger.EnterActions>
                                             <BeginStoryboard>
                                                 <Storyboard>
@@ -294,58 +299,112 @@
                     <StackPanel Orientation="Horizontal"
                                 Margin="10,-1"
                                 PreviewMouseLeftButtonDown="UIElement_OnPreviewMouseLeftButtonDown"
-                                Visibility="{Binding TimerModel.Countdown, Converter={StaticResource IsLessThanConverter}, ConverterParameter=1}"
+                                Visibility="{Binding TimerModel.Countdown, Source={StaticResource ServiceLocator}, Converter={StaticResource IsLessThanConverter}, ConverterParameter=1}"
                                 Name="DurationLabel">
-                        <Label Content="{Binding TimerModel.TimeSpan}"/>
+                        <Label Content="{Binding TimerModel.TimeSpan, Source={StaticResource ServiceLocator}}"/>
 
-                        <Label Content="{Binding Settings.Duration, Converter={StaticResource SecondsToTimeSpanConverter}}"
+                        <Label Content="{Binding MainViewModel.Settings.Duration, Source={StaticResource ServiceLocator}, Converter={StaticResource SecondsToTimeSpanConverter}}"
                                ContentStringFormat="{} / {0}"
-                               Visibility="{Binding Settings.Duration, Converter={StaticResource NotNullConverter}}"/>
+                               Visibility="{Binding MainViewModel.Settings.Duration, Source={StaticResource ServiceLocator}, Converter={StaticResource NotNullConverter}}"/>
                     </StackPanel>
 
                     <Label Visibility="{Binding Visibility, ElementName=DurationLabel, Converter={StaticResource NegatingConverter}}"
-                           Content="{Binding TimerModel.Countdown}"
+                           Content="{Binding TimerModel.Countdown, Source={StaticResource ServiceLocator}}"
                            Margin="10,-1"
                            PreviewMouseLeftButtonDown="UIElement_OnPreviewMouseLeftButtonDown"
                            Style="{StaticResource CountdownLabel}"/>
                 </DockPanel>
-
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="HorizontalAlignment" Value="Right"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Width, ElementName=This, Converter={StaticResource IsLessThanConverter}, ConverterParameter=500}" Value="True">
-                                <Setter Property="HorizontalAlignment" Value="Left"/>
-                                <Setter Property="Margin" Value="0,40,0,0"/>
-                            </DataTrigger>
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding IsMouseOver, ElementName=SizeBorder}" Value="False"/>
-                                    <Condition Binding="{Binding RecordingViewModel.RecorderState.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource NotRecordingConverter}}" Value="False"/>
-                                </MultiDataTrigger.Conditions>
-                                <MultiDataTrigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                             To="0.2"
-                                                             Duration="0:0:0.3" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </MultiDataTrigger.EnterActions>
-                                <MultiDataTrigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                             To="1"
-                                                             Duration="0:0:0.3" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </MultiDataTrigger.ExitActions>
-                            </MultiDataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
             </Border>
         </Grid>
+
+        <Border Grid.Row="0"
+                Margin="10,0,0,0"
+                Grid.Column="1"
+                Grid.RowSpan="2"
+                BorderBrush="{DynamicResource Accent}"
+                BorderThickness="1"
+                VerticalAlignment="Top"
+                Visibility="{Binding MainViewModel.Settings.UI.RegionSelectorDrawingTools, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}">
+            <DockPanel Background="{DynamicResource WindowBackground}"
+                       LastChildFill="False">
+                <ListBox Name="ModesBox"
+                         SelectedValuePath="Key"
+                         DockPanel.Dock="Top"
+                         Margin="0,0,0,10"
+                         HorizontalContentAlignment="Center"
+                         SelectionChanged="ModesBox_OnSelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Path Data="{Binding Key, Converter={StaticResource InkToolToIconConverter}}"
+                                  Width="12"
+                                  Height="12"
+                                  Stretch="Uniform"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  ToolTip="{Binding Value}"
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType=ContentControl}}"
+                                  Margin="5"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <xctk:ColorPicker Margin="0,2"
+                                  BorderThickness="2"
+                                  Width="35"
+                                  DockPanel.Dock="Bottom"
+                                  Name="ColorPicker"
+                                  SelectedColorChanged="ColorPicker_OnSelectedColorChanged"
+                                  VerticalContentAlignment="Stretch"
+                                  ColorMode="ColorCanvas"
+                                  ShowAdvancedButton="True"
+                                  AdvancedButtonHeader="Color Canvas"
+                                  StandardButtonHeader="Pallette"
+                                  ShowRecentColors="True">
+                    <xctk:ColorPicker.LayoutTransform>
+                        <ScaleTransform ScaleX="0.85" ScaleY="0.85"/>
+                    </xctk:ColorPicker.LayoutTransform>
+                </xctk:ColorPicker>
+
+                <xctk:IntegerUpDown Name="SizeBox"
+                                    Minimum="1"
+                                    Maximum="99"
+                                    DockPanel.Dock="Bottom"
+                                    ValueChanged="SizeBox_OnValueChanged"
+                                    Margin="0,2"
+                                    Width="40">
+                    <xctk:IntegerUpDown.LayoutTransform>
+                        <ScaleTransform ScaleX="0.85" ScaleY="0.85"/>
+                    </xctk:IntegerUpDown.LayoutTransform>
+                </xctk:IntegerUpDown>
+            </DockPanel>
+
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Opacity" Value="0.2"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         To="1"
+                                                         Duration="0:0:0.3" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         To="0.2"
+                                                         Duration="0:0:0.3" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+        </Border>
     </Grid>
 </Window>
