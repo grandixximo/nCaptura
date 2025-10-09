@@ -35,9 +35,6 @@ namespace Captura
 
             InitDimensionBoxes();
 
-            // Setting MainViewModel as DataContext from XAML causes crash.
-            Loaded += (S, E) => MainControls.DataContext = ServiceProvider.Get<MainViewModel>();
-
             ModesBox.ItemsSource = new[]
             {
                 new KeyValuePair<InkCanvasEditingMode, string>(InkCanvasEditingMode.None, "Pointer"),
