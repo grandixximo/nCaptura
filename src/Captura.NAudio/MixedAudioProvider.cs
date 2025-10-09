@@ -102,7 +102,7 @@ namespace Captura.Audio
 
         public void Dispose()
         {
-            foreach (var provider in _audioProviders.Keys)
+            foreach (var provider in _providers.Keys)
             {
                 provider.Dispose();
             }
