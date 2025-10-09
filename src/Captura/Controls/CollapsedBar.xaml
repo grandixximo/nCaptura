@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Captura.CollapsedBar"
+<UserControl x:Class="Captura.CollapsedBar"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -19,6 +19,13 @@
                 <Setter Property="Fill" Value="{Binding Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType=ContentControl}}"/>
             </Style>
             <Style TargetType="captura:ModernToggleButton" BasedOn="{StaticResource {x:Type captura:ModernToggleButton}}">
+                <Setter Property="LayoutTransform">
+                    <Setter.Value>
+                        <ScaleTransform ScaleX="0.85" ScaleY="0.85"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style TargetType="captura:ModernButton" BasedOn="{StaticResource {x:Type captura:ModernButton}}">
                 <Setter Property="LayoutTransform">
                     <Setter.Value>
                         <ScaleTransform ScaleX="0.85" ScaleY="0.85"/>
