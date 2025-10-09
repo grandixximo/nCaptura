@@ -1,4 +1,4 @@
-﻿using Captura.Audio;
+using Captura.Audio;
 using SharpDX.MediaFoundation;
 using System;
 using System.Runtime.InteropServices;
@@ -18,7 +18,11 @@ namespace Captura.Windows.MediaFoundation
             WaveFormat Wf,
             int AudioQuality)
         {
-            _writer = MediaFactory.CreateSinkWriterFromURL(FileName, null, null);
+            var attr = new MediaAttributes(2);
+            attr.Set(SinkWriterAttributeKeys.LowLatency, true);
+            attr.Set(SinkWriterAttributeKeys.ReadwriteDisableConverters, 0);
+            
+            _writer = MediaFactory.CreateSinkWriterFromURL(FileName, null, attr);
 
             _audioInBytesPerSecond = Wf.SampleRate * Wf.Channels * Wf.BitsPerSample / 8;
 
