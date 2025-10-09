@@ -214,6 +214,13 @@ namespace Captura.Video
 
             var toWrite = (int)(shouldHaveWritten - _audioBytesWritten);
 
+            // Prevent large bursts; keep writes bounded
+            var maxBurstBytes = _audioChunkBytes * 4;
+            if (toWrite > maxBurstBytes)
+            {
+                toWrite = maxBurstBytes;
+            }
+
             // Only write if data to write is more than chunk size.
             // This gives enough time for the audio provider to buffer data from the source.
             if (toWrite < _audioChunkBytes)
