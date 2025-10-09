@@ -9,6 +9,7 @@
         xmlns:models="clr-namespace:Captura.Models;assembly=Captura.Core"
         mc:Ignorable="d"
         Title="{Binding RegionSelector, Source={StaticResource Loc}, Mode=OneWay}"
+        DataContext="{Binding MainViewModel, Source={StaticResource ServiceLocator}}"
         Background="Transparent"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -101,7 +102,6 @@
             </Border.Style>
 
             <InkCanvas Background="Transparent"
-                       DataContext="{Binding MainViewModel, Source={StaticResource ServiceLocator}}"
                        Visibility="{Binding Settings.UI.RegionSelectorDrawingTools, Converter={StaticResource BoolToVisibilityConverter}}"
                        Name="InkCanvas"/>
         </Border>
@@ -257,7 +257,6 @@
                                         Foreground="#b71c1c"
                                         x:Name="RecordBtn"
                                         IconData="{Binding Icons.Record, Source={StaticResource ServiceLocator}}"
-                                        DockPanel.Dock="Right"
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         ToolTip="{Binding RecordStop, Source={StaticResource Loc}, Mode=OneWay}"/>
 
@@ -326,7 +325,6 @@
                 BorderBrush="{DynamicResource Accent}"
                 BorderThickness="1"
                 VerticalAlignment="Top"
-                DataContext="{Binding MainViewModel, Source={StaticResource ServiceLocator}}"
                 Visibility="{Binding Settings.UI.RegionSelectorDrawingTools, Converter={StaticResource BoolToVisibilityConverter}}">
             <DockPanel Background="{DynamicResource WindowBackground}"
                        LastChildFill="False">
