@@ -101,8 +101,8 @@
             </Border.Style>
 
             <InkCanvas Background="Transparent"
-                       Visibility="{Binding Settings.UI.RegionSelectorDrawingTools, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}"
                        DataContext="{Binding MainViewModel, Source={StaticResource ServiceLocator}}"
+                       Visibility="{Binding Settings.UI.RegionSelectorDrawingTools, Converter={StaticResource BoolToVisibilityConverter}}"
                        Name="InkCanvas"/>
         </Border>
 
