@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 // ReSharper disable MemberCanBePrivate.Global
@@ -204,6 +204,24 @@ namespace Captura.Loc
         }
 
         public string DarkTheme
+        {
+            get => Get();
+            set => Set(value);
+        }
+
+        public string LightTheme
+        {
+            get => Get();
+            set => Set(value);
+        }
+
+        public string FollowSystemTheme
+        {
+            get => Get();
+            set => Set(value);
+        }
+
+        public string ThemeMode
         {
             get => Get();
             set => Set(value);
