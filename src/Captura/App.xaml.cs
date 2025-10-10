@@ -9,6 +9,7 @@ using Captura.Models;
 using Captura.MouseKeyHook;
 using Captura.ViewModels;
 using Captura.Views;
+using Captura.Windows;
 using CommandLine;
 
 namespace Captura
@@ -70,6 +71,13 @@ namespace Captura
 
         void Application_Exit(object Sender, ExitEventArgs E)
         {
+            try
+            {
+                // Stop monitoring system theme changes
+                SystemThemeDetector.StopMonitoring();
+            }
+            catch { }
+
             try
             {
                 // Ensure modules and services are disposed first
@@ -138,9 +146,25 @@ namespace Captura
                 Settings.Load();
             }
 
-            if (Settings.UI.DarkTheme)
+            // Apply theme based on settings
+            if (Settings.UI.FollowSystemTheme)
             {
-                AppearanceManager.Current.ThemeSource = AppearanceManager.DarkThemeSource;
+                // Follow system theme
+                bool isDark = SystemThemeDetector.IsSystemDarkTheme();
+                AppearanceManager.Current.ThemeSource = isDark
+                    ? AppearanceManager.DarkThemeSource
+                    : AppearanceManager.LightThemeSource;
+                
+                // Start monitoring system theme changes
+                SystemThemeDetector.StartMonitoring();
+                SystemThemeDetector.SystemThemeChanged += (s, e) => OnSystemThemeChanged(Settings);
+            }
+            else
+            {
+                // Use manual theme selection
+                AppearanceManager.Current.ThemeSource = Settings.UI.ThemeMode == "Dark"
+                    ? AppearanceManager.DarkThemeSource
+                    : AppearanceManager.LightThemeSource;
             }
 
             var accent = Settings.UI.AccentColor;
@@ -148,6 +172,21 @@ namespace Captura
             if (!string.IsNullOrEmpty(accent))
             {
                 AppearanceManager.Current.AccentColor = WpfExtensions.ParseColor(accent);
+            }
+        }
+
+        static void OnSystemThemeChanged(Settings Settings)
+        {
+            // Only apply if still following system theme
+            if (Settings.UI.FollowSystemTheme)
+            {
+                bool isDark = SystemThemeDetector.IsSystemDarkTheme();
+                Current.Dispatcher.Invoke(() =>
+                {
+                    AppearanceManager.Current.ThemeSource = isDark
+                        ? AppearanceManager.DarkThemeSource
+                        : AppearanceManager.LightThemeSource;
+                });
             }
         }
     }
