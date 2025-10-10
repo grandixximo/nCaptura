@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Reactive.Linq;
 using WSize = System.Windows.Size;
@@ -14,7 +15,7 @@ using Xceed.Wpf.Toolkit.Core.Utilities;
 
 namespace Captura
 {
-    public partial class WebcamPage
+    public partial class WebcamPage : INotifyPropertyChanged
     {
         readonly WebcamModel _webcamModel;
         readonly ScreenShotModel _screenShotModel;
@@ -37,12 +38,55 @@ namespace Captura
             InitializeComponent();
         }
 
-        bool _loaded;
-
-        async void OnLoaded(object Sender, RoutedEventArgs E)
+        bool _isLoadingScreenshot;
+        public bool IsLoadingScreenshot
         {
-            await UpdateBackground();
+            get => _isLoadingScreenshot;
+            set
+            {
+                if (_isLoadingScreenshot != value)
+                {
+                    _isLoadingScreenshot = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoadingScreenshot)));
+                }
+            }
+        }
 
+        bool _isLoadingCamera;
+        public bool IsLoadingCamera
+        {
+            get => _isLoadingCamera;
+            set
+            {
+                if (_isLoadingCamera != value)
+                {
+                    _isLoadingCamera = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoadingCamera)));
+                }
+            }
+        }
+
+        bool _isCameraReady;
+        public bool IsCameraReady
+        {
+            get => _isCameraReady;
+            set
+            {
+                if (_isCameraReady != value)
+                {
+                    _isCameraReady = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCameraReady)));
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        bool _loaded;
+        static WSize _cachedFrameSize = new WSize(1920, 1080);
+
+        void OnLoaded(object Sender, RoutedEventArgs E)
+        {
             if (_loaded)
                 return;
 
@@ -59,11 +103,35 @@ namespace Captura
                 _reactor.Size.Select(M => M.Height).ToReadOnlyReactivePropertySlim());
 
             control.BindOne(OpacityProperty, _reactor.Opacity);
+
+            _reactor.FrameSize.OnNext(_cachedFrameSize);
         }
 
-        async Task UpdateBackground()
+        async Task UpdateBackgroundAsync()
         {
-            Img.Source = await WpfExtensions.GetBackground();
+            IsLoadingScreenshot = true;
+
+            try
+            {
+                await Task.Yield();
+
+                var source = await WpfExtensions.GetBackground();
+
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    Img.Source = source;
+
+                    if (Img.ActualWidth > 0 && Img.ActualHeight > 0)
+                    {
+                        _cachedFrameSize = new WSize(Img.ActualWidth, Img.ActualHeight);
+                        _reactor.FrameSize.OnNext(_cachedFrameSize);
+                    }
+                }, System.Windows.Threading.DispatcherPriority.Loaded);
+            }
+            finally
+            {
+                IsLoadingScreenshot = false;
+            }
         }
 
         IReadOnlyReactiveProperty<IWebcamCapture> _webcamCapture;
@@ -72,23 +140,21 @@ namespace Captura
         {
             _webcamModel.PreviewClicked += SettingsWindow.ShowWebcamPage;
 
-            IsVisibleChanged += (S, E) =>
+            IsVisibleChanged += async (S, E) =>
             {
-                if (IsVisible && _webcamCapture == null)
+                if (IsVisible)
                 {
-                    _webcamCapture = _webcamModel.InitCapture();
-
-                    if (_webcamCapture.Value is { } capture)
-                    {
-                        _reactor.WebcamSize.OnNext(new WSize(capture.Width, capture.Height));
-
-                        UpdateWebcamPreview();
-                    }
+                    await Task.Delay(300);
+                    _ = UpdateBackgroundAsync();
+                    await InitializeCameraAsync();
                 }
-                else if (!IsVisible && _webcamCapture != null)
+                else
                 {
-                    _webcamModel.ReleaseCapture();
-                    _webcamCapture = null;
+                    if (_webcamCapture != null)
+                    {
+                        _webcamModel.ReleaseCapture();
+                        _webcamCapture = null;
+                    }
                 }
             };
 
@@ -97,14 +163,18 @@ namespace Captura
                 if (!IsVisible)
                     return;
 
-                _reactor.FrameSize.OnNext(new WSize(Img.ActualWidth, Img.ActualHeight));
+                if (Img.ActualWidth > 0 && Img.ActualHeight > 0)
+                {
+                    _cachedFrameSize = new WSize(Img.ActualWidth, Img.ActualHeight);
+                    _reactor.FrameSize.OnNext(_cachedFrameSize);
+                }
             }
 
             PreviewGrid.LayoutUpdated += (S, E) => OnRegionChange();
 
             _webcamModel
                 .ObserveProperty(M => M.SelectedCam)
-                .Subscribe(M => UpdateWebcamPreview());
+                .Subscribe(M => OnCameraChanged());
 
             _reactor.Location
                 .CombineLatest(_reactor.Size, (M, N) =>
@@ -115,6 +185,76 @@ namespace Captura
                 .Subscribe();
 
             UpdateWebcamPreview();
+        }
+
+        async void OnCameraChanged()
+        {
+            if (!IsVisible)
+                return;
+
+            if (_webcamCapture != null)
+            {
+                _webcamModel.ReleaseCapture();
+                _webcamCapture = null;
+            }
+
+            await InitializeCameraAsync();
+        }
+
+        async Task InitializeCameraAsync()
+        {
+            if (_webcamCapture != null)
+            {
+                _webcamModel.ReleaseCapture();
+                _webcamCapture = null;
+            }
+
+            IsCameraReady = false;
+
+            if (_webcamModel.SelectedCam is NoWebcamItem)
+            {
+                return;
+            }
+
+            while (IsLoadingScreenshot)
+            {
+                await Task.Delay(50);
+            }
+
+            await Task.Delay(300);
+
+            await Dispatcher.InvokeAsync(() =>
+            {
+                IsCameraReady = true;
+            });
+
+            IsLoadingCamera = true;
+
+            try
+            {
+                await Task.Yield();
+
+                _webcamCapture = _webcamModel.InitCapture();
+
+                if (_webcamCapture.Value is { } capture)
+                {
+                    _reactor.WebcamSize.OnNext(new WSize(capture.Width, capture.Height));
+
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        UpdateWebcamPreview();
+                    }, System.Windows.Threading.DispatcherPriority.Loaded);
+                }
+            }
+            finally
+            {
+                IsLoadingCamera = false;
+            }
+        }
+
+        async void Refresh_OnClick(object Sender, RoutedEventArgs E)
+        {
+            await UpdateBackgroundAsync();
         }
 
         async void CaptureImage_OnClick(object Sender, RoutedEventArgs E)
