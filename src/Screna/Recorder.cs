@@ -298,6 +298,35 @@ namespace Captura.Video
             if (_audioProvider != null)
             {
                 _audioProvider.Stop();
+
+                // Pad trailing audio with silence to match last video frame boundary
+                try
+                {
+                    if (_videoWriter != null)
+                    {
+                        var requiredAudioBytes = (long)_frameCount * _audioBytesPerFrame;
+                        var missingBytes = requiredAudioBytes - _audioBytesWritten;
+
+                        if (missingBytes > 0)
+                        {
+                            var padBuffer = _silenceBuffer;
+                            if (padBuffer == null || padBuffer.Length < _audioChunkBytes)
+                            {
+                                padBuffer = new byte[_audioChunkBytes];
+                            }
+
+                            while (missingBytes > 0)
+                            {
+                                var toWrite = (int)Math.Min(missingBytes, (long)_audioChunkBytes);
+                                _videoWriter.WriteAudio(padBuffer, 0, toWrite);
+                                _audioBytesWritten += toWrite;
+                                missingBytes -= toWrite;
+                            }
+                        }
+                    }
+                }
+                catch { }
+
                 _audioProvider.Dispose();
                 _audioProvider = null;
             }

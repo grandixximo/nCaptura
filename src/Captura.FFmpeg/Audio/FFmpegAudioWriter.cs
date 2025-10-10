@@ -48,17 +48,21 @@ namespace Captura.FFmpeg
                 }
                 catch { }
 
-                // Ask FFmpeg to quit gracefully
-                FFmpegService.TryGracefulStop(_ffmpegProcess);
-
-                if (!_ffmpegProcess.WaitForExit(10000))
+                // Prefer natural EOF on stdin; only ask to quit if it refuses
+                if (!_ffmpegProcess.WaitForExit(20000))
                 {
+                    // Ask FFmpeg to quit gracefully
+                    FFmpegService.TryGracefulStop(_ffmpegProcess);
+
+                    if (!_ffmpegProcess.WaitForExit(10000))
+                    {
                     try
                     {
                         _ffmpegProcess.Kill();
                         _ffmpegProcess.WaitForExit(2000);
                     }
                     catch { }
+                    }
                 }
             }
             finally

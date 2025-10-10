@@ -51,14 +51,18 @@ namespace Captura.FFmpeg
             var argsBuilder = new FFmpegArgsBuilder();
 
             argsBuilder.AddInputPipe(videoPipeName)
-                .AddArg("thread_queue_size", 1024)
+                .AddArg("thread_queue_size", 8192)
+                .AddArg("use_wallclock_as_timestamps", 1)
+                .AddArg("fflags", "+genpts")
                 .AddArg("framerate", Args.FrameRate)
                 .SetFormat("rawvideo")
                 .AddArg("pix_fmt", nv12 ? "nv12" : "rgb32")
                 .SetVideoSize(w, h);
 
             var output = argsBuilder.AddOutputFile(Args.FileName)
-                .SetFrameRate(Args.FrameRate);
+                .SetFrameRate(Args.FrameRate)
+                .AddArg("vsync", "cfr")
+                .AddArg("movflags", "+faststart");
 
             Args.VideoCodec.Apply(settings, Args, output);
             
@@ -82,12 +86,17 @@ namespace Captura.FFmpeg
 
                 argsBuilder.AddInputPipe(audioPipeName)
                     .AddArg("thread_queue_size", 8192)
+                    .AddArg("use_wallclock_as_timestamps", 1)
+                    .AddArg("fflags", "+genpts")
                     .SetFormat("s16le")
                     .SetAudioCodec("pcm_s16le")
                     .SetAudioFrequency(Args.Frequency)
                     .SetAudioChannels(Args.Channels);
 
                 Args.VideoCodec.AudioArgsProvider(Args.AudioQuality, output);
+
+                // Improve clock drift handling between audio and video for live/raw inputs
+                output.AddArg("af", "aresample=async=1:first_pts=0");
 
                 var wf = Args.AudioProvider.WaveFormat;
 
@@ -129,6 +138,16 @@ namespace Captura.FFmpeg
             }
         }
 
+        // Detect encoding progress by observing stderr via FFmpegService's log item
+        public bool IsEncodingLikelyActive()
+        {
+            try
+            {
+                return _ffmpegProcess != null && !_ffmpegProcess.HasExited;
+            }
+            catch { return false; }
+        }
+
         public void Dispose()
         {
             try
@@ -136,26 +155,28 @@ namespace Captura.FFmpeg
                 try { _lastFrameTask?.Wait(5000); } catch { }
                 try { _lastAudio?.Wait(5000); } catch { }
 
-                try
-                {
-                    _ffmpegIn?.Flush();
-                    _audioPipe?.Flush();
-                }
-                catch { }
+                try { _ffmpegIn?.Flush(); } catch { }
+                try { _audioPipe?.Flush(); } catch { }
+                try { _ffmpegIn?.WaitForPipeDrain(); } catch { }
+                try { _audioPipe?.WaitForPipeDrain(); } catch { }
 
                 try { _ffmpegIn?.Dispose(); } catch { }
                 try { _audioPipe?.Dispose(); } catch { }
 
-                FFmpegService.TryGracefulStop(_ffmpegProcess);
-
-                if (!_ffmpegProcess.WaitForExit(10000))
+                // Prefer natural EOF on pipes; only send 'q' if FFmpeg refuses to exit
+                if (!_ffmpegProcess.WaitForExit(20000))
                 {
+                    FFmpegService.TryGracefulStop(_ffmpegProcess);
+
+                    if (!_ffmpegProcess.WaitForExit(10000))
+                    {
                     try
                     {
                         _ffmpegProcess.Kill();
                         _ffmpegProcess.WaitForExit(2000);
                     }
                     catch { }
+                    }
                 }
             }
             finally
