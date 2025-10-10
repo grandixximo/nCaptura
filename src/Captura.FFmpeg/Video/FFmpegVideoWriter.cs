@@ -51,9 +51,7 @@ namespace Captura.FFmpeg
             var argsBuilder = new FFmpegArgsBuilder();
 
             argsBuilder.AddInputPipe(videoPipeName)
-                .AddArg("thread_queue_size", 8192)
-                .AddArg("use_wallclock_as_timestamps", 1)
-                .AddArg("fflags", "+genpts")
+                .AddArg("thread_queue_size", 1024)
                 .AddArg("framerate", Args.FrameRate)
                 .SetFormat("rawvideo")
                 .AddArg("pix_fmt", nv12 ? "nv12" : "rgb32")
@@ -61,7 +59,6 @@ namespace Captura.FFmpeg
 
             var output = argsBuilder.AddOutputFile(Args.FileName)
                 .SetFrameRate(Args.FrameRate)
-                .AddArg("vsync", "cfr")
                 .AddArg("movflags", "+faststart");
 
             Args.VideoCodec.Apply(settings, Args, output);
@@ -86,8 +83,6 @@ namespace Captura.FFmpeg
 
                 argsBuilder.AddInputPipe(audioPipeName)
                     .AddArg("thread_queue_size", 8192)
-                    .AddArg("use_wallclock_as_timestamps", 1)
-                    .AddArg("fflags", "+genpts")
                     .SetFormat("s16le")
                     .SetAudioCodec("pcm_s16le")
                     .SetAudioFrequency(Args.Frequency)
@@ -95,8 +90,7 @@ namespace Captura.FFmpeg
 
                 Args.VideoCodec.AudioArgsProvider(Args.AudioQuality, output);
 
-                // Improve clock drift handling between audio and video for live/raw inputs
-                output.AddArg("af", "aresample=async=1:first_pts=0");
+                // Keep audio as provided without additional resampling to avoid added latency
 
                 var wf = Args.AudioProvider.WaveFormat;
 
