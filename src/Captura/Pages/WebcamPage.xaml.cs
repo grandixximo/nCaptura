@@ -105,8 +105,6 @@ namespace Captura
             control.BindOne(OpacityProperty, _reactor.Opacity);
 
             _reactor.FrameSize.OnNext(_cachedFrameSize);
-
-            _ = UpdateBackgroundAsync();
         }
 
         async Task UpdateBackgroundAsync()
@@ -146,6 +144,8 @@ namespace Captura
             {
                 if (IsVisible)
                 {
+                    await Task.Delay(300);
+                    _ = UpdateBackgroundAsync();
                     await InitializeCameraAsync();
                 }
                 else
@@ -250,6 +250,11 @@ namespace Captura
             {
                 IsLoadingCamera = false;
             }
+        }
+
+        async void Refresh_OnClick(object Sender, RoutedEventArgs E)
+        {
+            await UpdateBackgroundAsync();
         }
 
         async void CaptureImage_OnClick(object Sender, RoutedEventArgs E)

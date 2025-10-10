@@ -14,6 +14,7 @@
             <DockPanel>
                 <captura:ModernButton ToolTip="{Binding Refresh, Source={StaticResource Loc}, Mode=OneWay}"
                                       Command="{Binding WebcamModel.RefreshCommand, Source={StaticResource ServiceLocator}}"
+                                      Click="Refresh_OnClick"
                                       IconData="{Binding Icons.Refresh, Source={StaticResource ServiceLocator}}"
                                       DockPanel.Dock="Right"/>
 
