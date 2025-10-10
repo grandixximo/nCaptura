@@ -127,9 +127,17 @@
                            MaxWidth="{Binding ActualWidth, ElementName=Img}"
                            MaxHeight="{Binding ActualHeight, ElementName=Img}"/>
 
-                    <!-- Loading Spinner -->
-                    <Grid Background="#80000000"
-                          Visibility="{Binding IsLoading, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <!-- Loading Spinner - Positioned in camera preview area -->
+                    <Border Name="LoadingSpinner"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            Background="#80000000"
+                            Margin="{Binding Margin, ElementName=PreviewTarget}"
+                            Width="{Binding Width, ElementName=PreviewTarget}"
+                            Height="{Binding Height, ElementName=PreviewTarget}"
+                            MaxWidth="{Binding ActualWidth, ElementName=Img}"
+                            MaxHeight="{Binding ActualHeight, ElementName=Img}"
+                            Visibility="{Binding IsLoading, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BoolToVisibilityConverter}}">
                         <StackPanel HorizontalAlignment="Center"
                                     VerticalAlignment="Center">
                             <TextBlock Text="⏳"
@@ -162,7 +170,7 @@
                                        HorizontalAlignment="Center"
                                        Foreground="White"/>
                         </StackPanel>
-                    </Grid>
+                    </Border>
                 </Grid>
             </DockPanel>
         </DockPanel>

@@ -91,14 +91,17 @@ namespace Captura
 
             IsVisibleChanged += async (S, E) =>
             {
-                if (IsVisible && _webcamCapture == null)
+                if (IsVisible)
                 {
                     await InitializeCameraAsync();
                 }
-                else if (!IsVisible && _webcamCapture != null)
+                else
                 {
-                    _webcamModel.ReleaseCapture();
-                    _webcamCapture = null;
+                    if (_webcamCapture != null)
+                    {
+                        _webcamModel.ReleaseCapture();
+                        _webcamCapture = null;
+                    }
                 }
             };
 
@@ -143,6 +146,17 @@ namespace Captura
 
         async Task InitializeCameraAsync()
         {
+            if (_webcamCapture != null)
+            {
+                _webcamModel.ReleaseCapture();
+                _webcamCapture = null;
+            }
+
+            if (_webcamModel.SelectedCam is NoWebcamItem)
+            {
+                return;
+            }
+
             IsLoading = true;
 
             try
@@ -155,7 +169,10 @@ namespace Captura
                 {
                     _reactor.WebcamSize.OnNext(new WSize(capture.Width, capture.Height));
 
-                    UpdateWebcamPreview();
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        UpdateWebcamPreview();
+                    }, System.Windows.Threading.DispatcherPriority.Loaded);
                 }
             }
             finally
