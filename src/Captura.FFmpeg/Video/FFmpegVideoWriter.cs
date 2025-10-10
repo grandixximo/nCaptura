@@ -59,10 +59,7 @@ namespace Captura.FFmpeg
 
             var output = argsBuilder.AddOutputFile(Args.FileName)
                 .SetFrameRate(Args.FrameRate)
-                .AddArg("movflags", "+faststart")
-                .AddArg("shortest")
-                .AddArg("muxdelay", 0)
-                .AddArg("max_interleave_delta", 0);
+                .AddArg("movflags", "+faststart");
 
             Args.VideoCodec.Apply(settings, Args, output);
             
