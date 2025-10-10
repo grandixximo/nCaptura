@@ -59,7 +59,10 @@ namespace Captura.FFmpeg
 
             var output = argsBuilder.AddOutputFile(Args.FileName)
                 .SetFrameRate(Args.FrameRate)
-                .AddArg("movflags", "+faststart");
+                .AddArg("movflags", "+faststart")
+                .AddArg("shortest")
+                .AddArg("muxdelay", 0)
+                .AddArg("max_interleave_delta", 0);
 
             Args.VideoCodec.Apply(settings, Args, output);
             
@@ -151,26 +154,21 @@ namespace Captura.FFmpeg
 
                 try { _ffmpegIn?.Flush(); } catch { }
                 try { _audioPipe?.Flush(); } catch { }
-                try { _ffmpegIn?.WaitForPipeDrain(); } catch { }
-                try { _audioPipe?.WaitForPipeDrain(); } catch { }
 
                 try { _ffmpegIn?.Dispose(); } catch { }
                 try { _audioPipe?.Dispose(); } catch { }
 
-                // Prefer natural EOF on pipes; only send 'q' if FFmpeg refuses to exit
-                if (!_ffmpegProcess.WaitForExit(20000))
-                {
-                    FFmpegService.TryGracefulStop(_ffmpegProcess);
+                // Immediately ask FFmpeg to finalize quickly
+                FFmpegService.TryGracefulStop(_ffmpegProcess);
 
-                    if (!_ffmpegProcess.WaitForExit(10000))
-                    {
+                if (!_ffmpegProcess.WaitForExit(10000))
+                {
                     try
                     {
                         _ffmpegProcess.Kill();
                         _ffmpegProcess.WaitForExit(2000);
                     }
                     catch { }
-                    }
                 }
             }
             finally

@@ -25,7 +25,10 @@ namespace Captura.FFmpeg
                 .SetAudioChannels(Channels)
                 .DisableVideo();
 
-            var output = argsBuilder.AddOutputFile(FileName);
+            var output = argsBuilder.AddOutputFile(FileName)
+                .AddArg("shortest")
+                .AddArg("muxdelay", 0)
+                .AddArg("max_interleave_delta", 0);
 
             AudioArgsProvider(AudioQuality, output);
 
