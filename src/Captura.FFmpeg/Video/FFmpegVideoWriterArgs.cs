@@ -1,4 +1,4 @@
-﻿using Captura.Video;
+using Captura.Video;
 
 namespace Captura.FFmpeg
 {
@@ -6,7 +6,7 @@ namespace Captura.FFmpeg
     {
         public static FFmpegVideoWriterArgs FromVideoWriterArgs(VideoWriterArgs Args, FFmpegVideoCodec VideoCodec)
         {
-            return new FFmpegVideoWriterArgs
+            var ffArgs = new FFmpegVideoWriterArgs
             {
                 FileName = Args.FileName,
                 ImageProvider = Args.ImageProvider,
@@ -16,6 +16,16 @@ namespace Captura.FFmpeg
                 AudioQuality = Args.AudioQuality,
                 AudioProvider = Args.AudioProvider
             };
+
+            // Auto-configure audio pipe format to match provider
+            if (Args.AudioProvider != null)
+            {
+                var wf = Args.AudioProvider.WaveFormat;
+                ffArgs.Frequency = wf.SampleRate;
+                ffArgs.Channels = wf.Channels;
+            }
+
+            return ffArgs;
         }
 
         public FFmpegVideoCodec VideoCodec { get; set; }
