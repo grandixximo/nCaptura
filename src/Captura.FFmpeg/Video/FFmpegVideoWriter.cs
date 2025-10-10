@@ -51,7 +51,7 @@ namespace Captura.FFmpeg
             var argsBuilder = new FFmpegArgsBuilder();
 
             argsBuilder.AddInputPipe(videoPipeName)
-                .AddArg("thread_queue_size", 512)
+                .AddArg("thread_queue_size", 1024)
                 .AddArg("framerate", Args.FrameRate)
                 .SetFormat("rawvideo")
                 .AddArg("pix_fmt", nv12 ? "nv12" : "rgb32")
@@ -81,7 +81,7 @@ namespace Captura.FFmpeg
                 var audioPipeName = GetPipeName();
 
                 argsBuilder.AddInputPipe(audioPipeName)
-                    .AddArg("thread_queue_size", 512)
+                    .AddArg("thread_queue_size", 8192)
                     .SetFormat("s16le")
                     .SetAudioCodec("pcm_s16le")
                     .SetAudioFrequency(Args.Frequency)
@@ -96,8 +96,8 @@ namespace Captura.FFmpeg
                                             * wf.Channels
                                             * (wf.BitsPerSample / 8.0));
 
-                // Modest buffer size to avoid stalls without huge allocation
-                var audioBufferSize = 16384;
+                // Larger buffer to prevent audio crackling and underruns (~500ms)
+                var audioBufferSize = Math.Max(65536, wf.SampleRate * wf.Channels * (wf.BitsPerSample / 8) / 2);
 
                 _audioPipe = new NamedPipeServerStream(audioPipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, audioBufferSize, audioBufferSize);
             }
