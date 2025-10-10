@@ -119,6 +119,14 @@
                     <Image Name="Img"
                            Stretch="Uniform"/>
 
+                    <!-- Screenshot Loading Text -->
+                    <TextBlock Text="Loading..."
+                               FontSize="20"
+                               Foreground="White"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsLoadingScreenshot, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
                     <!-- Invisible but still required to prevent render errors -->
                     <Label Name="PreviewTarget"
                            HorizontalAlignment="Left"
@@ -127,8 +135,8 @@
                            MaxWidth="{Binding ActualWidth, ElementName=Img}"
                            MaxHeight="{Binding ActualHeight, ElementName=Img}"/>
 
-                    <!-- Loading Spinner - Positioned in camera preview area -->
-                    <Border Name="LoadingSpinner"
+                    <!-- Camera Loading Container - Only shown after screenshot loaded -->
+                    <Border Name="CameraLoadingContainer"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
                             Background="#80000000"
@@ -137,39 +145,13 @@
                             Height="{Binding Height, ElementName=PreviewTarget}"
                             MaxWidth="{Binding ActualWidth, ElementName=Img}"
                             MaxHeight="{Binding ActualHeight, ElementName=Img}"
-                            Visibility="{Binding IsLoading, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <StackPanel HorizontalAlignment="Center"
-                                    VerticalAlignment="Center">
-                            <TextBlock Text="⏳"
-                                       FontSize="48"
-                                       HorizontalAlignment="Center"
-                                       Foreground="White"
-                                       Margin="0,0,0,10">
-                                <TextBlock.RenderTransform>
-                                    <RotateTransform x:Name="SpinnerRotation" 
-                                                     CenterX="12" 
-                                                     CenterY="24"/>
-                                </TextBlock.RenderTransform>
-                                <TextBlock.Triggers>
-                                    <EventTrigger RoutedEvent="Loaded">
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="SpinnerRotation"
-                                                               Storyboard.TargetProperty="Angle"
-                                                               From="0"
-                                                               To="360"
-                                                               Duration="0:0:2"
-                                                               RepeatBehavior="Forever"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </EventTrigger>
-                                </TextBlock.Triggers>
-                            </TextBlock>
-                            <TextBlock Text="Loading camera..."
-                                       FontSize="16"
-                                       HorizontalAlignment="Center"
-                                       Foreground="White"/>
-                        </StackPanel>
+                            Visibility="{Binding IsCameraReady, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="Loading..."
+                                   FontSize="16"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Visibility="{Binding IsLoadingCamera, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BoolToVisibilityConverter}}"/>
                     </Border>
                 </Grid>
             </DockPanel>

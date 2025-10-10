@@ -38,16 +38,44 @@ namespace Captura
             InitializeComponent();
         }
 
-        bool _isLoading;
-        public bool IsLoading
+        bool _isLoadingScreenshot;
+        public bool IsLoadingScreenshot
         {
-            get => _isLoading;
+            get => _isLoadingScreenshot;
             set
             {
-                if (_isLoading != value)
+                if (_isLoadingScreenshot != value)
                 {
-                    _isLoading = value;
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoading)));
+                    _isLoadingScreenshot = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoadingScreenshot)));
+                }
+            }
+        }
+
+        bool _isLoadingCamera;
+        public bool IsLoadingCamera
+        {
+            get => _isLoadingCamera;
+            set
+            {
+                if (_isLoadingCamera != value)
+                {
+                    _isLoadingCamera = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoadingCamera)));
+                }
+            }
+        }
+
+        bool _isCameraReady;
+        public bool IsCameraReady
+        {
+            get => _isCameraReady;
+            set
+            {
+                if (_isCameraReady != value)
+                {
+                    _isCameraReady = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCameraReady)));
                 }
             }
         }
@@ -55,11 +83,10 @@ namespace Captura
         public event PropertyChangedEventHandler PropertyChanged;
 
         bool _loaded;
+        static WSize _cachedFrameSize = new WSize(1920, 1080);
 
-        async void OnLoaded(object Sender, RoutedEventArgs E)
+        void OnLoaded(object Sender, RoutedEventArgs E)
         {
-            await UpdateBackground();
-
             if (_loaded)
                 return;
 
@@ -76,11 +103,37 @@ namespace Captura
                 _reactor.Size.Select(M => M.Height).ToReadOnlyReactivePropertySlim());
 
             control.BindOne(OpacityProperty, _reactor.Opacity);
+
+            _reactor.FrameSize.OnNext(_cachedFrameSize);
+
+            _ = UpdateBackgroundAsync();
         }
 
-        async Task UpdateBackground()
+        async Task UpdateBackgroundAsync()
         {
-            Img.Source = await WpfExtensions.GetBackground();
+            IsLoadingScreenshot = true;
+
+            try
+            {
+                await Task.Yield();
+
+                var source = await WpfExtensions.GetBackground();
+
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    Img.Source = source;
+
+                    if (Img.ActualWidth > 0 && Img.ActualHeight > 0)
+                    {
+                        _cachedFrameSize = new WSize(Img.ActualWidth, Img.ActualHeight);
+                        _reactor.FrameSize.OnNext(_cachedFrameSize);
+                    }
+                }, System.Windows.Threading.DispatcherPriority.Loaded);
+            }
+            finally
+            {
+                IsLoadingScreenshot = false;
+            }
         }
 
         IReadOnlyReactiveProperty<IWebcamCapture> _webcamCapture;
@@ -110,7 +163,11 @@ namespace Captura
                 if (!IsVisible)
                     return;
 
-                _reactor.FrameSize.OnNext(new WSize(Img.ActualWidth, Img.ActualHeight));
+                if (Img.ActualWidth > 0 && Img.ActualHeight > 0)
+                {
+                    _cachedFrameSize = new WSize(Img.ActualWidth, Img.ActualHeight);
+                    _reactor.FrameSize.OnNext(_cachedFrameSize);
+                }
             }
 
             PreviewGrid.LayoutUpdated += (S, E) => OnRegionChange();
@@ -152,12 +209,26 @@ namespace Captura
                 _webcamCapture = null;
             }
 
+            IsCameraReady = false;
+
             if (_webcamModel.SelectedCam is NoWebcamItem)
             {
                 return;
             }
 
-            IsLoading = true;
+            while (IsLoadingScreenshot)
+            {
+                await Task.Delay(50);
+            }
+
+            await Task.Delay(300);
+
+            await Dispatcher.InvokeAsync(() =>
+            {
+                IsCameraReady = true;
+            });
+
+            IsLoadingCamera = true;
 
             try
             {
@@ -177,7 +248,7 @@ namespace Captura
             }
             finally
             {
-                IsLoading = false;
+                IsLoadingCamera = false;
             }
         }
 
