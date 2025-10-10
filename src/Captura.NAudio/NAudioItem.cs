@@ -22,19 +22,18 @@ namespace Captura.Audio
             if (IsLoopback)
                 return;
 
-            await Task.Run(() =>
-            {
-                var audioClient = Device.AudioClient;
-                audioClient.Initialize(AudioClientShareMode.Shared,
-                    AudioClientStreamFlags.None,
-                    100,
-                    100,
-                    audioClient.MixFormat,
-                    Guid.Empty);
+            // Yield to allow UI to render, then initialize on same thread (COM requirement)
+            await Task.Yield();
 
-                audioClient.Start();
-                _audioClient = audioClient;
-            }).ConfigureAwait(false);
+            _audioClient = Device.AudioClient;
+            _audioClient.Initialize(AudioClientShareMode.Shared,
+                AudioClientStreamFlags.None,
+                100,
+                100,
+                _audioClient.MixFormat,
+                Guid.Empty);
+
+            _audioClient.Start();
         }
 
         public void StopListeningForPeakLevel()
