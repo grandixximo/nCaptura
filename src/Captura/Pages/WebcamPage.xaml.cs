@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Reactive.Linq;
 using WSize = System.Windows.Size;
@@ -14,7 +15,7 @@ using Xceed.Wpf.Toolkit.Core.Utilities;
 
 namespace Captura
 {
-    public partial class WebcamPage
+    public partial class WebcamPage : INotifyPropertyChanged
     {
         readonly WebcamModel _webcamModel;
         readonly ScreenShotModel _screenShotModel;
@@ -36,6 +37,22 @@ namespace Captura
 
             InitializeComponent();
         }
+
+        bool _isLoading;
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                if (_isLoading != value)
+                {
+                    _isLoading = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoading)));
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         bool _loaded;
 
@@ -72,18 +89,11 @@ namespace Captura
         {
             _webcamModel.PreviewClicked += SettingsWindow.ShowWebcamPage;
 
-            IsVisibleChanged += (S, E) =>
+            IsVisibleChanged += async (S, E) =>
             {
                 if (IsVisible && _webcamCapture == null)
                 {
-                    _webcamCapture = _webcamModel.InitCapture();
-
-                    if (_webcamCapture.Value is { } capture)
-                    {
-                        _reactor.WebcamSize.OnNext(new WSize(capture.Width, capture.Height));
-
-                        UpdateWebcamPreview();
-                    }
+                    await InitializeCameraAsync();
                 }
                 else if (!IsVisible && _webcamCapture != null)
                 {
@@ -104,7 +114,7 @@ namespace Captura
 
             _webcamModel
                 .ObserveProperty(M => M.SelectedCam)
-                .Subscribe(M => UpdateWebcamPreview());
+                .Subscribe(M => OnCameraChanged());
 
             _reactor.Location
                 .CombineLatest(_reactor.Size, (M, N) =>
@@ -115,6 +125,43 @@ namespace Captura
                 .Subscribe();
 
             UpdateWebcamPreview();
+        }
+
+        async void OnCameraChanged()
+        {
+            if (!IsVisible)
+                return;
+
+            if (_webcamCapture != null)
+            {
+                _webcamModel.ReleaseCapture();
+                _webcamCapture = null;
+            }
+
+            await InitializeCameraAsync();
+        }
+
+        async Task InitializeCameraAsync()
+        {
+            IsLoading = true;
+
+            try
+            {
+                await Task.Yield();
+
+                _webcamCapture = _webcamModel.InitCapture();
+
+                if (_webcamCapture.Value is { } capture)
+                {
+                    _reactor.WebcamSize.OnNext(new WSize(capture.Width, capture.Height));
+
+                    UpdateWebcamPreview();
+                }
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         async void CaptureImage_OnClick(object Sender, RoutedEventArgs E)
