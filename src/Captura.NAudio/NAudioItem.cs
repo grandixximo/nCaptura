@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Threading.Tasks;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 
@@ -12,7 +13,7 @@ namespace Captura.Audio
 
         AudioClient _audioClient;
 
-        public void StartListeningForPeakLevel()
+        public async Task StartListeningForPeakLevelAsync()
         {
             if (_audioClient != null)
                 return;
@@ -21,15 +22,19 @@ namespace Captura.Audio
             if (IsLoopback)
                 return;
 
-            _audioClient = Device.AudioClient;
-            _audioClient.Initialize(AudioClientShareMode.Shared,
-                AudioClientStreamFlags.None,
-                100,
-                100,
-                _audioClient.MixFormat,
-                Guid.Empty);
+            await Task.Run(() =>
+            {
+                var audioClient = Device.AudioClient;
+                audioClient.Initialize(AudioClientShareMode.Shared,
+                    AudioClientStreamFlags.None,
+                    100,
+                    100,
+                    audioClient.MixFormat,
+                    Guid.Empty);
 
-            _audioClient.Start();
+                audioClient.Start();
+                _audioClient = audioClient;
+            }).ConfigureAwait(false);
         }
 
         public void StopListeningForPeakLevel()

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Captura.Audio;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -135,10 +135,18 @@ namespace Captura.Models
                 {
                     _listenPeakLvl = true;
 
-                    SelectedMicrophone?.StartListeningForPeakLevel();
-                    SelectedSpeaker?.StartListeningForPeakLevel();
+                    StartListeningAsync();
                 }
             }
+        }
+
+        async void StartListeningAsync()
+        {
+            if (SelectedMicrophone != null)
+                await SelectedMicrophone.StartListeningForPeakLevelAsync().ConfigureAwait(false);
+            
+            if (SelectedSpeaker != null)
+                await SelectedSpeaker.StartListeningForPeakLevelAsync().ConfigureAwait(false);
         }
 
         public string Name => _audioSource.Name;
@@ -156,9 +164,9 @@ namespace Captura.Models
                 {
                     old?.StopListeningForPeakLevel();
 
-                    if (ListeningPeakLevel)
+                    if (ListeningPeakLevel && _selectedMicrophone != null)
                     {
-                        _selectedMicrophone?.StartListeningForPeakLevel();
+                        _ = _selectedMicrophone.StartListeningForPeakLevelAsync();
                     }
                 }
             }
@@ -175,9 +183,9 @@ namespace Captura.Models
                 {
                     old?.StopListeningForPeakLevel();
 
-                    if (ListeningPeakLevel)
+                    if (ListeningPeakLevel && _selectedSpeaker != null)
                     {
-                        _selectedSpeaker?.StartListeningForPeakLevel();
+                        _ = _selectedSpeaker.StartListeningForPeakLevelAsync();
                     }
                 }
             }
