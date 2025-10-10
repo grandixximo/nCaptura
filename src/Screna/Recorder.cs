@@ -33,10 +33,10 @@ namespace Captura.Video
         readonly object _syncLock = new object();
 
         Task<bool> _frameWriteTask;
-        Task _audioWriteTask;
+        Task _audioPumpTask;
         int _frameCount;
         long _audioBytesWritten;
-        readonly int _audioBytesPerFrame, _audioChunkBytes;
+        readonly int _audioBytesPerFrame, _audioBytesPerSecond, _audioChunkBytes;
         // Smaller chunk lowers latency and reduces audible jitter
         const int AudioChunkLengthMs = 50;
         byte[] _audioBuffer, _silenceBuffer;
@@ -79,13 +79,19 @@ namespace Captura.Video
                                              * wf.Channels
                                              * (wf.BitsPerSample / 8.0));
 
-                _audioChunkBytes = (int) (_audioBytesPerFrame * (FrameRate * AudioChunkLengthMs / 1000.0));
+                _audioBytesPerSecond = _audioBytesPerFrame * FrameRate;
+                _audioChunkBytes = (int) (_audioBytesPerSecond * (AudioChunkLengthMs / 1000.0));
             }
             else _audioProvider = null;
 
             _sw = new Stopwatch();
 
             _recordTask = Task.Factory.StartNew(async () => await DoRecord(), TaskCreationOptions.LongRunning);
+
+            if (_audioProvider != null)
+            {
+                _audioPumpTask = Task.Factory.StartNew(AudioPumpLoop, _cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            }
         }
 
         async Task DoRecord()
@@ -109,11 +115,6 @@ namespace Captura.Video
 
                         if (!WriteDuplicateFrame())
                             return;
-                    }
-
-                    if (_audioWriteTask != null)
-                    {
-                        await _audioWriteTask;
                     }
 
                     _frameWriteTask = Task.Run(() => FrameWriter(timestamp));
@@ -153,16 +154,7 @@ namespace Captura.Video
 
             _fpsManager?.OnFrame();
 
-            try
-            {
-                _audioWriteTask = Task.Run(WriteAudio);
-
-                return true;
-            }
-            catch (InvalidOperationException)
-            {
-                return false;
-            }
+            return true;
         }
 
         bool WriteDuplicateFrame()
@@ -203,8 +195,8 @@ namespace Captura.Video
                 return;
             }
 
-            // These values need to be long otherwise can get out of range in a few hours
-            var shouldHaveWritten = (_frameCount - 1L) * _audioBytesPerFrame;
+            // Use elapsed time to determine audio budget to decouple from video frame pacing
+            var shouldHaveWritten = (long)(_sw.Elapsed.TotalSeconds * _audioBytesPerSecond);
 
             // Already written more than enough, skip for now
             if (_audioBytesWritten >= shouldHaveWritten)
@@ -221,8 +213,7 @@ namespace Captura.Video
                 toWrite = maxBurstBytes;
             }
 
-            // Only write if data to write is more than chunk size.
-            // This gives enough time for the audio provider to buffer data from the source.
+            // Only write if data to write is more than chunk size to keep latency stable
             if (toWrite < _audioChunkBytes)
             {
                 return;
@@ -264,6 +255,23 @@ namespace Captura.Video
             _audioBytesWritten += silenceToWrite;
         }
 
+        void AudioPumpLoop()
+        {
+            while (!_cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    if (_continueCapturing.WaitOne(0))
+                    {
+                        WriteAudio();
+                    }
+                }
+                catch { }
+
+                Thread.Sleep(AudioChunkLengthMs / 2);
+            }
+        }
+
         #region Dispose
         async void Dispose(bool TerminateRecord)
         {
@@ -288,16 +296,40 @@ namespace Captura.Video
             }
             catch { }
 
-            try
-            {
-                if (_audioWriteTask != null)
-                    await _audioWriteTask.ConfigureAwait(false);
-            }
-            catch { }
+            try { _audioPumpTask?.Wait(2000); } catch { }
 
             if (_audioProvider != null)
             {
                 _audioProvider.Stop();
+
+                // Pad trailing audio with silence to match last video frame boundary
+                try
+                {
+                    if (_videoWriter != null)
+                    {
+                        var requiredAudioBytes = (long)_frameCount * _audioBytesPerFrame;
+                        var missingBytes = requiredAudioBytes - _audioBytesWritten;
+
+                        if (missingBytes > 0)
+                        {
+                            var padBuffer = _silenceBuffer;
+                            if (padBuffer == null || padBuffer.Length < _audioChunkBytes)
+                            {
+                                padBuffer = new byte[_audioChunkBytes];
+                            }
+
+                            while (missingBytes > 0)
+                            {
+                                var toWrite = (int)Math.Min(missingBytes, (long)_audioChunkBytes);
+                                _videoWriter.WriteAudio(padBuffer, 0, toWrite);
+                                _audioBytesWritten += toWrite;
+                                missingBytes -= toWrite;
+                            }
+                        }
+                    }
+                }
+                catch { }
+
                 _audioProvider.Dispose();
                 _audioProvider = null;
             }
