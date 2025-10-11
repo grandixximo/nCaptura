@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
@@ -22,7 +22,7 @@ namespace Captura
 {
     public partial class OverlayPage
     {
-        OverlayPage()
+        public OverlayPage()
         {
             InitializeComponent();
 
@@ -37,15 +37,24 @@ namespace Captura
 
         void AddToGrid(LayerFrame Frame, bool CanResize)
         {
+            if (Grid == null)
+                return;
+
             Grid.Children.Add(Frame);
 
             Panel.SetZIndex(Frame, 0);
 
-            var layer = AdornerLayer.GetAdornerLayer(Frame);
-            var adorner = new OverlayPositionAdorner(Frame, CanResize);
-            layer.Add(adorner);
-
-            adorner.PositionUpdated += Frame.RaisePositionChanged;
+            // Wait for visual tree to be ready before accessing AdornerLayer
+            Frame.Loaded += (s, e) =>
+            {
+                var layer = AdornerLayer.GetAdornerLayer(Frame);
+                if (layer != null)
+                {
+                    var adorner = new OverlayPositionAdorner(Frame, CanResize);
+                    layer.Add(adorner);
+                    adorner.PositionUpdated += Frame.RaisePositionChanged;
+                }
+            };
         }
 
         LayerFrame Generate(PositionedOverlaySettings Settings, string Text, Color BackgroundColor)

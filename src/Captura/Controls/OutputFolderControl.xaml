@@ -24,19 +24,18 @@
         <Button DockPanel.Dock="Right"
                 ToolTip="{Binding SelectOutFolder, Source={StaticResource Loc}, Mode=OneWay}"
                 Command="{Binding SelectOutputFolderCommand}"
-                IsEnabled="{Binding ViewConditions.IsEnabled.Value, Source={StaticResource ServiceLocator}}">
+                IsEnabled="{Binding RecordingViewModel.RecorderState, Converter={StaticResource NotRecordingConverter}}">
             <Path Stretch="UniformToFill"
                   Height="4"
                   Width="16"
                   Data="{Binding Icons.More, Source={StaticResource ServiceLocator}}"/>
         </Button>
-        <Border ToolTip="{Binding MainViewModel.OutFolderDisplay.Value, Source={StaticResource ServiceLocator}}"
-                IsEnabled="{Binding ViewConditions.IsEnabled.Value, Source={StaticResource ServiceLocator}}"
+        <Border ToolTip="{Binding Settings.OutPath}"
                 MouseUp="SelectTargetFolder"
                 Cursor="Hand">
             <TextBox IsReadOnly="True"
                      IsEnabled="False"
-                     Text="{Binding MainViewModel.OutFolderDisplay.Value, Source={StaticResource ServiceLocator}, Mode=OneWay}"/>
+                     Text="{Binding Settings.OutPath}"/>
         </Border>
     </DockPanel>
 </UserControl>

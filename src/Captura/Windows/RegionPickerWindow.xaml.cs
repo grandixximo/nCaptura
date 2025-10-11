@@ -1,12 +1,16 @@
-﻿using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Forms;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Captura.Video;
-using Captura.ViewModels;
+using Color = System.Windows.Media.Color;
+using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Point = System.Windows.Point;
 
@@ -14,11 +18,6 @@ namespace Captura
 {
     public partial class RegionPickerWindow
     {
-        readonly IWindow[] _windows;
-        readonly IPlatformServices _platformServices;
-
-        Predicate<IWindow> Predicate { get; set; }
-
         RegionPickerWindow()
         {
             InitializeComponent();
@@ -29,24 +28,20 @@ namespace Captura
             Height = SystemParameters.VirtualScreenHeight;
 
             UpdateBackground();
-
-            _platformServices = ServiceProvider.Get<IPlatformServices>();
-
-            _windows = _platformServices
-                .EnumerateAllWindows()
-                .ToArray();
         }
 
         void UpdateBackground()
         {
-            using var bmp = ScreenShot.Capture();
-            var stream = new MemoryStream();
-            bmp.Save(stream, ImageFormats.Png);
+            using (var bmp = ScreenShot.Capture())
+            {
+                var stream = new MemoryStream();
+                bmp.Save(stream, ImageFormats.Png);
 
-            stream.Seek(0, SeekOrigin.Begin);
+                stream.Seek(0, SeekOrigin.Begin);
 
-            var decoder = new PngBitmapDecoder(stream, BitmapCreateOptions.None, BitmapCacheOption.Default);
-            BgImg.Source = decoder.Frames[0];
+                var decoder = new PngBitmapDecoder(stream, BitmapCreateOptions.None, BitmapCacheOption.Default);
+                BgImg.Source = decoder.Frames[0];
+            }
         }
 
         void CloseClick(object Sender, RoutedEventArgs E)
@@ -86,79 +81,75 @@ namespace Captura
 
                 if (r == null)
                 {
-                    Unhighlight();
+                    Border.Visibility = Visibility.Collapsed;
                     return;
                 }
 
-                HighlightRegion(r.Value);
+                var rect = r.Value;
+
+                Border.Margin = new Thickness(rect.Left, rect.Top, 0, 0);
+
+                Border.Width = rect.Width;
+                Border.Height = rect.Height;
+
+                Border.Visibility = Visibility.Visible;
             }
-            else
-            {
-                var point = _platformServices.CursorPosition;
-
-                _selectedWindow = _windows
-                        .Where(M => Predicate?.Invoke(M) ?? true)
-                        .FirstOrDefault(M => M.Rectangle.Contains(point));
-
-                if (_selectedWindow == null)
-                {
-                    UpdateSizeDisplay(null);
-
-                    Unhighlight();
-                }
-                else
-                {
-                    var rect = GetSelectedWindowRectangle().Value;
-
-                    UpdateSizeDisplay(rect);
-
-                    HighlightRegion(rect);
-                }
-            }
-        }
-
-        Rect? GetSelectedWindowRectangle()
-        {
-            if (_selectedWindow == null)
-                return null;
-
-            var rect = _selectedWindow.Rectangle;
-
-            return new Rect(-Left + rect.X / Dpi.X,
-                -Top + rect.Y / Dpi.Y,
-                rect.Width / Dpi.X,
-                rect.Height / Dpi.Y);
         }
 
         bool _isDragging;
         Point? _start, _end;
-        IWindow _selectedWindow;
+        CroppingAdorner _croppingAdorner;
 
         void WindowMouseLeftButtonDown(object Sender, MouseButtonEventArgs E)
         {
             _isDragging = true;
             _start = E.GetPosition(Grid);
             _end = null;
+
+            if (_croppingAdorner != null)
+            {
+                var layer = AdornerLayer.GetAdornerLayer(Grid);
+
+                layer.Remove(_croppingAdorner);
+
+                _croppingAdorner = null;
+            }
         }
 
         void WindowMouseLeftButtonUp(object Sender, MouseButtonEventArgs E)
         {
-            if (!_isDragging)
+            _isDragging = false;
+            _end = E.GetPosition(Grid);
+            Border.Visibility = Visibility.Collapsed;
+
+            var layer = AdornerLayer.GetAdornerLayer(Grid);
+
+            var rect = GetRegion();
+
+            UpdateSizeDisplay(rect);
+
+            if (rect == null)
                 return;
 
-            var current = E.GetPosition(Grid);
+            _croppingAdorner = new CroppingAdorner(Grid, rect.Value);
 
-            if (current != _start)
-            {
-                _end = E.GetPosition(Grid);
-            }
-            else if (GetSelectedWindowRectangle() is Rect rect)
-            {
-                _start = rect.Location;
-                _end = new Point(rect.Right, rect.Bottom);
-            }
+            var clr = Colors.Black;
+            clr.A = 110;
+            _croppingAdorner.Fill = new SolidColorBrush(clr);
 
-            Close();
+            layer.Add(_croppingAdorner);
+
+            _croppingAdorner.CropChanged += (S, Args) => UpdateSizeDisplay(_croppingAdorner.SelectedRegion);
+
+            _croppingAdorner.Checked += () =>
+            {
+                var r = _croppingAdorner.SelectedRegion;
+
+                _start = r.Location;
+                _end = r.BottomRight;
+
+                Close();
+            };
         }
 
         Rect? GetRegion()
@@ -220,30 +211,6 @@ namespace Captura
             picker.ShowDialog();
 
             return picker.GetRegionScaled();
-        }
-
-        void Unhighlight()
-        {
-            Border.Visibility = Visibility.Collapsed;
-            PunctRegion.Region = null;
-        }
-
-        void HighlightRegion(Rect Region)
-        {
-            var border = RegionSelectorViewModel.BorderSize;
-
-            var regionWithBorder = new Rect(Region.X - border,
-                Region.Y - border,
-                Region.Width + 2 * border,
-                Region.Height + 2 * border);
-
-            Border.Margin = new Thickness(regionWithBorder.X, regionWithBorder.Y, 0, 0);
-            Border.Width = regionWithBorder.Width;
-            Border.Height = regionWithBorder.Height;
-
-            PunctRegion.Region = regionWithBorder;
-
-            Border.Visibility = Visibility.Visible;
         }
     }
 }

@@ -7,7 +7,8 @@
         Height="400"
         Width="600"
         ResizeMode="NoResize"
-        Background="{DynamicResource WindowBackground}">
+        Background="{DynamicResource WindowBackground}"
+        DataContext="{Binding FFmpegDownloadViewModel, Source={StaticResource ServiceLocator}}">
     <WindowChrome.WindowChrome>
         <WindowChrome GlassFrameThickness="1"
                       UseAeroCaptionButtons="False"
@@ -43,6 +44,15 @@
                HorizontalAlignment="Center"
                ContentStringFormat="{}Status: {0}"/>
 
+        <TextBlock DockPanel.Dock="Top"
+                   Margin="0,5"
+                   TextAlignment="Center"
+                   Style="{StaticResource TextColor}">
+            FFmpeg adds support for more output formats to Captura.<LineBreak/>
+            Latest build of FFmpeg is downloaded. This can also be used to update FFmpeg.<LineBreak/>
+            The Download size is nearly 30 MB.
+        </TextBlock>
+
         <DockPanel DockPanel.Dock="Bottom"
                    Margin="0,5">
             <Button Command="{Binding OpenFolderCommand}">
@@ -73,17 +83,7 @@
                          Text="{Binding FFmpegSettings.FolderPath, Mode=OneWay}"/>
             </Border>
         </DockPanel>
-
-        <TextBlock DockPanel.Dock="Bottom"
-                   Margin="0,5"
-                   HorizontalAlignment="Center"
-                   Style="{StaticResource TextColor}"
-                   Opacity="0.9">
-            FFmpeg adds support for more output formats to Captura.<LineBreak/>
-            Latest build of FFmpeg is downloaded. This can also be used to update FFmpeg.<LineBreak/>
-            The Download size is nearly 70 MB.
-        </TextBlock>
-
+        
         <Grid HorizontalAlignment="Center"
               Margin="0,10"
               DockPanel.Dock="Top">

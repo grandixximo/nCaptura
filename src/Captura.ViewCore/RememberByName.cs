@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Captura.Video;
 using Captura.ViewModels;
@@ -48,14 +48,14 @@ namespace Captura.Models
             // Remember Video Codec
             _settings.Video.WriterKind = _videoWritersViewModel
                 .SelectedVideoWriterKind
-                .Name;
+                ?.Name;
 
             _settings.Video.Writer = _videoWritersViewModel
                 .SelectedVideoWriter
-                .ToString();
+                ?.ToString();
 
             // Remember Post Writer
-            _settings.Video.PostWriter = _videoWritersViewModel.SelectedPostWriter.ToString();
+            _settings.Video.PostWriter = _videoWritersViewModel.SelectedPostWriter?.ToString();
 
             // Remember Audio Sources
             _settings.Audio.Microphone = _audioSourceViewModel.SelectedMicrophone?.Name;

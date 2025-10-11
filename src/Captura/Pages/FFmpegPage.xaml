@@ -1,4 +1,4 @@
-﻿<Page x:Class="Captura.FFmpegPage"
+<Page x:Class="Captura.FFmpegPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
@@ -28,7 +28,7 @@
                 </DockPanel>
             </Button>
 
-            <Button IsEnabled="{Binding ViewConditions.IsEnabled.Value, Source={StaticResource ServiceLocator}}"
+            <Button IsEnabled="{Binding RecordingViewModel.RecorderState, Source={StaticResource ServiceLocator}, Converter={StaticResource NotRecordingConverter}}"
                     Click="FFmpegDownload"
                     Margin="0,5">
                 <DockPanel>
@@ -52,7 +52,7 @@
                 <Button DockPanel.Dock="Right"
                         ToolTip="{Binding SelectFFmpegFolder, Source={StaticResource Loc}, Mode=OneWay}"
                         Command="{Binding SelectFFmpegFolderCommand}"
-                        IsEnabled="{Binding ViewConditions.IsEnabled.Value, Source={StaticResource ServiceLocator}}">
+                        IsEnabled="{Binding RecordingViewModel.RecorderState, Source={StaticResource ServiceLocator}, Converter={StaticResource NotRecordingConverter}}">
                     <Path Stretch="UniformToFill"
                           Height="4"
                           Width="16"
@@ -61,7 +61,7 @@
                 <Button DockPanel.Dock="Right"
                         ToolTip="{Binding Reset, Source={StaticResource Loc}, Mode=OneWay}"
                         Command="{Binding ResetFFmpegFolderCommand}"
-                        IsEnabled="{Binding ViewConditions.IsEnabled.Value, Source={StaticResource ServiceLocator}}"
+                        IsEnabled="{Binding RecordingViewModel.RecorderState, Source={StaticResource ServiceLocator}, Converter={StaticResource NotRecordingConverter}}"
                         VerticalContentAlignment="Center">
                     <Path Stretch="UniformToFill"
                           Height="10"

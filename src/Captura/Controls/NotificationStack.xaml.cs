@@ -30,24 +30,19 @@ namespace Captura
 
         void TimerOnTick(object Sender, EventArgs Args)
         {
-            var now = DateTime.Now;
-            var elapsed = now - _lastMouseMoveTime;
+            var elapsed = DateTime.Now - _lastMouseMoveTime;
 
-            var unfinished = ItemsControl.Items
-                .OfType<NotificationBalloon>()
-                .Any(M => !M.Notification.Finished);
-
-            if (unfinished)
+            if (elapsed >= TimeoutToHide)
             {
-                _lastMouseMoveTime = now;
-            }
+                var unfinished = ItemsControl.Items
+                    .OfType<NotificationBalloon>()
+                    .Any(M => !M.Notification.Finished);
 
-            if (elapsed < TimeoutToHide)
-                return;
-
-            if (!unfinished)
-            {
-                OnClose();
+                if (!unfinished)
+                {
+                    Hide();
+                }
+                else _lastMouseMoveTime = DateTime.Now;
             }
         }
 

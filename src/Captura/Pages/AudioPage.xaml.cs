@@ -1,4 +1,5 @@
-﻿using Captura.Models;
+using Captura.Models;
+using Captura.ViewModels;
 
 namespace Captura
 {
@@ -14,6 +15,11 @@ namespace Captura
             };
 
             InitializeComponent();
+            
+            ServiceProvider.Get<MainViewModel>().Refreshed += () =>
+            {
+                AudioSourcesPanel?.Shake();
+            };
         }
     }
 }

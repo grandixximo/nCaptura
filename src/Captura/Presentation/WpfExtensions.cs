@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
@@ -19,7 +19,7 @@ namespace Captura
 {
     public static class WpfExtensions
     {
-        public static void ShowAndFocus(this Window W)
+        public static void ShowAndFocus(this System.Windows.Window W)
         {
             if (W.IsVisible && W.WindowState == WindowState.Minimized)
             {

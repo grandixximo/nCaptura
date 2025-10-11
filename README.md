@@ -22,15 +22,34 @@ Capture Screen, WebCam, Audio, Cursor, Mouse Clicks and Keystrokes.
 
 I use **Captura** regularly and love it because it's **small, portable, and just works**. The original [Captura](https://github.com/MathewSachin/Captura) was developed by **Mathew Sachin**, and I'm incredibly grateful for his work creating this excellent tool. While the original project was discontinued, [Mr. Chip (mrchipset)](https://github.com/mrchipset/nCaptura) did a great job maintaining a fork and keeping it alive.
 
-I forked this repository from mrchipset's version because I actively use this software and want to ensure it continues working smoothly. With the help of **Cursor** and **Claude**, I've made some important fixes:
+I forked this repository from mrchipset's version because I actively use this software and want to ensure it continues working smoothly. With the help of **Cursor** and **Claude**, I've made important fixes and improvements:
 
 - ✅ Fixed the FFmpeg download window initialization issue
 - ✅ Updated FFmpeg download mirrors to ensure reliability
 - ✅ Improved build and release workflows
+- ✅ Restored and fixed the classic 8.0.0 UI (dual-release with modern UI)
+- ✅ Fixed numerous data binding issues, UI bugs, and preview windows
+- ✅ Added shake animations, live region updates, and improved UX
 - ✅ Added AMD AMF hardware encoding support (inspired by OBS Studio)
 - ✅ Implemented Windows Graphics Capture (WGC) for reliable screen recording (Windows 10 1903+)
 
-**This is not an attempt to reboot the project**—it's simply maintained by someone who uses and appreciates it. I'll continue to apply fixes as needed (like updating download mirrors or addressing compatibility issues) to keep this wonderful tool working for everyone who relies on it.
+**This is not an attempt to reboot the project**—it's simply maintained by someone who uses and appreciates it. I'll continue to apply fixes as needed (like updating download mirrors, fixing UI issues, or addressing compatibility issues) to keep this wonderful tool working for everyone who relies on it.
+
+### Two UI Versions Available
+
+Each release includes **two versions** of Captura to choose from:
+
+**nCaptura (Modern UI)**
+- Based on the latest modern interface
+- Streamlined and updated design
+- Built from `main` branch
+
+**Captura Classic**
+- Original 8.0.0 classic interface
+- Traditional layout and workflow
+- Built from `classic-ui-modern-fixes` branch with all modern fixes
+
+Both versions have identical features and functionality—choose the one that matches your preference!
 
 **Huge thanks to:**
 - **Mathew Sachin** for creating Captura
@@ -60,8 +79,8 @@ I forked this repository from mrchipset's version because I actively use this so
 Portable and Setup builds for the latest release can be downloaded from [here][latest].
 
 **Choose one:**
-- **Installer** (`nCaptura-Setup.exe`) - Recommended for most users
-- **Portable** (`nCaptura-Portable.zip`) - No installation required
+- **Installer** (`nCaptura-Setup.exe` or `Captura-Classic-Setup.exe`) - Recommended for most users
+- **Portable** (`nCaptura-Portable.zip` or `Captura-Classic-Portable.zip`) - No installation required
 
 ### Build from Source
 

@@ -1,10 +1,22 @@
-﻿namespace Captura
+namespace Captura
 {
     public class VisualSettings : PropertyStore
     {
         public bool DarkTheme
         {
             get => Get<bool>();
+            set => Set(value);
+        }
+
+        public bool FollowSystemTheme
+        {
+            get => Get(true);
+            set => Set(value);
+        }
+
+        public string ThemeMode
+        {
+            get => Get("Dark");
             set => Set(value);
         }
 
@@ -47,6 +59,12 @@
         public string Language
         {
             get => Get("en");
+            set => Set(value);
+        }
+
+        public bool RegionSelectorDrawingTools
+        {
+            get => Get(true);  // Default to true (always visible)
             set => Set(value);
         }
     }

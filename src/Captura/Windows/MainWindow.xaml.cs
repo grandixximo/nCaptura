@@ -1,9 +1,10 @@
-﻿using System.Drawing;
+using System.Drawing;
 using System.Linq;
+using Captura.Models;
+using Captura.ViewModels;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
-using Captura.Models;
 
 namespace Captura
 {
@@ -31,7 +32,7 @@ namespace Captura
             {
                 RepositionWindowIfOutside();
 
-                ServiceProvider.Get<WebcamPage>().SetupPreview();
+                // WebcamPage.SetupPreview() removed in modern version
 
                 _helper.HotkeySetup.ShowUnregistered();
             };
@@ -58,17 +59,17 @@ namespace Captura
                     WindowState = WindowState.Normal;
                 }
 
-                Activate();
+                this.ShowAndFocus();
             });
         }
 
         void RepositionWindowIfOutside()
         {
             // Window dimensions taking care of DPI
-            var rect = new RectangleF((float) Left,
-                (float) Top,
-                (float) ActualWidth,
-                (float) ActualHeight).ApplyDpi();
+            var rect = new Rectangle((int)(Left * Dpi.X),
+                (int)(Top * Dpi.Y),
+                (int)(ActualWidth * Dpi.X),
+                (int)(ActualHeight * Dpi.Y));
             
             if (!Screen.AllScreens.Any(M => M.Bounds.Contains(rect)))
             {
@@ -101,15 +102,26 @@ namespace Captura
             {
                 Hide();
             }
-            else this.ShowAndFocus();
+            else
+            {
+                Show();
+
+                WindowState = WindowState.Normal;
+
+                Activate();
+            }
         }
 
         bool TryExit()
         {
-            if (!_helper.RecordingViewModel.CanExit())
+            var recordingViewModel = ServiceProvider.Get<RecordingViewModel>();
+            
+            if (!recordingViewModel.CanExit())
                 return false;
 
-            ServiceProvider.Dispose();
+            _helper.MainViewModel.Dispose();
+
+            SystemTray.Dispose();
 
             return true;
         }
@@ -118,6 +130,9 @@ namespace Captura
 
         void HideButton_Click(object Sender, RoutedEventArgs Args) => Hide();
 
-        void ShowMainWindow(object Sender, RoutedEventArgs E) => this.ShowAndFocus();
+        void ShowMainWindow(object Sender, RoutedEventArgs E)
+        {
+            this.ShowAndFocus();
+        }
     }
 }

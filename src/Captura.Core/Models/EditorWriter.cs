@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Captura.Models
@@ -8,6 +8,10 @@ namespace Captura.Models
     {
         public Task Save(IBitmapImage Image, ImageFormats Format, string FileName)
         {
+            // EditorWriter only works when saving to a file (not clipboard/imgur)
+            if (string.IsNullOrWhiteSpace(FileName))
+                return Task.CompletedTask;
+
             if (!File.Exists(FileName))
             {
                 Image.Save(FileName, Format);

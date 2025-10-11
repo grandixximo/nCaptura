@@ -1,9 +1,122 @@
-﻿<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="clr-namespace:Captura"
+      xmlns:mui="http://firstfloorsoftware.com/ModernUI"
       DataContext="{Binding MainViewModel, Source={StaticResource ServiceLocator}}"
       x:Class="Captura.MainPage">
-    <DockPanel>
-        <Frame Source="HomePage.xaml"
-               Margin="5"/>
+    <DockPanel Margin="-5,0,0,0">
+        <DockPanel DockPanel.Dock="Top">
+            <StackPanel Orientation="Horizontal"
+                                DockPanel.Dock="Right">
+                <local:ModernButton ToolTip="{Binding Refresh, Source={StaticResource Loc}, Mode=OneWay}"
+                                    Command="{Binding RefreshCommand}"
+                                    IconData="{Binding Icons.Refresh, Source={StaticResource ServiceLocator}}"/>
+                <!-- Canvas/Image Editor button removed - feature was removed from codebase -->
+                <local:ModernButton ToolTip="{Binding OpenOutFolder, Source={StaticResource Loc}, Mode=OneWay}"
+                                    Command="{Binding OpenOutputFolderCommand}"
+                                    IconData="{Binding Icons.Folder, Source={StaticResource ServiceLocator}}"/>
+                <local:ModernButton ToolTip="{Binding Configure, Source={StaticResource Loc}, Mode=OneWay}"
+                                    Click="OpenSettings"
+                                    Foreground="{DynamicResource Accent}"
+                                    IconData="{Binding Icons.Settings, Source={StaticResource ServiceLocator}}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="10,0,0,0">
+                <local:ModernToggleButton ToolTip="{Binding IncludeCursor, Source={StaticResource Loc}, Mode=OneWay}"
+                                          IsEnabled="{Binding RecordingViewModel.RecorderState, Converter={StaticResource NotRecordingConverter}}"
+                                          IconData="{Binding Icons.Cursor, Source={StaticResource ServiceLocator}}"
+                                          IsChecked="{Binding Settings.IncludeCursor}"/>
+                <local:ModernToggleButton IconData="{Binding Icons.Hand, Source={StaticResource ServiceLocator}}"
+                                          IsChecked="{Binding Settings.Clicks.Display, Mode=TwoWay}">
+                    <local:ModernToggleButton.ToolTip>
+                        <StackPanel>
+                            <TextBlock Text="{Binding IncludeClicks, Source={StaticResource Loc}, Mode=OneWay}"
+                                       Margin="0,0,0,2"/>
+                            <TextBlock Text="Color, Opacity, Border can be configured at Settings / Overlays."
+                                       FontSize="10"/>
+                        </StackPanel>
+                    </local:ModernToggleButton.ToolTip>
+                </local:ModernToggleButton>
+                <local:ModernToggleButton IconData="{Binding Icons.Keyboard, Source={StaticResource ServiceLocator}}"
+                                          IsChecked="{Binding Settings.Keystrokes.Display, Mode=TwoWay}">
+                    <local:ModernToggleButton.ToolTip>
+                        <StackPanel>
+                            <TextBlock Text="{Binding IncludeKeys, Source={StaticResource Loc}, Mode=OneWay}"
+                                       Margin="0,0,0,2"/>
+                            <TextBlock Text="Color, Opacity, Border and more can be configured at Settings / Overlays."
+                                       FontSize="10"/>
+                        </StackPanel>
+                    </local:ModernToggleButton.ToolTip>
+                </local:ModernToggleButton>
+                <local:ModernToggleButton IsEnabled="{Binding RecordingViewModel.RecorderState, Converter={StaticResource NotRecordingConverter}}"
+                                          IconData="{Binding Icons.Timer, Source={StaticResource ServiceLocator}}"
+                                          IsChecked="{Binding Settings.Elapsed.Display, Mode=TwoWay}">
+                    <local:ModernToggleButton.ToolTip>
+                        <StackPanel>
+                            <TextBlock Text="{Binding Elapsed, Source={StaticResource Loc}, Mode=OneWay}"
+                                       Margin="0,0,0,2"/>
+                            <TextBlock Text="Color, Opacity, Border and more can be configured at Settings / Overlays."
+                                       FontSize="10"/>
+                        </StackPanel>
+                    </local:ModernToggleButton.ToolTip>
+                </local:ModernToggleButton>
+            </StackPanel>
+        </DockPanel>
+
+        <TabControl Background="Transparent"
+                    TabStripPlacement="Left"
+                    BorderThickness="0"
+                    Margin="10,5">
+            <TabControl.Resources>
+                <Style x:Key="TabIcon"
+                       TargetType="Path"
+                       BasedOn="{StaticResource {x:Type Path}}">
+                    <Setter Property="Margin" Value="0,5"/>
+                    <Setter Property="Width" Value="15"/>
+                    <Setter Property="Height" Value="15"/>
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                    <Setter Property="VerticalAlignment" Value="Center"/>
+                    <Setter Property="Stretch" Value="Uniform"/>
+                    <Setter Property="Fill" Value="{Binding Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType=ContentControl}}"/>
+                </Style>
+            </TabControl.Resources>
+            <TabControl.ContentTemplate>
+                <DataTemplate>
+                    <DockPanel>
+                        <GridSplitter Width="1"
+                                      Margin="5,0"
+                                      IsEnabled="False"/>
+                        <mui:TransitioningContentControl Content="{Binding}"/>
+                    </DockPanel>
+                </DataTemplate>
+            </TabControl.ContentTemplate>
+            <TabItem>
+                <TabItem.Header>
+                    <Path Data="{Binding Icons.Home, Source={StaticResource ServiceLocator}}"
+                          Style="{StaticResource TabIcon}"
+                          ToolTip="{Binding Video, Source={StaticResource Loc}, Mode=OneWay}"/>
+                </TabItem.Header>
+
+                <Frame Source="HomePage.xaml"/>
+            </TabItem>
+            <TabItem>
+                <TabItem.Header>
+                    <Path Data="{Binding Icons.History, Source={StaticResource ServiceLocator}}"
+                          Style="{StaticResource TabIcon}"
+                          ToolTip="{Binding Recent, Source={StaticResource Loc}, Mode=OneWay}"/>
+                </TabItem.Header>
+
+                <Frame Source="RecentPage.xaml"/>
+            </TabItem>
+            <TabItem>
+                <TabItem.Header>
+                    <Path Data="{Binding Icons.Help, Source={StaticResource ServiceLocator}}"
+                          Style="{StaticResource TabIcon}"
+                          ToolTip="{Binding About, Source={StaticResource Loc}, Mode=OneWay}"/>
+                </TabItem.Header>
+                
+                <Frame Source="AboutPage.xaml"/>
+            </TabItem>
+        </TabControl>
     </DockPanel>
 </Page>

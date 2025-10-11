@@ -1,10 +1,9 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Input;
 using System.IO;
 using System.Diagnostics;
 using System;
 using System.Windows.Media.Imaging;
-using Captura.Models;
 
 namespace Captura
 {
@@ -46,8 +45,8 @@ namespace Captura
 
         void EditButton_OnClick(object Sender, RoutedEventArgs E)
         {
-            var winserv = ServiceProvider.Get<IMainWindow>();
-            winserv.EditImage(_filePath);
+            // Image editor removed in this version
+            MessageBox.Show("Image Editor has been removed.", "Feature Removed", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }

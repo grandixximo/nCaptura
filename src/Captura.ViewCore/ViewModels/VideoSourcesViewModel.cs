@@ -23,7 +23,6 @@ namespace Captura.ViewModels
             _settings = Settings;
             VideoSources = SourceProviders;
 
-            // DEBUG LOGGING
             var sourcesList = SourceProviders.ToList();
             System.Diagnostics.Debug.WriteLine($"[VideoSourcesViewModel] Total sources: {sourcesList.Count}");
             foreach (var source in sourcesList)

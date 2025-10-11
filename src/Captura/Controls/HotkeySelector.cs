@@ -1,8 +1,9 @@
-﻿using System.Windows;
+using Captura.Models;
+using Captura.Hotkeys;
+using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
-using Captura.Hotkeys;
 using Button = System.Windows.Controls.Button;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 
