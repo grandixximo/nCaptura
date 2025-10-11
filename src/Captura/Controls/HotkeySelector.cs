@@ -33,6 +33,13 @@ namespace Captura
                 {
                     if (E.PropertyName == nameof(Hotkey.IsActive))
                         selector.TextColor();
+                    
+                    // Update display when Key or Modifiers change
+                    if (E.PropertyName == nameof(Hotkey.Key) || E.PropertyName == nameof(Hotkey.Modifiers))
+                    {
+                        if (!selector._editing)
+                            selector.Content = hotkey.ToString();
+                    }
                 };
 
                 selector.Content = hotkey.ToString();

@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Captura.Hotkeys;
 using Reactive.Bindings;
@@ -9,6 +10,8 @@ namespace Captura.ViewModels
     public class HotkeysViewModel
     {
         public ReadOnlyObservableCollection<Hotkey> Hotkeys { get; }
+
+        public IEnumerable<Service> AllServices => HotKeyManager.AllServices;
 
         public HotkeysViewModel(HotKeyManager HotKeyManager)
         {
