@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -14,17 +14,19 @@ namespace Captura.Models
         public ReadOnlyObservableCollection<IRecentItem> Items { get; }
 
         readonly IEnumerable<IRecentItemSerializer> _recentItemSerializers;
+        readonly Settings _settings;
 
         static string GetFilePath()
         {
             return Path.Combine(ServiceProvider.SettingsDir, "RecentItems.json");
         }
 
-        public RecentListRepository(IEnumerable<IRecentItemSerializer> RecentItemSerializers)
+        public RecentListRepository(IEnumerable<IRecentItemSerializer> RecentItemSerializers, Settings Settings)
         {
             Items = new ReadOnlyObservableCollection<IRecentItem>(_recentList);
 
             _recentItemSerializers = RecentItemSerializers;
+            _settings = Settings;
 
             Load();
         }
@@ -73,6 +75,16 @@ namespace Captura.Models
             _recentList.Insert(0, RecentItem);
 
             RecentItem.RemoveRequested += () => _recentList.Remove(RecentItem);
+
+            // Enforce max limit
+            var max = _settings.RecentMax;
+            if (max > 0)
+            {
+                while (_recentList.Count > max)
+                {
+                    _recentList.RemoveAt(_recentList.Count - 1);
+                }
+            }
         }
 
         public void Clear()
@@ -86,7 +98,10 @@ namespace Captura.Models
             {
                 var items = new JArray();
 
-                foreach (var item in Items)
+                var max = _settings.RecentMax;
+                var itemsToSave = max > 0 ? Items.Take(max) : Items;
+
+                foreach (var item in itemsToSave)
                 {
                     var serializer = _recentItemSerializers.FirstOrDefault(M => M.CanSerialize(item));
 

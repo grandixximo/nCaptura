@@ -66,7 +66,8 @@
         <TabControl Background="Transparent"
                     TabStripPlacement="Left"
                     BorderThickness="0"
-                    Margin="10,5">
+                    Margin="10,5"
+                    MinHeight="400">
             <TabControl.Resources>
                 <Style x:Key="TabIcon"
                        TargetType="Path"
@@ -82,7 +83,7 @@
             </TabControl.Resources>
             <TabControl.ContentTemplate>
                 <DataTemplate>
-                    <DockPanel>
+                    <DockPanel MinHeight="400">
                         <GridSplitter Width="1"
                                       Margin="5,0"
                                       IsEnabled="False"/>
