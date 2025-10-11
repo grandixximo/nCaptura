@@ -17,6 +17,10 @@
         SizeToContent="WidthAndHeight"
         Name="This"
         ShowInTaskbar="False">
+    <Window.InputBindings>
+        <KeyBinding Key="Escape"
+                    Command="{Binding RegionSelectorViewModel.ExitDrawingModeCommand, Source={StaticResource ServiceLocator}}"/>
+    </Window.InputBindings>
     <Grid>
         <Grid.Resources>
             <Style TargetType="Thumb">
