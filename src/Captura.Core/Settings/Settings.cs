@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.IO;
@@ -241,6 +241,12 @@ namespace Captura
         public bool RegionPickerHotkeyAutoStartRecording
         {
             get => Get(true);
+            set => Set(value);
+        }
+
+        public int RecentMax
+        {
+            get => Get(10);
             set => Set(value);
         }
     }
