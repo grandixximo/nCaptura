@@ -75,35 +75,6 @@
                                           CommandParameter="/Pages/CrashLogsPage.xaml"/>
                 </WrapPanel>
 
-                <Label Margin="0,15,0,5">
-                    <TextBlock Text="{Binding Tools, Source={StaticResource Loc}, Mode=OneWay}"/>
-                </Label>
-                
-                <WrapPanel Margin="3">
-                    <Button ToolTip="{Binding Trim, Source={StaticResource Loc}, Mode=OneWay}"
-                            Padding="5"
-                            Margin="0,0,10,10"
-                            Click="OpenAudioVideoTrimmer">
-                        <Path Data="{Binding Icons.Trim, Source={StaticResource ServiceLocator}}"
-                              Width="15"
-                              Height="15"
-                              Stretch="Uniform"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"/>
-                    </Button>
-
-                    <Button ToolTip="{Binding UploadToImgur, Source={StaticResource Loc}, Mode=OneWay}"
-                            Padding="5"
-                            Margin="0,0,10,10"
-                            Click="UploadToImgur">
-                        <Path Data="{Binding Icons.Upload, Source={StaticResource ServiceLocator}}"
-                              Width="15"
-                              Height="15"
-                              Stretch="Uniform"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"/>
-                    </Button>
-                </WrapPanel>
             </StackPanel>
         </ScrollViewer>
     </Grid>
