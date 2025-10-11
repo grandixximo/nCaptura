@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Globalization;
 
@@ -36,6 +36,9 @@ namespace Captura.Loc
         string CustomSize { get; }
         string CustomUrl { get; }
         string DarkTheme { get; }
+        string LightTheme { get; }
+        string FollowSystemTheme { get; }
+        string ThemeMode { get; }
         string Delete { get; }
         string DiscardChanges { get; }
         string Disk { get; }
