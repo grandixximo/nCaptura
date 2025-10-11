@@ -60,7 +60,27 @@
                 <Frame Source="TrimmerPage.xaml"/>
             </TabItem>
             <TabItem Header="{Binding About, Source={StaticResource Loc}, Mode=OneWay}">
-                <Frame Source="AboutPage.xaml"/>
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top"
+                               Margin="5,5,5,10">
+                        <mui:ModernButton IconData="{Binding Icons.Back, Source={StaticResource ServiceLocator}}"
+                                          IsEnabled="{Binding CanGoBack, ElementName=AboutFrame}"
+                                          EllipseDiameter="40"
+                                          IconWidth="35"
+                                          IconHeight="25"
+                                          Margin="5,0,2,0"
+                                          Click="AboutBackButton_Click"/>
+                        
+                        <mui:ModernButton IconData="{Binding Icons.Forward, Source={StaticResource ServiceLocator}}"
+                                          IsEnabled="{Binding CanGoForward, ElementName=AboutFrame}"
+                                          Click="AboutForwardButton_Click"/>
+                    </DockPanel>
+                    <Frame x:Name="AboutFrame"
+                           Source="AboutPage.xaml"
+                           NavigationUIVisibility="Hidden"
+                           JournalOwnership="OwnsJournal"
+                           Navigated="AboutFrame_Navigated"/>
+                </DockPanel>
             </TabItem>
         </TabControl>
     </Grid>
