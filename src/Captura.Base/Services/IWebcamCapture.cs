@@ -14,6 +14,9 @@ namespace Captura.Webcam
 
         void UpdatePreview(IWindow Window, Rectangle Location);
 
+        // Control preview window visibility without tearing down the camera graph
+        void SetPreviewVisibility(bool IsVisible);
+
         string GetCameraProperties();
     }
 }

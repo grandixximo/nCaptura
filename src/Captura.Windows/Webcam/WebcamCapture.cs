@@ -19,15 +19,19 @@ namespace Captura.Webcam
             _filter = Filter ?? throw new ArgumentNullException(nameof(Filter));
             _onClick = OnClick;
 
+            // Initialize the camera but start with preview hidden
+            // This ensures Width/Height are available immediately
             try
             {
                 _captureWebcam = new CaptureWebcam(Filter, OnClick, IntPtr.Zero);
                 _captureWebcam.StartPreview();
+                _lastWin = IntPtr.Zero;
+                
+                // Start hidden - will be shown when UpdatePreview is called
+                _captureWebcam.SetPreviewVisibility(false);
             }
             catch (Exception ex)
             {
-                // Don't show error dialogs during initialization to avoid dialog crashes
-                // Just log and rethrow
                 System.Diagnostics.Debug.WriteLine($"Webcam initialization failed: {ex.Message}");
                 _captureWebcam?.Dispose();
                 _captureWebcam = null;
@@ -94,19 +98,28 @@ namespace Captura.Webcam
             {
                 try
                 {
-                    if (Window != null && _lastWin != Window.Handle)
+                    if (_captureWebcam == null)
+                        return;
+
+                    // Check if we need to set or switch the owner window
+                    if (Window != null)
                     {
-                        // Recreate capture with new window handle
-                        _captureWebcam?.StopPreview();
-                        _captureWebcam?.Dispose();
-
-                        _captureWebcam = new CaptureWebcam(_filter, _onClick, Window.Handle);
-                        _captureWebcam.StartPreview();
-
-                        _lastWin = Window.Handle;
+                        var newHandle = Window.Handle;
+                        if (_lastWin != newHandle)
+                        {
+                            // Switch owner handle without rebuilding the graph
+                            _captureWebcam.UpdatePreviewWindow(newHandle, Location);
+                            _lastWin = newHandle;
+                        }
+                        else
+                        {
+                            // Just update window position
+                            _captureWebcam.OnPreviewWindowResize(Location.X, Location.Y, Location.Width, Location.Height);
+                        }
                     }
-
-                    _captureWebcam?.OnPreviewWindowResize(Location.X, Location.Y, Location.Width, Location.Height);
+                    
+                    // Make sure preview is visible
+                    _captureWebcam.SetPreviewVisibility(true);
                 }
                 catch (COMException ex)
                 {
@@ -116,6 +129,21 @@ namespace Captura.Webcam
                 {
                     HandleCameraException(ex, "Failed to update preview");
                 }
+            });
+        }
+
+        public void SetPreviewVisibility(bool isVisible)
+        {
+            if (_disposed)
+                return;
+
+            _syncContext.Run(() =>
+            {
+                try
+                {
+                    _captureWebcam?.SetPreviewVisibility(isVisible);
+                }
+                catch { }
             });
         }
 

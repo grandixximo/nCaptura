@@ -13,6 +13,7 @@ namespace Captura.Webcam
         #region Fields
         readonly Filter _videoDevice;
         readonly IntPtr _previewWindow;
+        IntPtr _currentOwner;
         readonly DummyForm _form;
         readonly Action _onClick;
         readonly object _lock = new object();
@@ -50,6 +51,7 @@ namespace Captura.Webcam
             _form.Click += (s, e) => OnClick?.Invoke();
 
             _previewWindow = PreviewWindow != IntPtr.Zero ? PreviewWindow : _form.Handle;
+            _currentOwner = _previewWindow;
 
             BuildGraph();
         }
@@ -479,6 +481,7 @@ namespace Captura.Webcam
                         _videoWindow = null;
                         return;
                     }
+                    _currentOwner = _previewWindow;
 
                     hr = _videoWindow.put_MessageDrain(_form.Handle);
                     if (hr < 0)
@@ -551,6 +554,48 @@ namespace Captura.Webcam
                 catch
                 {
                     // Ignore errors
+                }
+            }
+        }
+
+        public void SetPreviewVisibility(bool isVisible)
+        {
+            lock (_lock)
+            {
+                if (_videoWindow == null)
+                    return;
+
+                try
+                {
+                    _videoWindow.put_Visible(isVisible ? OABool.True : OABool.False);
+                }
+                catch { }
+            }
+        }
+
+        public void UpdatePreviewWindow(IntPtr ownerHandle, Rectangle location)
+        {
+            lock (_lock)
+            {
+                if (_videoWindow != null)
+                {
+                    try
+                    {
+                        if (ownerHandle != IntPtr.Zero && _currentOwner != ownerHandle)
+                        {
+                            // Switch owner without rebuilding the graph
+                            _videoWindow.put_Visible(OABool.False);
+                            _videoWindow.put_Owner(ownerHandle);
+                            _currentOwner = ownerHandle;
+                            _videoWindow.put_Visible(OABool.True);
+                        }
+
+                        _videoWindow.SetWindowPosition(location.X, location.Y, location.Width, location.Height);
+                    }
+                    catch
+                    {
+                        // Ignore errors
+                    }
                 }
             }
         }
