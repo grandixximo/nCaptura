@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
@@ -378,7 +378,7 @@ namespace Captura
 
         void UIElement_OnMouseMove(object Sender, MouseEventArgs E)
         {
-            if (ServiceProvider.Get<Settings>().MousePointerOverlay.Display)
+            if (ServiceProvider.Get<Settings>().MousePointerOverlay.DisplayHighlight)
                 MousePointer.Visibility = Visibility.Visible;
 
             var position = E.GetPosition(Grid);
