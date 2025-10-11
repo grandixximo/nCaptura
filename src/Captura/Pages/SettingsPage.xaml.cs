@@ -1,4 +1,4 @@
-﻿namespace Captura
+namespace Captura
 {
     public partial class SettingsPage
     {

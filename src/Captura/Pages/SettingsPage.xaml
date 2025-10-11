@@ -1,67 +1,82 @@
-﻿<Page x:Class="Captura.SettingsPage"
+<Page x:Class="Captura.SettingsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:captura="clr-namespace:Captura"
       Title="{Binding Configure, Source={StaticResource Loc}, Mode=OneWay}">
     <DockPanel>
         <ScrollViewer>
-            <WrapPanel VerticalAlignment="Center"
-                       HorizontalAlignment="Center"
-                       MaxWidth="800">
-                <WrapPanel.Resources>
-                    <Style TargetType="captura:ModernButton" BasedOn="{StaticResource IconButton}">
-                        <Setter Property="Command" Value="GoToPage"/>
-                    </Style>
-                </WrapPanel.Resources>
+            <StackPanel>
+                <WrapPanel VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           MaxWidth="800">
+                    <WrapPanel.Resources>
+                        <Style TargetType="captura:ModernButton" BasedOn="{StaticResource IconButton}">
+                            <Setter Property="Command" Value="GoToPage"/>
+                        </Style>
+                    </WrapPanel.Resources>
 
-                <captura:ModernButton Content="{Binding Video, Source={StaticResource Loc}, Mode=OneWay}"
-                                      IconData="{Binding Icons.Video, Source={StaticResource ServiceLocator}}"
-                                      CommandParameter="/Pages/VideoPage.xaml"/>
+                    <captura:ModernButton Content="{Binding Video, Source={StaticResource Loc}, Mode=OneWay}"
+                                          IconData="{Binding Icons.Video, Source={StaticResource ServiceLocator}}"
+                                          CommandParameter="/Pages/VideoPage.xaml"/>
 
-                <captura:ModernButton Content="{Binding WebCam, Source={StaticResource Loc}, Mode=OneWay}"
-                                      IconData="{Binding Icons.Webcam, Source={StaticResource ServiceLocator}}"
-                                      CommandParameter="{Binding WebcamPage, Source={StaticResource ServiceLocator}}"/>
+                    <captura:ModernButton Content="{Binding WebCam, Source={StaticResource Loc}, Mode=OneWay}"
+                                          IconData="{Binding Icons.Webcam, Source={StaticResource ServiceLocator}}"
+                                          CommandParameter="{Binding WebcamPage, Source={StaticResource ServiceLocator}}"/>
 
-                <captura:ModernButton Content="{Binding Audio, Source={StaticResource Loc}, Mode=OneWay}"
-                                      IconData="{Binding Icons.Speaker, Source={StaticResource ServiceLocator}}"
-                                      CommandParameter="/Pages/AudioPage.xaml"/>
+                    <captura:ModernButton Content="{Binding Audio, Source={StaticResource Loc}, Mode=OneWay}"
+                                          IconData="{Binding Icons.Speaker, Source={StaticResource ServiceLocator}}"
+                                          CommandParameter="/Pages/AudioPage.xaml"/>
 
-                <captura:ModernButton Content="{Binding ScreenShot, Source={StaticResource Loc}, Mode=OneWay}"
-                                      IconData="{Binding Icons.Region, Source={StaticResource ServiceLocator}}"
-                                      CommandParameter="/Pages/ScreenShotsPage.xaml"/>
+                    <captura:ModernButton Content="{Binding ScreenShot, Source={StaticResource Loc}, Mode=OneWay}"
+                                          IconData="{Binding Icons.Region, Source={StaticResource ServiceLocator}}"
+                                          CommandParameter="/Pages/ScreenShotsPage.xaml"/>
 
-                <captura:ModernButton Content="{Binding Recent, Source={StaticResource Loc}, Mode=OneWay}"
-                                      IconData="{Binding Icons.History, Source={StaticResource ServiceLocator}}"
-                                      CommandParameter="/Pages/RecentPage.xaml"/>
+                    <captura:ModernButton Content="{Binding Recent, Source={StaticResource Loc}, Mode=OneWay}"
+                                          IconData="{Binding Icons.History, Source={StaticResource ServiceLocator}}"
+                                          CommandParameter="/Pages/RecentPage.xaml"/>
 
-                <captura:ModernButton Content="UI"
-                                      IconData="{Binding Icons.Window, Source={StaticResource ServiceLocator}}"
-                                      CommandParameter="/Pages/InterfacePage.xaml"/>
+                    <captura:ModernButton Content="UI"
+                                          IconData="{Binding Icons.Window, Source={StaticResource ServiceLocator}}"
+                                          CommandParameter="/Pages/InterfacePage.xaml"/>
 
-                <captura:ModernButton Content="FFmpeg"
-                                      IconData="{Binding Icons.VideoFile, Source={StaticResource ServiceLocator}}"
-                                      CommandParameter="/Pages/FFmpegPage.xaml"/>
+                    <captura:ModernButton Content="FFmpeg"
+                                          IconData="{Binding Icons.VideoFile, Source={StaticResource ServiceLocator}}"
+                                          CommandParameter="/Pages/FFmpegPage.xaml"/>
 
-                <captura:ModernButton Content="{Binding Hotkeys, Source={StaticResource Loc}, Mode=OneWay}"
-                                      IconData="{Binding Icons.Keyboard, Source={StaticResource ServiceLocator}}"
-                                      CommandParameter="/Pages/HotkeysPage.xaml"/>
+                    <captura:ModernButton Content="{Binding Hotkeys, Source={StaticResource Loc}, Mode=OneWay}"
+                                          IconData="{Binding Icons.Keyboard, Source={StaticResource ServiceLocator}}"
+                                          CommandParameter="/Pages/HotkeysPage.xaml"/>
 
-                <captura:ModernButton Content="{Binding Proxy, Source={StaticResource Loc}, Mode=OneWay}"
-                                      IconData="{Binding Icons.Web, Source={StaticResource ServiceLocator}}"
-                                      CommandParameter="/Pages/ProxyPage.xaml"/>
+                    <captura:ModernButton Content="{Binding Proxy, Source={StaticResource Loc}, Mode=OneWay}"
+                                          IconData="{Binding Icons.Web, Source={StaticResource ServiceLocator}}"
+                                          CommandParameter="/Pages/ProxyPage.xaml"/>
 
-                <captura:ModernButton Content="{Binding FileNaming, Source={StaticResource Loc}, Mode=OneWay}"
-                                      IconData="{Binding Icons.NewFile, Source={StaticResource ServiceLocator}}"
-                                      CommandParameter="/Pages/FileNameFormatPage.xaml"/>
+                    <captura:ModernButton Content="{Binding FileNaming, Source={StaticResource Loc}, Mode=OneWay}"
+                                          IconData="{Binding Icons.NewFile, Source={StaticResource ServiceLocator}}"
+                                          CommandParameter="/Pages/FileNameFormatPage.xaml"/>
 
-                <captura:ModernButton Content="{Binding Overlays, Source={StaticResource Loc}, Mode=OneWay}"
-                                      IconData="{Binding Icons.Arrow, Source={StaticResource ServiceLocator}}"
-                                      CommandParameter="{x:Static captura:OverlayPage.Instance}"/>
+                    <captura:ModernButton Content="{Binding Overlays, Source={StaticResource Loc}, Mode=OneWay}"
+                                          IconData="{Binding Icons.Arrow, Source={StaticResource ServiceLocator}}"
+                                          CommandParameter="{x:Static captura:OverlayPage.Instance}"/>
 
-                <captura:ModernButton Content="{Binding About, Source={StaticResource Loc}, Mode=OneWay}"
-                                      IconData="{Binding Icons.Help, Source={StaticResource ServiceLocator}}"
-                                      CommandParameter="/Pages/AboutPage.xaml"/>
-            </WrapPanel>
+                    <captura:ModernButton Content="{Binding About, Source={StaticResource Loc}, Mode=OneWay}"
+                                          IconData="{Binding Icons.Help, Source={StaticResource ServiceLocator}}"
+                                          CommandParameter="/Pages/AboutPage.xaml"/>
+                </WrapPanel>
+                
+                <Separator Margin="20,15" Height="1"/>
+                
+                <captura:ModernButton Content="{Binding Trim, Source={StaticResource Loc}, Mode=OneWay}"
+                                      IconData="{Binding Icons.Trim, Source={StaticResource ServiceLocator}}"
+                                      HorizontalAlignment="Center"
+                                      CommandParameter="/Pages/TrimmerPage.xaml">
+                    <captura:ModernButton.Style>
+                        <Style TargetType="captura:ModernButton" BasedOn="{StaticResource IconButton}">
+                            <Setter Property="Command" Value="GoToPage"/>
+                        </Style>
+                    </captura:ModernButton.Style>
+                </captura:ModernButton>
+            </StackPanel>
         </ScrollViewer>
     </DockPanel>
 </Page>
