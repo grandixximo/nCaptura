@@ -317,39 +317,7 @@ This Limit option is to prevent system crashes due to using high FPS on full scr
                                                 IconData="{Binding Icons.Clipboard, Source={StaticResource ServiceLocator}}"
                                                 IsChecked="{Binding ClipboardWriter.Active}"/>
 
-                    <Border VerticalAlignment="Center"
-                            CornerRadius="12"
-                            BorderThickness="1"
-                            Margin="5,0">
-                        <Button ToolTip="Imgur"
-                                Content="Imgur"
-                                Command="{Binding SourceToggleCommand}"
-                                CommandParameter="{Binding ImgurWriter}"
-                                BorderThickness="0"
-                                Background="Transparent"
-                                Cursor="Hand">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding ImgurWriter.Active}" Value="True">
-                                            <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="BorderBrush" Value="{DynamicResource ItemBorder}"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ImgurWriter.Active}" Value="True">
-                                        <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                    </Border>
+                    <!-- Imgur upload button removed - feature no longer supported -->
 
                     <captura:ModernToggleButton ToolTip="{Binding ImageEditor, Source={StaticResource Loc}, Mode=OneWay}"
                                                 IconData="{Binding Icons.Pencil, Source={StaticResource ServiceLocator}}"

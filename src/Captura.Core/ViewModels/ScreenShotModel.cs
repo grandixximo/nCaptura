@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Captura.Audio;
@@ -99,7 +99,7 @@ namespace Captura.ViewModels
 
             if (Window.Handle == _platformServices.DesktopWindow.Handle)
             {
-                return ScreenShot.Capture(_settings.IncludeCursor);
+                return ScreenShot.Capture(_settings.MousePointerOverlay.Display);
             }
 
             try
@@ -108,11 +108,11 @@ namespace Captura.ViewModels
 
                 if (_settings.ScreenShots.WindowShotTransparent)
                 {
-                    bmp = ScreenShot.CaptureTransparent(Window, _settings.IncludeCursor);
+                    bmp = ScreenShot.CaptureTransparent(Window, _settings.MousePointerOverlay.Display);
                 }
 
                 // Capture without Transparency
-                return bmp ?? ScreenShot.Capture(Window.Rectangle, _settings.IncludeCursor);
+                return bmp ?? ScreenShot.Capture(Window.Rectangle, _settings.MousePointerOverlay.Display);
             }
             catch
             {
@@ -127,7 +127,7 @@ namespace Captura.ViewModels
             // Wait for notifications to hide
             await Task.Delay(100);
 
-            var includeCursor = _settings.IncludeCursor;
+            var includeCursor = _settings.MousePointerOverlay.Display;
 
             IBitmapImage bmp;
 

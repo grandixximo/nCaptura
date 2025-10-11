@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 
 namespace Captura.Video
@@ -17,7 +17,7 @@ namespace Captura.Video
         /// </summary>
         public void Draw(IEditableFrame Editor, Func<Point, Point> Transform = null)
         {
-            if (!_settings.Display)
+            if (!_settings.DisplayHighlight)
                 return;
 
             var clickRadius = _settings.Radius;

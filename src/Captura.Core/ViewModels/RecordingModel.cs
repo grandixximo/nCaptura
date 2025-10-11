@@ -544,7 +544,7 @@ namespace Captura.ViewModels
             return RecordingParams
                 .VideoSourceKind
                 ?.Source
-                ?.GetImageProvider(Settings.IncludeCursor);
+                ?.GetImageProvider(Settings.MousePointerOverlay.Display);
         }
 
         public string CurrentFileName { get; private set; }

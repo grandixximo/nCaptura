@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -96,7 +96,7 @@ namespace Captura
 
         public void Start(StartCmdOptions StartOptions)
         {
-            _settings.IncludeCursor = StartOptions.Cursor;
+            _settings.MousePointerOverlay.Display = StartOptions.Cursor;
             _settings.Clicks.Display = StartOptions.Clicks;
             _settings.Keystrokes.Display = StartOptions.Keys;
 
@@ -169,7 +169,7 @@ namespace Captura
 
         public void Shot(ShotCmdOptions ShotOptions)
         {
-            _settings.IncludeCursor = ShotOptions.Cursor;
+            _settings.MousePointerOverlay.Display = ShotOptions.Cursor;
 
             // Screenshot Window with Transparency
             if (Regex.IsMatch(ShotOptions.Source, @"win:\d+"))

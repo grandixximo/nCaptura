@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reactive.Linq;
 using System.Windows;
@@ -6,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Captura.FFmpeg;
+using Captura.Models;
 using Microsoft.Win32;
 using Reactive.Bindings;
 using Reactive.Bindings.Extensions;
@@ -271,6 +273,7 @@ namespace Captura
                 return;
 
             var hasAudio = _player.HasAudio;
+            var outputFile = sfd.FileName;
 
             _player.Close();
 
@@ -283,7 +286,7 @@ namespace Captura
                 await trimmer.Run(FilePath,
                     From,
                     To,
-                    sfd.FileName,
+                    outputFile,
                     hasAudio);
             }
             finally
@@ -291,7 +294,23 @@ namespace Captura
                 _isTrimming.Value = false;
             }
 
-            MessageBox.Show("Done");
+            // Show success notification with click to open file
+            var systemTray = ServiceProvider.Get<ISystemTray>();
+            systemTray.ShowNotification(new TextNotification(
+                "Trim Complete", 
+                () => 
+                {
+                    try
+                    {
+                        Process.Start(outputFile);
+                    }
+                    catch
+                    {
+                        // If direct open fails, try opening the folder
+                        Process.Start("explorer.exe", $"/select,\"{outputFile}\"");
+                    }
+                },
+                "Click to open trimmed video"));
         }
     }
 }

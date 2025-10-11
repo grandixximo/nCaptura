@@ -1,8 +1,7 @@
-﻿namespace Captura
+namespace Captura
 {
     enum UploadService
     {
-        imgur,
         youtube
     }
 }

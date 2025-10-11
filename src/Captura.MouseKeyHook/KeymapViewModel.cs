@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -12,6 +12,7 @@ namespace Captura.MouseKeyHook
     {
         Keymap _keymap;
 
+        // Default to English (United States) keyboard layout - most common
         public const string DefaultKeymapFileName = "en";
 
         public class KeymapItem
@@ -57,7 +58,15 @@ namespace Captura.MouseKeyHook
 
                 _selectedKeymap = empty;
             }
-            else SelectedKeymap = AvailableKeymaps[0];
+            else
+            {
+                // Try to find English US keymap as default (most common)
+                var defaultKeymap = AvailableKeymaps.FirstOrDefault(M => 
+                    Path.GetFileNameWithoutExtension(M.FileName) == DefaultKeymapFileName);
+                
+                // If English US not found, fall back to first available
+                SelectedKeymap = defaultKeymap ?? AvailableKeymaps[0];
+            }
         }
 
         readonly List<KeymapItem> _keymaps = new List<KeymapItem>();

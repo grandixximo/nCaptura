@@ -26,8 +26,9 @@
                         <Setter Property="Margin" Value="0,2"/>
                     </Style>
                 </StackPanel.Resources>
-                <CheckBox IsChecked="{Binding Settings.IncludeCursor}"
-                          IsEnabled="{Binding ViewConditions.IsEnabled.Value, Source={StaticResource ServiceLocator}}">
+                <CheckBox IsChecked="{Binding Settings.MousePointerOverlay.Display}"
+                          IsEnabled="{Binding ViewConditions.IsEnabled.Value, Source={StaticResource ServiceLocator}}"
+                          ToolTip="Show mouse pointer. Configure appearance at Settings / Overlays.">
                     <StackPanel Orientation="Horizontal">
                         <Path Data="{Binding Icons.Cursor, Source={StaticResource ServiceLocator}}"/>
                         <TextBlock Text="{Binding IncludeCursor, Source={StaticResource Loc}, Mode=OneWay}"/>

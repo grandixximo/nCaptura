@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 
 namespace Captura.FFmpeg
@@ -17,10 +17,13 @@ namespace Captura.FFmpeg
                 .AddArg("ss", From)
                 .AddArg("to", To);
 
+            var outputArgs = argsBuilder.AddOutputFile(DestFile);
+            
+            // Copy video codec to avoid re-encoding
+            outputArgs.AddArg("c:v", "copy");
+            
             if (HasAudio)
-                inputArgs.SetAudioCodec("copy");
-
-            argsBuilder.AddOutputFile(DestFile);
+                outputArgs.SetAudioCodec("copy");
 
             var args = argsBuilder.GetArgs();
 
