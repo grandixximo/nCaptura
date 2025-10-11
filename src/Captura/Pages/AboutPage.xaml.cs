@@ -1,7 +1,5 @@
 using System.Windows;
-using Captura.Models;
 using Captura.Views;
-using Microsoft.Win32;
 
 namespace Captura
 {
@@ -17,34 +15,11 @@ namespace Captura
             NavigationService?.Navigate(new CrashLogsPage());
         }
 
-        // OpenImageEditor method removed - internal image editor was removed from codebase
+        // OpenImageEditor, OpenImageCropper, and UploadToImgur methods removed - features no longer supported
 
         void OpenAudioVideoTrimmer(object Sender, RoutedEventArgs E)
         {
             new TrimmerWindow().ShowAndFocus();
-        }
-
-        void OpenImageCropper(object Sender, RoutedEventArgs E)
-        {
-            MessageBox.Show("Image Cropper has been removed in this version.", "Feature Removed", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        async void UploadToImgur(object Sender, RoutedEventArgs E)
-        {
-            var ofd = new OpenFileDialog
-            {
-                Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp;*.wmp;*.tiff",
-                CheckFileExists = true,
-                CheckPathExists = true
-            };
-
-            if (ofd.ShowDialog().GetValueOrDefault())
-            {
-                var imgSystem = ServiceProvider.Get<IImagingSystem>();
-
-                using var img = imgSystem.LoadBitmap(ofd.FileName);
-                await img.UploadImage();
-            }
         }
     }
 }
