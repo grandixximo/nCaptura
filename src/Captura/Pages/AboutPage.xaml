@@ -118,26 +118,6 @@
                     </DockPanel>
                 </Button>
 
-                <Label Margin="0,15,0,5">
-                    <TextBlock Text="{Binding Tools, Source={StaticResource Loc}, Mode=OneWay}"/>
-                </Label>
-                
-                <WrapPanel Margin="3">
-                    <!-- Image Editor button removed - internal editor was removed, external editor is available via toggle in main UI -->
-                    <!-- Crop and Imgur upload buttons removed - features no longer working/supported -->
-
-                    <Button ToolTip="{Binding Trim, Source={StaticResource Loc}, Mode=OneWay}"
-                            Padding="5"
-                            Margin="0,0,10,10"
-                            Click="OpenAudioVideoTrimmer">
-                        <Path Data="{Binding Icons.Trim, Source={StaticResource ServiceLocator}}"
-                              Width="15"
-                              Height="15"
-                              Stretch="Uniform"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"/>
-                    </Button>
-                </WrapPanel>
             </StackPanel>
         </ScrollViewer>
     </Grid>

@@ -53,6 +53,12 @@
             <TabItem Header="FFmpeg">
                 <Frame Source="FFmpegPage.xaml"/>
             </TabItem>
+            <TabItem Header="{Binding Trim, Source={StaticResource Loc}, Mode=OneWay}">
+                <Frame Source="TrimmerPage.xaml"/>
+            </TabItem>
+            <TabItem Header="{Binding About, Source={StaticResource Loc}, Mode=OneWay}">
+                <Frame Source="AboutPage.xaml"/>
+            </TabItem>
         </TabControl>
     </Grid>
 </Page>
