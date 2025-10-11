@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 using System;
 using Captura.Video;
 
@@ -19,10 +19,6 @@ namespace Captura.Fakes
         public Rectangle SelectedRegion { get; set; }
 
         public IVideoItem VideoSource => new RegionItem(this, ServiceProvider.Get<IPlatformServices>());
-
-#pragma warning disable CS0067
-        public event Action SelectorHidden;
-#pragma warning restore CS0067
 
         public IntPtr Handle => IntPtr.Zero;
     }
