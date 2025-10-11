@@ -74,6 +74,7 @@
                 <Slider Grid.Column="2"
                         Minimum="1"
                         Maximum="100"
+                        LargeChange="10"
                         Value="{Binding Opacity, Mode=TwoWay}"/>
             </Grid>
         </StackPanel>
@@ -88,6 +89,7 @@
                 <Slider Value="{Binding Scale, Mode=TwoWay}"
                         TickPlacement="BottomRight"
                         TickFrequency="0.1"
+                        LargeChange="0.1"
                         Minimum="0"
                         Maximum="1"/>
             </DockPanel>
@@ -100,6 +102,7 @@
                     <Label Content="X"
                            Margin="0,0,5,0"/>
                     <Slider Value="{Binding XLoc, Mode=TwoWay}"
+                            LargeChange="0.1"
                             Minimum="0"
                             Maximum="1"/>
                 </DockPanel>
@@ -112,6 +115,7 @@
                     <Slider Value="{Binding YLoc, Mode=TwoWay}"
                             Orientation="Vertical"
                             IsDirectionReversed="True"
+                            LargeChange="0.1"
                             Minimum="0"
                             Maximum="1"/>
                 </DockPanel>
