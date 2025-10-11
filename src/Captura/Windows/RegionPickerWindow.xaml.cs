@@ -122,34 +122,13 @@ namespace Captura
             _end = E.GetPosition(Grid);
             Border.Visibility = Visibility.Collapsed;
 
-            var layer = AdornerLayer.GetAdornerLayer(Grid);
-
             var rect = GetRegion();
-
-            UpdateSizeDisplay(rect);
 
             if (rect == null)
                 return;
 
-            _croppingAdorner = new CroppingAdorner(Grid, rect.Value);
-
-            var clr = Colors.Black;
-            clr.A = 110;
-            _croppingAdorner.Fill = new SolidColorBrush(clr);
-
-            layer.Add(_croppingAdorner);
-
-            _croppingAdorner.CropChanged += (S, Args) => UpdateSizeDisplay(_croppingAdorner.SelectedRegion);
-
-            _croppingAdorner.Checked += () =>
-            {
-                var r = _croppingAdorner.SelectedRegion;
-
-                _start = r.Location;
-                _end = r.BottomRight;
-
-                Close();
-            };
+            // Auto-confirm the selection without showing the cropping adorner
+            Close();
         }
 
         Rect? GetRegion()
