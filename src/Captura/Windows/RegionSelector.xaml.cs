@@ -96,6 +96,8 @@ namespace Captura
                 });
             };
 
+            var regionSelectorViewModel = ServiceProvider.Get<RegionSelectorViewModel>();
+            
             ModesBox.ItemsSource = new[]
             {
                 new KeyValuePair<InkCanvasEditingMode, string>(InkCanvasEditingMode.None, "Pointer"),
@@ -105,10 +107,44 @@ namespace Captura
             };
 
             ModesBox.SelectedIndex = 0;
-            ColorPicker.SelectedColor = Color.FromRgb(27, 27, 27);
+            
+            // Initialize ColorPicker with saved brush color from settings
+            var savedBrushColor = regionSelectorViewModel.BrushColor.Value;
+            ColorPicker.SelectedColor = savedBrushColor;
+            InkCanvas.DefaultDrawingAttributes.Color = savedBrushColor;
+            
             SizeBox.Value = 10;
 
             InkCanvas.DefaultDrawingAttributes.FitToCurve = true;
+            
+            // Subscribe to ExitDrawingModeCommand
+            regionSelectorViewModel
+                .ExitDrawingModeCommand
+                .Subscribe(() => 
+                {
+                    regionSelectorViewModel.SelectedTool.Value = InkCanvasEditingMode.None;
+                    ModesBox.SelectedIndex = 0; // Set ListBox selection to Pointer
+                });
+            
+            // Add right-click handler to exit drawing mode
+            InkCanvas.PreviewMouseRightButtonDown += (s, e) =>
+            {
+                regionSelectorViewModel.SelectedTool.Value = InkCanvasEditingMode.None;
+                ModesBox.SelectedIndex = 0;
+                e.Handled = true;
+            };
+            
+            // Add keyboard handler at Window level to exit drawing mode (ESC)
+            // This catches keys before any child control can process them
+            this.PreviewKeyDown += (s, e) =>
+            {
+                if (e.Key == Key.Escape)
+                {
+                    regionSelectorViewModel.SelectedTool.Value = InkCanvasEditingMode.None;
+                    ModesBox.SelectedIndex = 0;
+                    e.Handled = true;
+                }
+            };
         }
 
         void SizeBox_OnValueChanged(object Sender, RoutedPropertyChangedEventArgs<object> E)
