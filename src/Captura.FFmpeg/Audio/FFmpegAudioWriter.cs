@@ -57,12 +57,12 @@ namespace Captura.FFmpeg
 
                     if (!_ffmpegProcess.WaitForExit(10000))
                     {
-                    try
-                    {
-                        _ffmpegProcess.Kill();
-                        _ffmpegProcess.WaitForExit(2000);
-                    }
-                    catch { }
+                        try
+                        {
+                            _ffmpegProcess.Kill();
+                            _ffmpegProcess.WaitForExit(2000);
+                        }
+                        catch { }
                     }
                 }
             }

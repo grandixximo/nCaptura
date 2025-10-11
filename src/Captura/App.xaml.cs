@@ -28,15 +28,20 @@ namespace Captura
         
         void App_OnDispatcherUnhandledException(object Sender, DispatcherUnhandledExceptionEventArgs Args)
         {
-            var dir = Path.Combine(ServiceProvider.SettingsDir, "Crashes");
-
-            Directory.CreateDirectory(dir);
-
-            File.WriteAllText(Path.Combine(dir, $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.txt"), Args.Exception.ToString());
+            LogException(Args.Exception.ToString());
 
             Args.Handled = true;
 
             new ErrorWindow(Args.Exception, Args.Exception.Message).ShowDialog();
+        }
+
+        static void LogException(string exceptionText)
+        {
+            var dir = Path.Combine(ServiceProvider.SettingsDir, "Crashes");
+
+            Directory.CreateDirectory(dir);
+
+            File.WriteAllText(Path.Combine(dir, $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.txt"), exceptionText);
         }
 
         void ShowSplashScreen()
@@ -95,11 +100,7 @@ namespace Captura
 
         void OnCurrentDomainOnUnhandledException(object S, UnhandledExceptionEventArgs E)
         {
-            var dir = Path.Combine(ServiceProvider.SettingsDir, "Crashes");
-
-            Directory.CreateDirectory(dir);
-
-            File.WriteAllText(Path.Combine(dir, $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.txt"), E.ExceptionObject.ToString());
+            LogException(E.ExceptionObject.ToString());
 
             if (E.ExceptionObject is Exception e)
             {

@@ -27,7 +27,12 @@ namespace Captura.Loc
             RaisePropertyChanged(PropertyName);
         }
 
+        /// <summary>
+        /// Fired when the language changes. This event is invoked by derived classes (e.g., LanguageManager).
+        /// </summary>
+#pragma warning disable CS0067 // The event is never used - invoked by derived classes
         public virtual event Action<CultureInfo> LanguageChanged;
+#pragma warning restore CS0067
 
         public string About
         {

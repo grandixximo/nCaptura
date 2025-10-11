@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -54,16 +54,32 @@ namespace Captura.Audio
 
         public void Start()
         {
-            _audioProvider.Start();
+            try
+            {
+                _audioProvider.Start();
 
-            _continueEvent.Set();
+                _continueEvent.Set();
+            }
+            catch (Exception e)
+            {
+                ErrorOccurred?.Invoke(e);
+                throw;
+            }
         }
 
         public void Stop()
         {
-            _continueEvent.Reset();
+            try
+            {
+                _continueEvent.Reset();
 
-            _audioProvider.Stop();
+                _audioProvider.Stop();
+            }
+            catch (Exception e)
+            {
+                ErrorOccurred?.Invoke(e);
+                throw;
+            }
         }
 
         void Loop()
@@ -80,13 +96,20 @@ namespace Captura.Audio
                 }
             }
 
-            while (CanContinue())
+            try
             {
-                var read = _audioProvider.Read(_buffer, 0, _buffer.Length);
+                while (CanContinue())
+                {
+                    var read = _audioProvider.Read(_buffer, 0, _buffer.Length);
 
-                _audioWriter.Write(_buffer, 0, read);
+                    _audioWriter.Write(_buffer, 0, read);
 
-                Thread.Sleep(ReadInterval);
+                    Thread.Sleep(ReadInterval);
+                }
+            }
+            catch (Exception e)
+            {
+                ErrorOccurred?.Invoke(e);
             }
         }
 
