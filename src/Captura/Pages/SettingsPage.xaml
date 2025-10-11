@@ -53,6 +53,9 @@
             <TabItem Header="FFmpeg">
                 <Frame Source="FFmpegPage.xaml"/>
             </TabItem>
+            <TabItem Header="{Binding WebCam, Source={StaticResource Loc}, Mode=OneWay}">
+                <Frame Name="WebcamTabFrame"/>
+            </TabItem>
             <TabItem Header="{Binding Trim, Source={StaticResource Loc}, Mode=OneWay}">
                 <Frame Source="TrimmerPage.xaml"/>
             </TabItem>

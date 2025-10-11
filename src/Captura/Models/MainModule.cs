@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Captura.Audio;
 using Captura.FFmpeg;
 using Captura.Hotkeys;
@@ -29,6 +29,7 @@ namespace Captura
             Binder.BindSingleton<RegionSelectorViewModel>();
 
             Binder.BindSingleton<WebcamPage>();
+            Binder.BindSingleton<WebcamPlacementPreviewPage>();
 
             // Bind as a Function to ensure the UI objects are referenced only after they have been created.
             Binder.Bind<Func<TaskbarIcon>>(() => () => MainWindow.Instance.SystemTray);
