@@ -14,6 +14,8 @@ namespace Captura.ViewModels
     // ReSharper disable once ClassNeverInstantiated.Global
     public class RegionSelectorViewModel : NotifyPropertyChanged
     {
+        readonly Settings _settings;
+        
         int _left = 50,
             _top = 50,
             _width = 500,
@@ -25,8 +27,21 @@ namespace Captura.ViewModels
 
         public const int BorderSize = 3;
 
-        public RegionSelectorViewModel()
+        public RegionSelectorViewModel(Settings Settings)
         {
+            _settings = Settings;
+            
+            // Initialize BrushColor from settings
+            var savedColor = _settings.RegionSelector.BrushColor;
+            BrushColor = new ReactiveProperty<Color>(Color.FromRgb(savedColor.R, savedColor.G, savedColor.B));
+            
+            // Subscribe to BrushColor changes to save to settings
+            BrushColor.Subscribe(color =>
+            {
+                var drawingColor = System.Drawing.Color.FromArgb(color.R, color.G, color.B);
+                _settings.RegionSelector.BrushColor = drawingColor;
+            });
+            
             MoveLeftCommand = new ReactiveCommand()
                 .WithSubscribe(() => Left -= KeyMoveDelta);
             MoveRightCommand = new ReactiveCommand()
@@ -58,7 +73,7 @@ namespace Captura.ViewModels
 
         public IReactiveProperty<int> BrushSize { get; } = new ReactiveProperty<int>(10);
 
-        public IReactiveProperty<Color> BrushColor { get; } = new ReactiveProperty<Color>(Color.FromRgb(27, 27, 27));
+        public IReactiveProperty<Color> BrushColor { get; }
 
         public int Left
         {
