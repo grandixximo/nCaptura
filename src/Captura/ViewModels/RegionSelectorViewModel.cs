@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -203,5 +203,7 @@ namespace Captura.ViewModels
         public ICommand DecreaseHeightCommand { get; }
 
         public ReactiveCommand ClearAllDrawingsCommand { get; } = new ReactiveCommand();
+        
+        public ReactiveCommand ExitDrawingModeCommand { get; } = new ReactiveCommand();
     }
 }

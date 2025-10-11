@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -40,7 +40,29 @@ namespace Captura
                 .ClearAllDrawingsCommand
                 .Subscribe(() => InkCanvas.Strokes.Clear());
 
+            ViewModel
+                .ExitDrawingModeCommand
+                .Subscribe(() => ViewModel.SelectedTool.Value = InkCanvasEditingMode.None);
+
             InkCanvas.DefaultDrawingAttributes.FitToCurve = true;
+            
+            // Add right-click handler to exit drawing mode
+            InkCanvas.PreviewMouseRightButtonDown += (s, e) =>
+            {
+                ViewModel.SelectedTool.Value = InkCanvasEditingMode.None;
+                e.Handled = true;
+            };
+            
+            // Add keyboard handler at Window level to exit drawing mode (ESC)
+            // This catches keys before any child control can process them
+            this.PreviewKeyDown += (s, e) =>
+            {
+                if (e.Key == Key.Escape)
+                {
+                    ViewModel.SelectedTool.Value = InkCanvasEditingMode.None;
+                    e.Handled = true;
+                }
+            };
         }
 
         void OnToolChange(InkCanvasEditingMode Tool)
