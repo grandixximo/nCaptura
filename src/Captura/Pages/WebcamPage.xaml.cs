@@ -138,7 +138,8 @@ namespace Captura
 
         public void SetupPreview()
         {
-            _webcamModel.PreviewClicked += SettingsWindow.ShowWebcamPage;
+            // Classic UI: SettingsWindow.ShowWebcamPage doesn't exist - preview handled by WebCamWindow
+            // _webcamModel.PreviewClicked += SettingsWindow.ShowWebcamPage;
 
             IsVisibleChanged += async (S, E) =>
             {
