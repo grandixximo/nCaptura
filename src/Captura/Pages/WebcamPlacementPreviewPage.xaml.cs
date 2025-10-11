@@ -71,6 +71,7 @@ namespace Captura
         IReadOnlyReactiveProperty<IWebcamCapture> _webcamCapture;
         bool _setupComplete;
         bool _isReleasing;
+        bool _acquired;
 
         public void SetupPreview()
         {
@@ -81,24 +82,25 @@ namespace Captura
 
             IsVisibleChanged += (S, E) =>
             {
-                if (IsVisible && _webcamCapture == null && !_isReleasing)
+                if (IsVisible && !_isReleasing)
                 {
-                    _webcamCapture = _webcamModel.InitCapture();
+                    if (_webcamCapture == null)
+                    {
+                        _webcamCapture = _webcamModel.InitCapture();
+                        _acquired = true;
+                    }
 
                     if (_webcamCapture.Value is { } capture)
                     {
                         _reactor.WebcamSize.OnNext(new WSize(capture.Width, capture.Height));
-
+                        _webcamCapture.Value.SetPreviewVisibility(true);
                         UpdateWebcamPreview();
                     }
                 }
                 else if (!IsVisible && _webcamCapture != null && !_isReleasing)
                 {
-                    // Release webcam when page becomes not visible
-                    _isReleasing = true;
-                    _webcamModel.ReleaseCapture();
-                    _webcamCapture = null;
-                    _isReleasing = false;
+                    // Hide preview when page is not visible but keep camera running to avoid flicker
+                    try { _webcamCapture.Value?.SetPreviewVisibility(false); } catch { }
                 }
             };
 
@@ -127,6 +129,19 @@ namespace Captura
                 .AddTo(_subscriptions);
 
             UpdateWebcamPreview();
+
+            Unloaded += (s, e) =>
+            {
+                // Cleanup when page is unloaded
+                if (_acquired && _webcamCapture != null)
+                {
+                    _isReleasing = true;
+                    _webcamModel.ReleaseCapture();
+                    _webcamCapture = null;
+                    _acquired = false;
+                    _isReleasing = false;
+                }
+            };
         }
 
 
