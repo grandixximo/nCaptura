@@ -1,10 +1,16 @@
-﻿using System.Drawing;
+using System.Drawing;
 
 namespace Captura
 {
     public class MouseOverlaySettings : PropertyStore
     {
         public bool Display
+        {
+            get => Get(true);
+            set => Set(value);
+        }
+
+        public bool DisplayHighlight
         {
             get => Get<bool>();
             set => Set(value);
