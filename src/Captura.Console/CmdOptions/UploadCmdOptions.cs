@@ -1,4 +1,4 @@
-﻿using Captura.Models;
+using Captura.Models;
 using CommandLine;
 using CommandLine.Text;
 using System;
@@ -21,11 +21,7 @@ namespace Captura
         {
             get
             {
-                yield return new Example("Upload image to Imgur", new UploadCmdOptions
-                {
-                    Service = UploadService.imgur,
-                    FileName = "image.png"
-                });
+                yield break;
             }
         }
 
@@ -37,19 +33,8 @@ namespace Captura
                 return;
             }
 
-            switch (Service)
-            {
-                case UploadService.imgur:
-                    var imgSystem = ServiceProvider.Get<IImagingSystem>();
-                    var img = imgSystem.LoadBitmap(FileName);
-                    var uploader = ServiceProvider.Get<IImageUploader>();
-
-                    // TODO: Show progress (on a single line)
-                    var result = uploader.Upload(img, ImageFormats.Png, P => { }).Result;
-
-                    Console.WriteLine(result.Url);
-                    break;
-            }
+            // No upload services currently implemented
+            Console.WriteLine("No upload services available");
         }
     }
 }
