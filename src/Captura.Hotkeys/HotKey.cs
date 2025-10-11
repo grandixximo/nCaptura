@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Windows.Forms;
 using Captura.Native;
@@ -68,9 +68,27 @@ namespace Captura.Hotkeys
             }
         }
         
-        public Keys Key { get; private set; }
+        Keys _key;
+        public Keys Key
+        {
+            get => _key;
+            private set
+            {
+                _key = value;
+                OnPropertyChanged();
+            }
+        }
 
-        public Modifiers Modifiers { get; private set; }
+        Modifiers _modifiers;
+        public Modifiers Modifiers
+        {
+            get => _modifiers;
+            private set
+            {
+                _modifiers = value;
+                OnPropertyChanged();
+            }
+        }
 
         public void Change(Keys NewKey, Modifiers NewModifiers)
         {
