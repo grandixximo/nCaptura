@@ -251,13 +251,6 @@ namespace Captura
             };
         }
 
-        void CloseButton_Click(object Sender, RoutedEventArgs E)
-        {
-            Hide();
-
-            SelectorHidden?.Invoke();
-        }
-
         void ScreenShotButton_Click(object Sender, RoutedEventArgs E)
         {
             var screenShotViewModel = ServiceProvider.Get<ScreenShotViewModel>();
@@ -385,7 +378,7 @@ namespace Captura
             Dispatcher.Invoke(() =>
             {
                 ResizeMode = ResizeMode.NoResize;
-                Snapper.IsEnabled = CloseButton.IsEnabled = false;
+                Snapper.IsEnabled = false;
 
                 WidthBox.IsEnabled = HeightBox.IsEnabled = false;
             });
@@ -396,7 +389,7 @@ namespace Captura
             Dispatcher.Invoke(() =>
             {
                 ResizeMode = ResizeMode.CanResize;
-                Snapper.IsEnabled = CloseButton.IsEnabled = true;
+                Snapper.IsEnabled = true;
 
                 WidthBox.IsEnabled = HeightBox.IsEnabled = true;
 

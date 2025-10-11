@@ -262,15 +262,6 @@
                                         WindowChrome.IsHitTestVisibleInChrome="True"
                                         ToolTip="{Binding SnapToWindow, Source={StaticResource Loc}, Mode=OneWay}"/>
 
-                    <local:ModernButton x:Name="CloseButton"
-                                        Click="CloseButton_Click"
-                                        Background="{DynamicResource WindowBackground}"
-                                        Foreground="#77ef5350"
-                                        IconData="{Binding Icons.Close, Source={StaticResource ServiceLocator}}"
-                                        DockPanel.Dock="Right"
-                                        WindowChrome.IsHitTestVisibleInChrome="True"
-                                        ToolTip="{Binding Close, Source={StaticResource Loc}, Mode=OneWay}"/>
-
                     <local:ModernButton Click="ScreenShotButton_Click"
                                         IconData="{Binding Icons.Camera, Source={StaticResource ServiceLocator}}"
                                         DockPanel.Dock="Right"
