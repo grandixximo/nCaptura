@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -167,23 +167,52 @@ namespace Captura.MouseKeyHook.Steps
 
         void DoRecord(IObservable<IRecordStep> StepsObservable, IObservable<Unit> ShotObservable)
         {
-            var frames = ShotObservable.Select(M => _imageProvider.Capture())
-                .Zip(StepsObservable, (Frame, Step) =>
-                {
-                    Step.Draw(Frame, _imageProvider.PointTransform);
-
-                    return Frame.GenerateFrame(TimeSpan.Zero);
-                });
-
-            foreach (var frame in frames.ToEnumerable())
+            try
             {
-                _videoWriter.WriteFrame(frame);
+                var frames = ShotObservable.Select(M => _imageProvider.Capture())
+                    .Zip(StepsObservable, (Frame, Step) =>
+                    {
+                        Step.Draw(Frame, _imageProvider.PointTransform);
+
+                        return Frame.GenerateFrame(TimeSpan.Zero);
+                    });
+
+                foreach (var frame in frames.ToEnumerable())
+                {
+                    _videoWriter.WriteFrame(frame);
+                }
+            }
+            catch (Exception e)
+            {
+                ErrorOccurred?.Invoke(e);
             }
         }
 
-        public void Start() => _recording = true;
+        public void Start()
+        {
+            try
+            {
+                _recording = true;
+            }
+            catch (Exception e)
+            {
+                ErrorOccurred?.Invoke(e);
+                throw;
+            }
+        }
 
-        public void Stop() => _recording = false;
+        public void Stop()
+        {
+            try
+            {
+                _recording = false;
+            }
+            catch (Exception e)
+            {
+                ErrorOccurred?.Invoke(e);
+                throw;
+            }
+        }
 
         public event Action<Exception> ErrorOccurred;
 
