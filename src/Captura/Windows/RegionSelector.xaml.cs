@@ -309,8 +309,6 @@ namespace Captura
         }
 
         #region IRegionProvider
-        public event Action SelectorHidden;
-
         public bool SelectorVisible
         {
             get => Visibility == Visibility.Visible;

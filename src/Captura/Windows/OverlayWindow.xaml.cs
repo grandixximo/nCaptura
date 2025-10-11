@@ -413,7 +413,7 @@ namespace Captura
             PlaceOverlays();
         }
 
-        async void UpdateBackground()
+        void UpdateBackground()
         {
             // Modern version doesn't have VideoViewModel on MainViewModel
             // Just capture a simple screenshot
