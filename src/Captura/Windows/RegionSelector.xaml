@@ -1,4 +1,4 @@
-﻿<Window x:Class="Captura.RegionSelector"
+<Window x:Class="Captura.RegionSelector"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Captura"
@@ -46,6 +46,9 @@
         <KeyBinding Key="Down"
                     Modifiers="Shift"
                     Command="{Binding RegionSelectorViewModel.IncreaseHeightCommand, Source={StaticResource ServiceLocator}}"/>
+        
+        <KeyBinding Key="Escape"
+                    Command="{Binding RegionSelectorViewModel.ExitDrawingModeCommand, Source={StaticResource ServiceLocator}}"/>
     </Window.InputBindings>
     <Grid>
         <Grid.Resources>
