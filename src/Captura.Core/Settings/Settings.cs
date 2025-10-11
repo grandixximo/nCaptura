@@ -115,6 +115,8 @@ namespace Captura
 
         public WindowsSettings WindowsSettings { get; }
 
+        public RegionSelectorSettings RegionSelector { get; } = new RegionSelectorSettings();
+
         public int PreStartCountdown
         {
             get => Get(0);
