@@ -64,8 +64,6 @@
                                           CommandParameter="/Pages/AboutPage.xaml"/>
                 </WrapPanel>
                 
-                <Separator Margin="20,15" Height="1"/>
-                
                 <captura:ModernButton Content="{Binding Trim, Source={StaticResource Loc}, Mode=OneWay}"
                                       IconData="{Binding Icons.Trim, Source={StaticResource ServiceLocator}}"
                                       HorizontalAlignment="Center"
