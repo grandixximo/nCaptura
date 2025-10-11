@@ -135,6 +135,7 @@ namespace Captura
         }
 
         IReadOnlyReactiveProperty<IWebcamCapture> _webcamCapture;
+        bool _acquired;
 
         public void SetupPreview()
         {
@@ -150,10 +151,10 @@ namespace Captura
                 }
                 else
                 {
-                    if (_webcamCapture != null)
+                    // Hide preview when page is not visible but keep camera running to avoid flicker
+                    if (_webcamCapture?.Value != null)
                     {
-                        _webcamModel.ReleaseCapture();
-                        _webcamCapture = null;
+                        try { _webcamCapture.Value.SetPreviewVisibility(false); } catch { }
                     }
                 }
             };
@@ -185,6 +186,17 @@ namespace Captura
                 .Subscribe();
 
             UpdateWebcamPreview();
+
+            Unloaded += (s, e) =>
+            {
+                // Cleanup when page is unloaded (not just hidden)
+                if (_acquired && _webcamCapture != null)
+                {
+                    _webcamModel.ReleaseCapture();
+                    _webcamCapture = null;
+                    _acquired = false;
+                }
+            };
         }
 
         async void OnCameraChanged()
@@ -196,6 +208,7 @@ namespace Captura
             {
                 _webcamModel.ReleaseCapture();
                 _webcamCapture = null;
+                _acquired = false;
             }
 
             await InitializeCameraAsync();
@@ -203,10 +216,13 @@ namespace Captura
 
         async Task InitializeCameraAsync()
         {
+            // Don't release and recreate if camera is already initialized
             if (_webcamCapture != null)
             {
-                _webcamModel.ReleaseCapture();
-                _webcamCapture = null;
+                // Camera already initialized, just update the preview
+                // UpdateWebcamPreview will automatically show the preview
+                UpdateWebcamPreview();
+                return;
             }
 
             IsCameraReady = false;
@@ -235,6 +251,7 @@ namespace Captura
                 await Task.Yield();
 
                 _webcamCapture = _webcamModel.InitCapture();
+                _acquired = true;
 
                 if (_webcamCapture.Value is { } capture)
                 {
