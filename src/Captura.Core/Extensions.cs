@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DSize = System.Drawing.Size;
 using WSize = System.Windows.Size;
 using System.Threading.Tasks;
@@ -14,27 +14,6 @@ namespace Captura
         {
             if (Command.CanExecute(null))
                 Command.Execute(null);
-        }
-
-        public static async Task UploadImage(this IBitmapImage Bitmap)
-        {
-            var uploadWriter = ServiceProvider.Get<ImageUploadWriter>();
-
-            var settings = ServiceProvider.Get<Settings>();
-
-            var response = await uploadWriter.Save(Bitmap, settings.ScreenShots.ImageFormat);
-
-            switch (response)
-            {
-                case Exception ex:
-                    var loc = ServiceProvider.Get<ILocalizationProvider>();
-                    ServiceProvider.MessageProvider.ShowException(ex, loc.ImageUploadFailed);
-                    break;
-
-                case UploadResult uploadResult:
-                    uploadResult.Url.WriteToClipboard();
-                    break;
-            }
         }
 
         public static DSize ToDrawingSize(this WSize Size)

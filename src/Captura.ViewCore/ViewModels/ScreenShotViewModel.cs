@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
@@ -18,13 +18,11 @@ namespace Captura.ViewModels
     {
         public DiskWriter DiskWriter { get; }
         public ClipboardWriter ClipboardWriter { get; }
-        public ImageUploadWriter ImgurWriter { get; }
 
         public ScreenShotViewModel(ILocalizationProvider Loc,
             Settings Settings,
             DiskWriter DiskWriter,
             ClipboardWriter ClipboardWriter,
-            ImageUploadWriter ImgurWriter,
             ScreenShotModel ScreenShotModel,
             VideoSourcesViewModel VideoSourcesViewModel,
             WebcamModel WebcamModel,
@@ -32,7 +30,6 @@ namespace Captura.ViewModels
         {
             this.DiskWriter = DiskWriter;
             this.ClipboardWriter = ClipboardWriter;
-            this.ImgurWriter = ImgurWriter;
 
             ScreenShotCommand = new[]
                 {

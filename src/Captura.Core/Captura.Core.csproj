@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
@@ -6,7 +6,6 @@
     <ProjectReference Include="..\Captura.Base\Captura.Base.csproj" />
     <ProjectReference Include="..\Captura.FFmpeg\Captura.FFmpeg.csproj" />
     <ProjectReference Include="..\Captura.Hotkeys\Captura.Hotkeys.csproj" />
-    <ProjectReference Include="..\Captura.Imgur\Captura.Imgur.csproj" />
     <ProjectReference Include="..\Captura.Loc\Captura.Loc.csproj" />
     <ProjectReference Include="..\Captura.MouseKeyHook\Captura.MouseKeyHook.csproj" />
     <ProjectReference Include="..\Captura.NAudio\Captura.NAudio.csproj" />

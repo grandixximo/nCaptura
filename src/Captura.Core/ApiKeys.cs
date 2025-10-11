@@ -1,5 +1,4 @@
-﻿using System;
-using Captura.Imgur;
+using System;
 using Captura.YouTube;
 
 namespace Captura
@@ -10,13 +9,9 @@ namespace Captura
     /// On Production builds, AppVeyor embeds Api Keys into the app.
     /// </summary>
     // ReSharper disable once ClassNeverInstantiated.Global
-    class ApiKeys : IImgurApiKeys, IYouTubeApiKeys
+    class ApiKeys : IYouTubeApiKeys
     {
         static string Get(string Key) => Environment.GetEnvironmentVariable(Key, EnvironmentVariableTarget.User) ?? "";
-
-        public string ImgurClientId => Get("imgur_client_id");
-
-        public string ImgurSecret => Get("imgur_secret");
 
         public string YouTubeClientId => Get("yt_client_id");
 
