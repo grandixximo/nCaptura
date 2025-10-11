@@ -368,6 +368,17 @@
                         <ScaleTransform ScaleX="0.85" ScaleY="0.85"/>
                     </xctk:IntegerUpDown.LayoutTransform>
                 </xctk:IntegerUpDown>
+
+                <local:ModernButton ToolTip="Clear all drawings"
+                                    Foreground="#ff3330"
+                                    IconData="{Binding Icons.Delete, Source={StaticResource ServiceLocator}}"
+                                    DockPanel.Dock="Bottom"
+                                    Command="{Binding RegionSelectorViewModel.ClearAllDrawingsCommand, Source={StaticResource ServiceLocator}}"
+                                    Margin="0,2">
+                    <local:ModernButton.LayoutTransform>
+                        <ScaleTransform ScaleX="0.85" ScaleY="0.85"/>
+                    </local:ModernButton.LayoutTransform>
+                </local:ModernButton>
             </DockPanel>
 
             <Border.Style>

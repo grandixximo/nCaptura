@@ -126,6 +126,11 @@ namespace Captura
                     ModesBox.SelectedIndex = 0; // Set ListBox selection to Pointer
                 });
             
+            // Subscribe to ClearAllDrawingsCommand
+            regionSelectorViewModel
+                .ClearAllDrawingsCommand
+                .Subscribe(() => InkCanvas.Strokes.Clear());
+            
             // Add right-click handler to exit drawing mode
             InkCanvas.PreviewMouseRightButtonDown += (s, e) =>
             {
