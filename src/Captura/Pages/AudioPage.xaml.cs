@@ -1,5 +1,3 @@
-using System.Windows;
-using System.Windows.Input;
 using Captura.Models;
 using Captura.ViewModels;
 
@@ -17,14 +15,11 @@ namespace Captura
             };
 
             InitializeComponent();
-        }
-
-        void SetSoundFile(object Sender, MouseButtonEventArgs E)
-        {
-            if (Sender is FrameworkElement element && element.DataContext is SoundsViewModelItem vm)
+            
+            ServiceProvider.Get<MainViewModel>().Refreshed += () =>
             {
-                vm.SetCommand.ExecuteIfCan();
-            }
+                AudioSourcesPanel?.Shake();
+            };
         }
     }
 }

@@ -1,33 +1,14 @@
 <Page x:Class="Captura.WebcamPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:captura="clr-namespace:Captura"
-      Title="{Binding WebCam, Source={StaticResource Loc}, Mode=OneWay}"
       DataContext="{Binding MainViewModel, Source={StaticResource ServiceLocator}}">
-    <Grid Margin="5,0">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <StackPanel DataContext="{Binding Settings.WebcamOverlay}">
-            <DockPanel>
-                <captura:ModernButton ToolTip="{Binding Refresh, Source={StaticResource Loc}, Mode=OneWay}"
-                                      Command="{Binding WebcamModel.RefreshCommand, Source={StaticResource ServiceLocator}}"
-                                      Click="Refresh_OnClick"
-                                      IconData="{Binding Icons.Refresh, Source={StaticResource ServiceLocator}}"
-                                      DockPanel.Dock="Right"/>
+    <Grid>
+        <StackPanel>
+            <Label Margin="0,3"
+                   Content="{Binding WebCam, Source={StaticResource Loc}, Mode=OneWay}"
+                   FontWeight="Bold"/>
 
-                <captura:ModernButton ToolTip="Capture Image"
-                                      Click="CaptureImage_OnClick"
-                                      IconData="{Binding Icons.Camera, Source={StaticResource ServiceLocator}}"
-                                      DockPanel.Dock="Right"/>
-
-                <captura:ModernButton ToolTip="Show Camera Properties"
-                                      Click="ShowCameraProperties_OnClick"
-                                      IconData="{Binding Icons.Settings, Source={StaticResource ServiceLocator}}"
-                                      DockPanel.Dock="Right"/>
-
+            <DockPanel Margin="0,5">
                 <Path Data="{Binding Icons.Webcam, Source={StaticResource ServiceLocator}}"
                       Width="15"
                       Height="15"
@@ -37,129 +18,30 @@
                       VerticalAlignment="Center"
                       ToolTip="{Binding WebCam, Source={StaticResource Loc}, Mode=OneWay}"/>
 
+                <Button Content="Properties"
+                        DockPanel.Dock="Right"
+                        Click="ShowCameraProperties_Click"
+                        Padding="10,0"
+                        Margin="3,0"
+                        ToolTip="Show Camera Properties"/>
+
+                <Button Content="{Binding Preview, Source={StaticResource Loc}, Mode=OneWay}"
+                        DockPanel.Dock="Right"
+                        Click="Preview_Click"
+                        Padding="10,0"
+                        Margin="3,0"/>
+
                 <ComboBox ItemsSource="{Binding WebcamModel.AvailableCams, Source={StaticResource ServiceLocator}}"
                           SelectedItem="{Binding WebcamModel.SelectedCam, Mode=TwoWay, Source={StaticResource ServiceLocator}}"
-                          IsEnabled="{Binding ViewConditions.CanChangeWebcam.Value, Source={StaticResource ServiceLocator}}"
+                          IsEnabled="{Binding RecordingViewModel.CanChangeWebcam, Source={StaticResource ServiceLocator}}"
                           DisplayMemberPath="Name"
-                          VerticalAlignment="Center"
-                          Margin="0,0,7,0"/>
+                          Name="WebcamComboBox"/>
             </DockPanel>
 
-            <CheckBox IsChecked="{Binding SeparateFile}"
+            <CheckBox IsChecked="{Binding Settings.WebcamOverlay.SeparateFile}"
                       Content="{Binding WebCamSeparateFile, Source={StaticResource Loc}, Mode=OneWay}"
-                      IsEnabled="{Binding ViewConditions.IsEnabled.Value, Source={StaticResource ServiceLocator}}"
-                      Visibility="{Binding ViewConditions.CanWebcamSeparateFile.Value, Source={StaticResource ServiceLocator}, Converter={StaticResource BoolToVisibilityConverter}}"
+                      IsEnabled="{Binding RecordingViewModel.RecorderState, Converter={StaticResource NotRecordingConverter}}"
                       Margin="0,5"/>
-
-            <Grid Margin="0,15,0,5">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <Path Data="{Binding Icons.Opacity, Source={StaticResource ServiceLocator}}"
-                      Width="15"
-                      Height="15"
-                      Margin="0,0,10,0"
-                      Stretch="Uniform"
-                      HorizontalAlignment="Center"
-                      VerticalAlignment="Center"/>
-
-                <Label Content="{Binding Opacity, Source={StaticResource Loc}, Mode=OneWay}"
-                       ContentStringFormat="{}{0}: "
-                       Grid.Column="1"
-                       Margin="0,3"/>
-
-                <Slider Grid.Column="2"
-                        Minimum="1"
-                        Maximum="100"
-                        LargeChange="10"
-                        Value="{Binding Opacity, Mode=TwoWay}"/>
-            </Grid>
         </StackPanel>
-        <GridSplitter Grid.Column="1"
-                      Width="1"
-                      Margin="5,0"/>
-        <DockPanel Grid.Column="2"
-                   DataContext="{Binding Settings.WebcamOverlay}">
-            <DockPanel Margin="5"
-                       DockPanel.Dock="Top">
-                <Label Content="Scale: "/>
-                <Slider Value="{Binding Scale, Mode=TwoWay}"
-                        TickPlacement="BottomRight"
-                        TickFrequency="0.1"
-                        LargeChange="0.1"
-                        Minimum="0"
-                        Maximum="1"/>
-            </DockPanel>
-
-            <DockPanel VerticalAlignment="Center"
-                       HorizontalAlignment="Center"
-                       Margin="0,0,0,10">
-                <DockPanel DockPanel.Dock="Bottom"
-                           Margin="5,5,40,5">
-                    <Label Content="X"
-                           Margin="0,0,5,0"/>
-                    <Slider Value="{Binding XLoc, Mode=TwoWay}"
-                            LargeChange="0.1"
-                            Minimum="0"
-                            Maximum="1"/>
-                </DockPanel>
-                <DockPanel DockPanel.Dock="Right"
-                           Margin="5">
-                    <Label Content="Y"
-                           HorizontalContentAlignment="Center"
-                           Margin="0,0,0,5"
-                           DockPanel.Dock="Top"/>
-                    <Slider Value="{Binding YLoc, Mode=TwoWay}"
-                            Orientation="Vertical"
-                            IsDirectionReversed="True"
-                            LargeChange="0.1"
-                            Minimum="0"
-                            Maximum="1"/>
-                </DockPanel>
-                <Grid Name="PreviewGrid"
-                      Background="DimGray">
-                    <Image Name="Img"
-                           Stretch="Uniform"/>
-
-                    <!-- Screenshot Loading Text -->
-                    <TextBlock Text="Loading..."
-                               FontSize="20"
-                               Foreground="White"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               Visibility="{Binding IsLoadingScreenshot, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BoolToVisibilityConverter}}"/>
-
-                    <!-- Invisible but still required to prevent render errors -->
-                    <Label Name="PreviewTarget"
-                           HorizontalAlignment="Left"
-                           VerticalAlignment="Top"
-                           Background="#00FFFFFF"
-                           MaxWidth="{Binding ActualWidth, ElementName=Img}"
-                           MaxHeight="{Binding ActualHeight, ElementName=Img}"/>
-
-                    <!-- Camera Loading Container - Only shown after screenshot loaded -->
-                    <Border Name="CameraLoadingContainer"
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Top"
-                            Background="#80000000"
-                            Margin="{Binding Margin, ElementName=PreviewTarget}"
-                            Width="{Binding Width, ElementName=PreviewTarget}"
-                            Height="{Binding Height, ElementName=PreviewTarget}"
-                            MaxWidth="{Binding ActualWidth, ElementName=Img}"
-                            MaxHeight="{Binding ActualHeight, ElementName=Img}"
-                            Visibility="{Binding IsCameraReady, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Text="Loading..."
-                                   FontSize="16"
-                                   Foreground="White"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Visibility="{Binding IsLoadingCamera, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                    </Border>
-                </Grid>
-            </DockPanel>
-        </DockPanel>
     </Grid>
 </Page>
