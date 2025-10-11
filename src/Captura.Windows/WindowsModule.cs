@@ -12,6 +12,9 @@ namespace Captura.Windows
     {
         public static void Load(IBinder Binder)
         {
+            // Register hardware detection service first, as it's used by encoder providers
+            Binder.BindSingleton<IHardwareInfoService, HardwareInfoService>();
+
             if (Windows8OrAbove)
             {
                 try
