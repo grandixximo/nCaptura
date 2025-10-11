@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Threading.Tasks;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 
@@ -12,7 +13,7 @@ namespace Captura.Audio
 
         AudioClient _audioClient;
 
-        public void StartListeningForPeakLevel()
+        public async Task StartListeningForPeakLevelAsync()
         {
             if (_audioClient != null)
                 return;
@@ -20,6 +21,9 @@ namespace Captura.Audio
             // Peak Level is available for recording devices only when they are active
             if (IsLoopback)
                 return;
+
+            // Yield to allow UI to render, then initialize on same thread (COM requirement)
+            await Task.Yield();
 
             _audioClient = Device.AudioClient;
             _audioClient.Initialize(AudioClientShareMode.Shared,

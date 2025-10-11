@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Threading.Tasks;
 
 namespace Captura.Audio
 {
@@ -8,7 +9,7 @@ namespace Captura.Audio
 
         bool IsLoopback { get; }
 
-        void StartListeningForPeakLevel();
+        Task StartListeningForPeakLevelAsync();
 
         void StopListeningForPeakLevel();
 

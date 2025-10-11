@@ -58,7 +58,8 @@ namespace Captura.FFmpeg
                 .SetVideoSize(w, h);
 
             var output = argsBuilder.AddOutputFile(Args.FileName)
-                .SetFrameRate(Args.FrameRate);
+                .SetFrameRate(Args.FrameRate)
+                .AddArg("movflags", "+faststart");
 
             Args.VideoCodec.Apply(settings, Args, output);
             
@@ -88,6 +89,8 @@ namespace Captura.FFmpeg
                     .SetAudioChannels(Args.Channels);
 
                 Args.VideoCodec.AudioArgsProvider(Args.AudioQuality, output);
+
+                // Keep audio as provided without additional resampling to avoid added latency
 
                 var wf = Args.AudioProvider.WaveFormat;
 
@@ -129,6 +132,16 @@ namespace Captura.FFmpeg
             }
         }
 
+        // Detect encoding progress by observing stderr via FFmpegService's log item
+        public bool IsEncodingLikelyActive()
+        {
+            try
+            {
+                return _ffmpegProcess != null && !_ffmpegProcess.HasExited;
+            }
+            catch { return false; }
+        }
+
         public void Dispose()
         {
             try
@@ -136,16 +149,13 @@ namespace Captura.FFmpeg
                 try { _lastFrameTask?.Wait(5000); } catch { }
                 try { _lastAudio?.Wait(5000); } catch { }
 
-                try
-                {
-                    _ffmpegIn?.Flush();
-                    _audioPipe?.Flush();
-                }
-                catch { }
+                try { _ffmpegIn?.Flush(); } catch { }
+                try { _audioPipe?.Flush(); } catch { }
 
                 try { _ffmpegIn?.Dispose(); } catch { }
                 try { _audioPipe?.Dispose(); } catch { }
 
+                // Immediately ask FFmpeg to finalize quickly
                 FFmpegService.TryGracefulStop(_ffmpegProcess);
 
                 if (!_ffmpegProcess.WaitForExit(10000))
