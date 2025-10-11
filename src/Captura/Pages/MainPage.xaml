@@ -109,15 +109,6 @@
 
                 <Frame Source="RecentPage.xaml"/>
             </TabItem>
-            <TabItem>
-                <TabItem.Header>
-                    <Path Data="{Binding Icons.Help, Source={StaticResource ServiceLocator}}"
-                          Style="{StaticResource TabIcon}"
-                          ToolTip="{Binding About, Source={StaticResource Loc}, Mode=OneWay}"/>
-                </TabItem.Header>
-                
-                <Frame Source="AboutPage.xaml"/>
-            </TabItem>
         </TabControl>
     </DockPanel>
 </Page>

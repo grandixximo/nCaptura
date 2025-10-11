@@ -14,12 +14,5 @@ namespace Captura
         {
             NavigationService?.Navigate(new CrashLogsPage());
         }
-
-        // OpenImageEditor, OpenImageCropper, and UploadToImgur methods removed - features no longer supported
-
-        void OpenAudioVideoTrimmer(object Sender, RoutedEventArgs E)
-        {
-            new TrimmerWindow().ShowAndFocus();
-        }
     }
 }
