@@ -22,7 +22,7 @@ namespace Captura
 {
     public partial class OverlayPage
     {
-        public OverlayPage()
+        OverlayPage()
         {
             InitializeComponent();
 
@@ -37,24 +37,15 @@ namespace Captura
 
         void AddToGrid(LayerFrame Frame, bool CanResize)
         {
-            if (Grid == null)
-                return;
-
             Grid.Children.Add(Frame);
 
             Panel.SetZIndex(Frame, 0);
 
-            // Wait for visual tree to be ready before accessing AdornerLayer
-            Frame.Loaded += (s, e) =>
-            {
-                var layer = AdornerLayer.GetAdornerLayer(Frame);
-                if (layer != null)
-                {
-                    var adorner = new OverlayPositionAdorner(Frame, CanResize);
-                    layer.Add(adorner);
-                    adorner.PositionUpdated += Frame.RaisePositionChanged;
-                }
-            };
+            var layer = AdornerLayer.GetAdornerLayer(Frame);
+            var adorner = new OverlayPositionAdorner(Frame, CanResize);
+            layer.Add(adorner);
+
+            adorner.PositionUpdated += Frame.RaisePositionChanged;
         }
 
         LayerFrame Generate(PositionedOverlaySettings Settings, string Text, Color BackgroundColor)
@@ -387,9 +378,6 @@ namespace Captura
 
         void UIElement_OnMouseMove(object Sender, MouseEventArgs E)
         {
-            if (ServiceProvider.Get<Settings>().MousePointerOverlay.DisplayHighlight)
-                MousePointer.Visibility = Visibility.Visible;
-
             var position = E.GetPosition(Grid);
 
             if (IsOutsideGrid(position))
@@ -398,6 +386,12 @@ namespace Captura
 
                 return;
             }
+
+            // Show/hide circle based on DisplayHighlight setting
+            if (ServiceProvider.Get<Settings>().MousePointerOverlay.DisplayHighlight)
+                MousePointer.Visibility = Visibility.Visible;
+            else
+                MousePointer.Visibility = Visibility.Collapsed;
 
             if (_dragging)
             {
