@@ -169,13 +169,24 @@ namespace Captura
                 InkCanvas.Background = new SolidColorBrush(mode == InkCanvasEditingMode.None
                     ? Colors.Transparent
                     : Color.FromArgb(1, 0, 0, 0));
+                
+                // Update ViewModel's SelectedTool
+                var regionSelectorViewModel = ServiceProvider.Get<RegionSelectorViewModel>();
+                regionSelectorViewModel.SelectedTool.Value = mode;
             }
         }
 
         void ColorPicker_OnSelectedColorChanged(object Sender, RoutedPropertyChangedEventArgs<Color?> E)
         {
             if (E.NewValue != null && InkCanvas != null)
-                InkCanvas.DefaultDrawingAttributes.Color = E.NewValue.Value;
+            {
+                var newColor = E.NewValue.Value;
+                InkCanvas.DefaultDrawingAttributes.Color = newColor;
+                
+                // Update ViewModel's BrushColor to trigger save to settings
+                var regionSelectorViewModel = ServiceProvider.Get<RegionSelectorViewModel>();
+                regionSelectorViewModel.BrushColor.Value = newColor;
+            }
         }
 
         const int LeftOffset = 3,
