@@ -249,8 +249,24 @@ namespace Captura
                 MousePointer.Stroke = new SolidColorBrush(Settings.BorderColor.ToWpfColor());
                 MousePointer.Fill = new SolidColorBrush(Settings.Color.ToWpfColor());
             }
+
+            void UpdateVisibility()
+            {
+                // Update visibility based on DisplayHighlight setting
+                if (!Settings.DisplayHighlight)
+                {
+                    MousePointer.Visibility = Visibility.Collapsed;
+                }
+            }
+
             Update();
-            Settings.PropertyChanged += (S, E) => Dispatcher.Invoke(Update);
+            UpdateVisibility();
+
+            Settings.PropertyChanged += (S, E) => Dispatcher.Invoke(() =>
+            {
+                Update();
+                UpdateVisibility();
+            });
         }
 
         void OverlayWindow_OnSizeChanged(object Sender, SizeChangedEventArgs E)
@@ -305,9 +321,6 @@ namespace Captura
 
         void UIElement_OnMouseMove(object Sender, MouseEventArgs E)
         {
-            if (ServiceProvider.Get<Settings>().MousePointerOverlay.Display)
-                MousePointer.Visibility = Visibility.Visible;
-
             var position = E.GetPosition(Grid);
 
             if (IsOutsideGrid(position))
@@ -315,6 +328,12 @@ namespace Captura
                 MousePointer.Visibility = Visibility.Collapsed;
                 return;
             }
+
+            // Show/hide circle based on DisplayHighlight setting
+            if (ServiceProvider.Get<Settings>().MousePointerOverlay.DisplayHighlight)
+                MousePointer.Visibility = Visibility.Visible;
+            else
+                MousePointer.Visibility = Visibility.Collapsed;
 
             if (_dragging)
                 UpdateMouseClickPosition(position);

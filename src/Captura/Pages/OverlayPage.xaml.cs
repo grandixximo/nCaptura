@@ -312,9 +312,23 @@ namespace Captura
                 MousePointer.Fill = new SolidColorBrush(Settings.Color.ToWpfColor());
             }
 
-            Update();
+            void UpdateVisibility()
+            {
+                // Update visibility based on DisplayHighlight setting
+                if (!Settings.DisplayHighlight)
+                {
+                    MousePointer.Visibility = Visibility.Collapsed;
+                }
+            }
 
-            Settings.PropertyChanged += (S, E) => Dispatcher.Invoke(Update);
+            Update();
+            UpdateVisibility();
+
+            Settings.PropertyChanged += (S, E) => Dispatcher.Invoke(() =>
+            {
+                Update();
+                UpdateVisibility();
+            });
         }
 
         void OverlayWindow_OnSizeChanged(object Sender, SizeChangedEventArgs E)
