@@ -36,6 +36,15 @@ namespace Captura
         {
             this.FFmpeg = FFmpeg;
             this.WindowsSettings = WindowsSettings;
+            
+            // Sync IncludeCursor with MousePointerOverlay.Display
+            MousePointerOverlay.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(MousePointerOverlay.Display))
+                {
+                    OnPropertyChanged(nameof(IncludeCursor));
+                }
+            };
         }
 
         static string GetPath() => Path.Combine(ServiceProvider.SettingsDir, "Captura.json");
@@ -231,8 +240,12 @@ namespace Captura
 
         public bool IncludeCursor
         {
-            get => Get(true);
-            set => Set(value);
+            get => MousePointerOverlay.Display;
+            set
+            {
+                MousePointerOverlay.Display = value;
+                OnPropertyChanged();
+            }
         }
 
         public bool RegionPickerHotkeyAutoStartRecording
